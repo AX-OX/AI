@@ -38,4 +38,4 @@ BE·FE를 변경하는 대신, 최신 FE의 타입에 맞춰 표시 응답만 �
 - FE 모듈은 Node의 브라우저 타이머·localStorage shim과 React SSR로 검사했다. 실제 브라우저 클릭·레이아웃 검사는 아니다.
 - GCP/Cloud SQL에는 연결하지 않았다. BE의 새 설정을 명시적인 로컬 DB 환경 변수와 local 프로필로 실행했다. DB는 격리한 PostgreSQL 17 / pgvector 0.8.1이며 운영 데이터는 변경하지 않았다.
 
-로컬 상세 보고서는 `.local/reports/latest_integration_summary.json`, `latest_backend_e2e.json`, `latest_fe_integration.json`이다. Git에서는 제외한다. 이번 Agent 보완은 아직 커밋·푸시하지 않았다.
+로컬 상세 보고서는 `.local/reports/latest_integration_summary.json`, `latest_backend_e2e.json`, `latest_fe_integration.json`이다. Git에서는 제외한다. Agent 보완 코드와 이 점검 문서는 PR #3의 변경 사항에 포함한다.
