@@ -66,6 +66,7 @@ sh scripts/verify_pgvector.sh
 
 - [Agent 구조·실행](agent/README.md)
 - [팀원 코드 통합·BE/FE 계약](docs/TEAM_AGENT_ALIGNMENT.md)
+- [최신 BE·FE 연동 점검](docs/LATEST_INTEGRATION_CHECK.md)
 - [실제 LLM 시연](docs/LLM_DEMO.md)
 - [pgvector 저장·검색](docs/PGVECTOR_AND_OPPORTUNITY.md)
 - [데이터 재생성 요구사항](docs/DATA_REBUILD_PROMPT.md)

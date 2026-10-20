@@ -27,6 +27,7 @@ def display_roadmap(roadmap, state=None):
             ((state or {}).get('approval') or {}).get('decision'), 'PENDING'),
         'items': [{**{names.get(k,k):v for k,v in item.items()},
                    **names_for(state or {}, item['process_id'], item['solution_id']),
+                   'threeYearNetValueKrw': item['three_year_net_value_krw'],
                    'evidence': evidence_dto(item['evidence']),
                    'humanReviewRequired': reviews[str(item['solution_id'])]} for item in roadmap['items']]}
 

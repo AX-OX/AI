@@ -1,5 +1,7 @@
 # 팀원 Agent 구조로 통합한 결과
 
+> 최신 BE `f1ad23a`·FE `4d2d97d`로 다시 점검한 내용은 [최신 연동 점검](LATEST_INTEGRATION_CHECK.md)을 따른다. 아래의 이전 FE ROI 문구 지적은 최신 버전에서 해결되었다.
+
 2026-10-20. 작업 브랜치 `codex/team-agent-alignment`.
 
 ## 기준과 작업 위치

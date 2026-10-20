@@ -22,9 +22,17 @@ def names_for(state, process_id, solution_id):
 
 def candidates_dto(state):
     selected = {c['solutionId'] for c in (state.get('portfolio') or {}).get('selected', [])}
+    proposals = {(c['process_id'], c['solution_id']): c for c in state.get('candidates', [])}
+    def evidence(candidate):
+        proposal = proposals.get((candidate['processId'], candidate['solutionId']), {})
+        document_ids = set(proposal.get('document_ids', []))
+        rows = [r for r in state.get('evidence', []) if r['document_id'] in document_ids]
+        rows.sort(key=lambda r: not r['section'].startswith(str(candidate['processId']) + ' '))
+        return evidence_dto([{'document_id': r['document_id'], 'title': r.get('title'),
+                              'section': r['section'], 'summary': r['content'][:400]} for r in rows[:3]])
     return [{**c, **names_for(state, c['processId'], c['solutionId']),
              'firstYearCostKrw': c['firstYearTcoKrw'], 'priority': c['axScore'],
-             'selected': c['solutionId'] in selected} for c in state.get('roi', [])]
+             'selected': c['solutionId'] in selected, 'evidence': evidence(c)} for c in state.get('roi', [])]
 
 
 def maturity_dto(assessment):

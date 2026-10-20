@@ -75,6 +75,10 @@ async def test_fe_snapshot_events_approval_and_registered_projects():
             assert result['roadmap']['budgetLimitKrw'] == 300000000
             assert all(c['priority'] == c['axScore'] and c['selected'] for c in result['candidates'])
             assert all(c['firstYearCostKrw'] == c['firstYearTcoKrw'] for c in result['candidates'])
+            assert all(c['evidence'] and c['evidence'][0]['documentId'] for c in result['candidates'])
+            scores = {c['solutionId']: c for c in result['candidates']}
+            assert all(i['threeYearNetValueKrw'] == scores[i['solutionId']]['scenarios']['base']['threeYearNetKrw']
+                       for i in result['roadmap']['items'])
             assert all(i['departmentName'] and i['solutionType'] and i['evidence'][0]['documentId']
                        for i in result['roadmap']['items'])
             assert result['maturity']['totalScore'] == result['assessment']['total_score']
