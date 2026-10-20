@@ -2,8 +2,8 @@
 
 from typing import Literal
 
-from app.models.api import Decision
-from app.models.state import AXState
+from ..models.api import Decision
+from ..models.state import AXState
 
 MAX_DISCOVER_RETRIES = 2
 # retry_count = 지금까지 수행한 discover 재탐색 횟수.

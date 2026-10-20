@@ -5,6 +5,7 @@ description = "AX Navigator AI - Agent (FastAPI + LangGraph)"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi",
+    "fastmcp==2.14.7",
     "uvicorn[standard]",
     "pydantic>=2",
     "pydantic-settings",
@@ -25,3 +26,4 @@ dev = ["pytest", "pytest-asyncio"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = [".."]

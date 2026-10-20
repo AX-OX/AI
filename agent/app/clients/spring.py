@@ -1,43 +1,35 @@
-import logging
+"""Teammate SpringClient interface, with strict HTTP errors and explicit JSON headers."""
 from datetime import datetime, timezone
-from typing import Any
-
 import httpx
-
-from app.config import Settings
-from app.models.events import EventType, TaskEvent
-
-log = logging.getLogger(__name__)
+from ..models.events import EventType, TaskEvent
 
 
 class SpringClient:
-    """Spring /internal/** 호출 (§7). 모든 요청에 X-Internal-Token을 붙인다."""
-
-    def __init__(self, settings: Settings, client: httpx.AsyncClient | None = None):
+    def __init__(self, settings, client=None):
+        self.settings = settings
         self._client = client or httpx.AsyncClient(
-            base_url=settings.spring_internal_url,
-            headers={"X-Internal-Token": settings.internal_token},
-            timeout=10,
-        )
+            base_url=settings.spring_url.rstrip('/') + '/', timeout=15,
+            headers={'X-Internal-Token': settings.internal_token})
 
-    async def aclose(self) -> None:
+    async def request(self, method, path, body):
+        response = await self._client.request(method, path.lstrip('/'), json=body,
+                                             headers={'X-Internal-Token': self.settings.internal_token})
+        response.raise_for_status()
+        return response
+
+    async def patch_task(self, task_id, **fields):
+        return await self.request('PATCH', f'tasks/{task_id}', fields)
+
+    async def emit(self, task_id, type_, node=None, data=None):
+        event = TaskEvent(type=EventType(type_), taskId=task_id, ts=datetime.now(timezone.utc),
+                          node=node, data=data or {})
+        return await self.request('POST', f'tasks/{task_id}/events', event.model_dump(mode='json'))
+
+    async def aclose(self):
         await self._client.aclose()
 
-    async def emit(
-        self, task_id: str, type_: EventType, node: str | None = None, data: dict[str, Any] | None = None
-    ) -> None:
-        """POST /internal/tasks/{taskId}/events. 전송 실패가 작업을 죽이지 않게 로그만 남긴다."""
-        event = TaskEvent(type=type_, taskId=task_id, ts=datetime.now(timezone.utc), node=node, data=data or {})
-        try:
-            r = await self._client.post(f"/tasks/{task_id}/events", content=event.model_dump_json())
-            r.raise_for_status()
-        except httpx.HTTPError as e:
-            log.warning("event 전송 실패 task=%s type=%s: %s", task_id, type_, e)
+    async def __aenter__(self):
+        return self
 
-    async def patch_task(self, task_id: str, **fields: Any) -> None:
-        """PATCH /internal/tasks/{taskId}: status, result, errorMessage, traceUrl 등."""
-        try:
-            r = await self._client.patch(f"/tasks/{task_id}", json=fields)
-            r.raise_for_status()
-        except httpx.HTTPError as e:
-            log.warning("task 갱신 실패 task=%s fields=%s: %s", task_id, list(fields), e)
+    async def __aexit__(self, *args):
+        await self.aclose()

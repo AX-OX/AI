@@ -2,10 +2,10 @@ from collections.abc import Callable, Mapping
 
 from langgraph.graph import END, START, StateGraph
 
-from app.graph import routing
-from app.graph.nodes import stubs
-from app.graph.nodes.approval import approval
-from app.models.state import AXState
+from . import routing
+from .nodes import stubs
+from .nodes.approval import approval
+from ..models.state import AXState
 
 DEFAULT_NODES: dict[str, Callable] = {
     "collect": stubs.collect,

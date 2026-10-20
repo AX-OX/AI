@@ -2,7 +2,7 @@ import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from app.graph.builder import build_graph
+from agent.app.graph.builder import build_graph
 
 BASE = {
     "task_id": "t1",

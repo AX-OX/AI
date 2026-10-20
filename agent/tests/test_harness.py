@@ -1,11 +1,11 @@
 import pytest
 
-from app.config import Settings
-from app.harness.guardrails import mask_pii, mask_text
-from app.harness.limits import LimitExceeded, LoopGuard, truncate_result
-from app.harness.recovery import call_with_recovery
-from app.harness.tool_output import prepare_tool_output
-from app.maturity import compute_total_score, load_criteria
+from agent.app.config import Settings
+from agent.app.harness.guardrails import mask_pii, mask_text
+from agent.app.harness.limits import LimitExceeded, LoopGuard, truncate_result
+from agent.app.harness.recovery import call_with_recovery
+from agent.app.harness.tool_output import prepare_tool_output
+from agent.app.maturity import compute_total_score, load_criteria
 
 
 def test_mask_email_and_phone():

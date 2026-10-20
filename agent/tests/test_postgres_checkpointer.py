@@ -10,9 +10,9 @@ import pytest
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.types import Command
 
-from app.graph.builder import build_graph
+from agent.app.graph.builder import build_graph
 
-DSN = os.environ.get("AGENT_TEST_PG_DSN")
+DSN = os.environ.get("AGENT_TEST_PG_DSN") or os.environ.get("AGENT_TEST_DATABASE_URL")
 pytestmark = pytest.mark.skipif(not DSN, reason="AGENT_TEST_PG_DSN 미설정")
 
 

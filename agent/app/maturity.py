@@ -1,3 +1,4 @@
+"""팀원 기준표·순수 함수 검증용. 운영 Agent의 성숙도 총점은 Spring 응답을 사용한다."""
 from functools import lru_cache
 from pathlib import Path
 

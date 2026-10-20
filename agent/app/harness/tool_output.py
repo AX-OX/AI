@@ -1,6 +1,6 @@
-from app.config import Settings
-from app.harness.guardrails import mask_text
-from app.harness.limits import truncate_result
+from ..config import Settings
+from .guardrails import mask_text
+from .limits import truncate_result
 
 
 def prepare_tool_output(text: str, settings: Settings) -> str:

@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ax}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ax
+      RAG_READER_PASSWORD: ${RAG_READER_PASSWORD:?Set RAG_READER_PASSWORD}
+      RAG_INDEXER_PASSWORD: ${RAG_INDEXER_PASSWORD:?Set RAG_INDEXER_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d ax"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  business-mcp:
+    build: ./business-mcp
+    environment:
+      SPRING_INTERNAL_URL: ${SPRING_INTERNAL_URL:?Set external team Spring internal API URL}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?Set INTERNAL_TOKEN in .env}
+  rag-mcp:
+    build: ./rag-mcp
+    environment: &rag_common
+      RAG_INDEX_VERSION: ${RAG_INDEX_VERSION:-ax-v3-pgvector-v1}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}
+      EMBEDDING_REVISION: ${EMBEDDING_REVISION:-e8f8c211226b894fcb81acc59f3b34ba3efd5f42}
+      CORPUS_DIR: /data/rag
+      HF_HOME: /model-cache
+      RAG_COMPANY_ID: 1
+      RAG_DATABASE_URL: ${RAG_DATABASE_URL:?Set reader connection RAG_DATABASE_URL}
+    volumes: &rag_volumes
+      - ./AX_Navigator_AI_MVP_v3/rag:/data/rag:ro
+      - model_cache:/model-cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+  indexer:
+    build: ./rag-mcp
+    profiles: [tools]
+    command: ["python", "index.py"]
+    environment:
+      <<: *rag_common
+      RAG_DATABASE_URL: ""
+      RAG_INDEX_DATABASE_URL: ${RAG_INDEX_DATABASE_URL:?Set writer connection RAG_INDEX_DATABASE_URL}
+    volumes: *rag_volumes
+    depends_on:
+      postgres:
+        condition: service_healthy
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    environment:
+      AGENT_MODE: ${AGENT_MODE:-live}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?Set INTERNAL_TOKEN in .env}
+      AGENT_DATABASE_URL: ${AGENT_DATABASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ax-navigator
+      SPRING_INTERNAL_URL: ${SPRING_INTERNAL_URL:?Set external team Spring internal API URL}
+      BUSINESS_MCP_URL: http://business-mcp:9101/mcp
+      RAG_MCP_URL: http://rag-mcp:9102/mcp
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  model_cache:

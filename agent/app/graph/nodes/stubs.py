@@ -4,7 +4,7 @@
 스텁은 업무 데이터를 만들지 않는다 (빈 값만 채운다).
 """
 
-from app.models.state import AXState
+from ...models.state import AXState
 
 
 # 🔴 실제 구현에는 business-mcp 조회 도구(MCP 연결 + 업무 데이터)가 필요

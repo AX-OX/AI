@@ -1,0 +1,9 @@
+document_id,company_id,process_id,title,doc_type,file_uri,access_level,version,created_at
+401,1,201,인사 업무 매뉴얼,MANUAL,docs://401,CONFIDENTIAL,v3,2026-10-20 09:00:00
+402,1,204,기획 업무 매뉴얼,MANUAL,docs://402,INTERNAL,v3,2026-10-20 09:00:00
+403,1,207,개발 업무 매뉴얼,MANUAL,docs://403,INTERNAL,v3,2026-10-20 09:00:00
+404,1,,보안·데이터 처리 정책,POLICY,docs://404,INTERNAL,v3,2026-10-20 09:00:00
+405,1,,IT 시스템 명세,SYSTEM_SPEC,docs://405,INTERNAL,v3,2026-10-20 09:00:00
+406,1,,AI 활용 현황,AI_STATUS,docs://406,INTERNAL,v3,2026-10-20 09:00:00
+407,1,,데이터 품질 점검표,DATA_QUALITY,docs://407,INTERNAL,v3,2026-10-20 09:00:00
+408,1,,과거 프로젝트 보고서,PROJECT_REPORT,docs://408,INTERNAL,v3,2026-10-20 09:00:00

@@ -1,7 +1,7 @@
 from langgraph.types import interrupt
 
-from app.models.api import Decision
-from app.models.state import AXState
+from ...models.api import Decision
+from ...models.state import AXState
 
 
 async def approval(state: AXState) -> dict:

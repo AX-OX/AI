@@ -1,105 +1,107 @@
+"""Teammate TaskRunner layout with real nodes, checkpoint guards and Spring callbacks."""
 import asyncio
 import logging
+import os
+from uuid import uuid4
+import httpx
+from fastapi import HTTPException
+from langgraph.types import Command
+from .graph import task_result, approval_payload
 
-from app.clients.spring import SpringClient
-from app.config import Settings
-from app.models.api import Decision, ResumeRequest, RunRequest
-from app.models.events import EventType, TaskStatus
-
-log = logging.getLogger(__name__)
-
-
-class TaskConflict(Exception):
-    """같은 taskId가 이미 실행/존재."""
-
-
-class TaskNotResumable(Exception):
-    """승인 대기 상태가 아니거나 없는 taskId."""
-
-
-class TaskForbidden(Exception):
-    """작업 요청자가 아닌 사용자의 재개 시도."""
-
+logger = logging.getLogger(__name__)
 
 class TaskRunner:
-    def __init__(self, graph, spring: SpringClient, settings: Settings):
-        self.graph = graph
-        self.spring = spring
-        self.settings = settings
-        self._running: set[str] = set()
-        self._tasks: set[asyncio.Task] = set()
+    def __init__(self, graph, gateway, settings):
+        self.graph, self.gateway, self.settings = graph, gateway, settings
+        self.jobs = {}
+        self.guard = asyncio.Lock()
 
     @staticmethod
-    def _cfg(task_id: str) -> dict:
-        return {"configurable": {"thread_id": task_id}}  # thread_id = taskId
+    def _cfg(task_id):
+        return {'configurable': {'thread_id': str(task_id)}, 'recursion_limit': 40,
+                'run_name': 'ax-navigator', 'metadata': {'task_id': str(task_id)}}
 
-    def _spawn(self, coro) -> None:
-        t = asyncio.create_task(coro)
-        self._tasks.add(t)
-        t.add_done_callback(self._tasks.discard)
-
-    async def start(self, task_id: str, req: RunRequest) -> None:
-        snap = await self.graph.aget_state(self._cfg(task_id))
-        if task_id in self._running or snap.values:
-            raise TaskConflict(task_id)
-        self._running.add(task_id)
-        initial = {
-            "task_id": task_id,
-            "company_id": req.companyId,
-            "user_id": req.userId,
-            "request": req.requestText,
-            "messages": [],
-            "errors": [],
-            "retry_count": 0,
-        }
-        self._spawn(self._execute(task_id, initial))
-
-    async def resume(self, task_id: str, req: ResumeRequest) -> None:
-        from langgraph.types import Command
-
-        snap = await self.graph.aget_state(self._cfg(task_id))
-        if task_id in self._running or snap.next != ("approval",):
-            raise TaskNotResumable(task_id)
-        if snap.values.get("user_id") != req.userId:
-            raise TaskForbidden(task_id)
-        self._running.add(task_id)
-        value = Command(resume={"decision": req.decision.value, "userId": req.userId, "reason": req.reason})
-        self._spawn(self._execute(task_id, value))
-
-    async def _execute(self, task_id: str, graph_input) -> None:
+    async def execute(self, task_id, payload):
+        graph, client = self.graph, self.gateway
+        cfg = self._cfg(task_id)
+        cfg['run_id'] = uuid4()
+        cfg['metadata']['mode'] = self.settings.mode
+        trace_url = None
+        if os.getenv('LANGSMITH_TRACING', '').lower() == 'true' and os.getenv('LANGSMITH_API_KEY'):
+            try:
+                from langsmith import Client as TraceClient
+                trace_url = TraceClient().get_run_url(run_id=cfg['run_id'], project_name=os.getenv('LANGSMITH_PROJECT', 'ax-navigator'))
+            except Exception:
+                logger.warning('LangSmith URL unavailable task_id=%s', task_id)
         try:
-            await self.spring.patch_task(task_id, status=TaskStatus.RUNNING.value)
-            async with asyncio.timeout(self.settings.task_timeout_seconds):
-                await self.graph.ainvoke(graph_input, self._cfg(task_id))
-            await self._finish(task_id)
-        except Exception as e:  # noqa: BLE001 - 어떤 실패든 FAILED로 마감
-            log.exception("task 실패 %s", task_id)
-            await self.spring.patch_task(task_id, status=TaskStatus.FAILED.value, errorMessage=str(e))
-            await self.spring.emit(task_id, EventType.FAILED, data={"message": str(e)})
+            rejecting = isinstance(payload, Command) and isinstance(payload.resume, dict) and payload.resume.get('decision') == 'REJECT'
+            if not rejecting:
+                await client.status(task_id, 'RUNNING', trace_url=trace_url)
+            async with asyncio.timeout(self.settings.task_timeout_seconds or self.settings.timeout):
+                result = await graph.ainvoke(payload, config=cfg)
+            if result.get('errors'):
+                raise ValueError('; '.join(result['errors']))
+            if result.get('__interrupt__'):
+                await client.status(task_id, 'WAITING_APPROVAL', result=task_result(result, self.settings.mode))
+                # Existing FE renders natural language only from TOKEN events.
+                # Send the verified complete answer once; do not expose raw LLM output.
+                if result.get('answer'):
+                    await client.event(task_id, 'TOKEN', 'roadmap', {'text': task_result(result, self.settings.mode)['answer']})
+                await client.event(task_id, 'APPROVAL_REQUIRED', 'approval', approval_payload(result))
+            elif result['status'] == 'REJECTED':
+                await client.status(task_id, 'REJECTED')
+            else:
+                body = task_result(result, self.settings.mode)
+                await client.status(task_id, 'DONE', result=body)
+                await client.event(task_id, 'DONE', 'register', {'result': body})
+        except asyncio.CancelledError:
+            # 프로세스 종료 시 마지막 완료 노드 체크포인트는 보존한다.
+            raise
+        except Exception as exc:
+            logger.error('Agent task failed task_id=%s error=%s', task_id, type(exc).__name__)
+            failures=[e for e in client.public_trace.get(task_id) if e['type']=='NODE_ERROR']
+            detail=failures[-1]['data'].get('message','') if failures else ''
+            if isinstance(exc, httpx.HTTPStatusError):
+                detail = f'Spring HTTP {exc.response.status_code}: {exc.request.method} {exc.request.url.path}'
+            message = f'작업 실패: {type(exc).__name__}. {detail or "내부 로그와 연동 상태를 확인하세요."}'
+            try:
+                await graph.aupdate_state(cfg, {'status': 'FAILED', 'errors': [message]})
+                await client.status(task_id, 'FAILED', error_message=message)
+                await client.event(task_id, 'FAILED', data={'message': message})
+            except Exception:
+                logger.exception('Failure callback failed task_id=%s', task_id)
         finally:
-            self._running.discard(task_id)
+            self.jobs.pop(task_id, None)
 
-    async def _finish(self, task_id: str) -> None:
-        snap = await self.graph.aget_state(self._cfg(task_id))
-        values = snap.values
+    async def start(self, task_id, request):
+        key = str(task_id)
+        if request.companyId != self.settings.company_id: raise HTTPException(403, '지원하는 회사 범위를 벗어났습니다.')
+        async with self.guard:
+            snapshot = await self.graph.aget_state(self._cfg(key))
+            if key in self.jobs or snapshot.values: raise HTTPException(409, '이미 존재하는 작업입니다.')
+            if len(self.jobs) >= 8: raise HTTPException(503, '동시 실행 한도 초과')
+            initial = {'task_id': key, 'company_id': request.companyId, 'user_id': request.userId,
+                       'request': request.requestText, 'messages': [], 'retry_count': 0, 'errors': [], 'status': 'QUEUED'}
+            # 첫 노드 실행 전에도 중복 작업/소유권을 조회할 수 있게 저장한다.
+            await self.graph.aupdate_state(self._cfg(key), initial, as_node='__start__')
+            self.jobs[key] = asyncio.create_task(self.execute(key, None))
+        return {'taskId': key, 'status': 'QUEUED', 'mode': self.settings.mode}
 
-        if snap.next == ("approval",):  # interrupt()로 멈춤
-            payload = snap.tasks[0].interrupts[0].value
-            await self.spring.patch_task(task_id, status=TaskStatus.WAITING_APPROVAL.value)
-            await self.spring.emit(task_id, EventType.APPROVAL_REQUIRED, node="approval", data=payload)
-        elif values.get("errors"):
-            message = "; ".join(values["errors"])
-            await self.spring.patch_task(task_id, status=TaskStatus.FAILED.value, errorMessage=message)
-            await self.spring.emit(task_id, EventType.FAILED, data={"message": message})
-        elif (values.get("approval") or {}).get("decision") == Decision.REJECT:
-            await self.spring.patch_task(task_id, status=TaskStatus.REJECTED.value)
-            await self.spring.emit(task_id, EventType.DONE, data={"result": {"rejected": True}})
-        else:
-            # 🔴 result 구조는 팀 합의 전 (성숙도·후보 과제·시나리오별 ROI)
-            result = {
-                "maturity": values.get("maturity"),
-                "portfolio": values.get("portfolio"),
-                "roadmap": values.get("roadmap"),
-            }
-            await self.spring.patch_task(task_id, status=TaskStatus.DONE.value, result=result)
-            await self.spring.emit(task_id, EventType.DONE, data={"result": result})
+    async def resume(self, task_id, request):
+        key = str(task_id)
+        async with self.guard:
+            snapshot = await self.graph.aget_state(self._cfg(key))
+            if not snapshot.values: raise HTTPException(404, '작업이 없습니다.')
+            if snapshot.values['user_id'] != request.userId: raise HTTPException(403, '작업 요청자만 재개할 수 있습니다.')
+            interrupted = any(t.interrupts for t in snapshot.tasks)
+            if key in self.jobs or not interrupted or snapshot.values.get('status') in {'FAILED', 'DONE', 'REJECTED'}:
+                raise HTTPException(409, '승인 대기 중인 작업만 재개할 수 있습니다.')
+            if len(self.jobs) >= 8: raise HTTPException(503, '동시 실행 한도 초과')
+            self.jobs[key] = asyncio.create_task(self.execute(key, Command(resume=request.model_dump())))
+        return {'taskId': key, 'status': 'RUNNING'}
+
+    async def close(self):
+        jobs = list(self.jobs.values())
+        for job in jobs:
+            job.cancel()
+        await asyncio.gather(*jobs, return_exceptions=True)

@@ -3,7 +3,7 @@
 import time
 from collections import Counter
 
-from app.config import Settings
+from ..config import Settings
 
 
 class LimitExceeded(Exception):
@@ -23,7 +23,7 @@ class LoopGuard:
     def __init__(self, settings: Settings, clock=time.monotonic):
         self._max_turns = settings.max_agent_turns
         self._max_same = settings.max_same_tool_calls
-        self._deadline = clock() + settings.task_timeout_seconds
+        self._deadline = clock() + (settings.task_timeout_seconds or settings.timeout)
         self._clock = clock
         self._turns = 0
         self._tools: Counter[str] = Counter()
