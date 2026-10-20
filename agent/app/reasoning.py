@@ -7,6 +7,9 @@ from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from .clients import READS, mask
 from .schemas import Discovery, Assessment, Narrative
+from .harness.limits import LoopGuard, LimitExceeded
+from .harness.tool_output import prepare_tool_output
+from .harness.recovery import is_retryable
 
 PROMPTS = Path(__file__).resolve().parents[1] / 'prompts'
 
@@ -42,20 +45,22 @@ class Reasoner:
                 except Exception as exc:
                     last = exc
                     self.observe(task_id, stage, 'LLM_ERROR', {'model':name, 'errorType':type(exc).__name__, 'httpStatus':getattr(exc, 'status_code', None)})
-                    if getattr(exc, 'status_code', None) not in {429, 503}: break
+                    if not is_retryable(exc):
+                        raise RuntimeError('LLM 호출 실패') from exc
                     await asyncio.sleep(0.5 * 2**attempt)
         raise RuntimeError('LLM 호출 실패') from last
 
     async def collect(self, state, gateway):
         results = {}
-        counts = {}
+        guard = LoopGuard(self.settings)
         tools = []
         for name in sorted(READS):
             async def execute(company_id: int | None = None, department_id: int | None = None, _name=name):
-                counts[_name] = counts.get(_name, 0) + 1
-                if counts[_name] > 3:
-                    self.observe(state['task_id'],'collect','TOOL_REJECTED',{'tool':_name,'reason':'같은 도구는 최대 3회'})
-                    return '오류: 같은 도구는 최대 3회입니다.'
+                try:
+                    guard.record_tool(_name)
+                except LimitExceeded as exc:
+                    self.observe(state['task_id'],'collect','TOOL_REJECTED',{'tool':_name,'reason':str(exc)})
+                    return str(exc)
                 if company_id is not None and company_id != state['company_id']: return '오류: 작업의 회사 ID를 사용하세요.'
                 if department_id is not None: return '오류: collect 단계에서는 department_id 없이 회사 전체를 조회하세요.'
                 args = {} if _name == 'get_solution_catalog' else {'company_id': state['company_id']}
@@ -64,7 +69,7 @@ class Reasoner:
                 try:
                     value = await gateway.tool(state['task_id'], 'collect', _name, args)
                     results[_name] = value
-                    return compact(value, 2000)
+                    return prepare_tool_output(compact(value, 100000), self.settings)
                 except Exception as exc:
                     return f'도구 오류: {str(exc)[:500]}'
             # 모델에 내부 _name 인자를 노출하지 않도록 명시적 schema 사용
@@ -74,7 +79,8 @@ class Reasoner:
                              'required':[] if name=='get_solution_catalog' else ['company_id'], 'additionalProperties':False}))
         messages = [SystemMessage(content=prompt('collect')), HumanMessage(content=compact({'company_id': state['company_id'], 'request': state['request']}))]
         by_name = {t.name: t for t in tools}
-        for _ in range(8):
+        for _ in range(self.settings.max_agent_turns):
+            guard.next_turn()
             async def choose(model): return await model.bind_tools(tools, strict=True).ainvoke(messages)
             response = await self.invoke(choose, task_id=state['task_id'], stage='collect')
             messages.append(response)

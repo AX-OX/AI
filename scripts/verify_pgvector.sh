@@ -8,8 +8,8 @@ PG_STARTED=0
 cleanup() {
   TEST_STATUS=$?
   if [ "$TEST_STATUS" -ne 0 ]; then
-    mkdir -p reports/runtime
-    for file in "$TASK_DIR"/*.log; do [ ! -f "$file" ] || cp "$file" reports/runtime/; done
+    mkdir -p .local/reports/runtime
+    for file in "$TASK_DIR"/*.log; do [ ! -f "$file" ] || cp "$file" .local/reports/runtime/; done
   fi
   for pid in "${STUB_PID:-}" "${BUSINESS_PID:-}" "${RAG_PID:-}"; do
     [ -z "$pid" ] || kill "$pid" 2>/dev/null || true
@@ -60,4 +60,4 @@ for name in ('TEST_SPRING_INTERNAL_URL','LIVE_BUSINESS_MCP_URL','LIVE_RAG_MCP_UR
         time.sleep(.2)
     else:raise RuntimeError(name+' startup failed')
 PY
-.venv/bin/python -m pytest agent/tests tests -q
+"${AGENT_TEST_PYTHON:-.venv/bin/python}" -m pytest agent/tests tests -q

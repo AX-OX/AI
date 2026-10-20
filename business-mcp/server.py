@@ -4,6 +4,7 @@ from typing import Any
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from spring_client import call
+from dto import AREAS, camel, storage_result
 
 mcp = FastMCP('business')
 
@@ -54,17 +55,22 @@ async def optimize_ax_portfolio(company_id: int, candidates: list[dict[str, int]
 @mcp.tool
 async def save_assessment(task_id: str, scores: dict[str, Any], criteria_version: str, evidence: list[dict[str, Any]]) -> Any:
     """작업 ID, 0~100 영역 점수, 기준 버전과 문서 근거를 Spring에 저장한다."""
-    return await call('POST', '/assessments', body={'taskId': task_id, 'scores': scores, 'criteriaVersion': criteria_version, 'evidence': evidence})
+    evidence = [{**row, 'area': AREAS.get(row.get('area'), row.get('area'))} for row in evidence]
+    result = await call('POST', '/assessments', body={'taskId': task_id,
+        'scores': {AREAS.get(k,k):v for k,v in scores.items()},
+        'criteriaVersion': criteria_version, 'evidence': camel(evidence)})
+    return storage_result(result)
 
 @mcp.tool(annotations={'destructiveHint': True})
 async def create_ax_roadmap(task_id: str, company_id: int, assessment_id: int | None, roadmap_name: str, items: list[dict[str, Any]]) -> Any:
     """요청자 승인 후 작업 ID, 회사, 평가 ID와 로드맵 항목으로 로드맵을 생성한다. 금액은 원이다."""
-    return await call('POST', '/roadmaps', body={'taskId': task_id, 'companyId': company_id, 'assessmentId': assessment_id, 'roadmapName': roadmap_name, 'items': items})
+    result = await call('POST', '/roadmaps', body={'taskId': task_id, 'companyId': company_id, 'assessmentId': assessment_id, 'roadmapName': roadmap_name, 'items': camel(items)})
+    return storage_result(result)
 
 @mcp.tool(annotations={'destructiveHint': True})
 async def create_ax_project(item_id: int, owner_department_id: int, project_name: str) -> Any:
     """요청자 승인 후 생성된 로드맵 항목 ID와 담당 부서 ID로 프로젝트를 등록한다."""
-    return await call('POST', '/projects', body={'itemId': item_id, 'ownerDepartmentId': owner_department_id, 'projectName': project_name})
+    return storage_result(await call('POST', '/projects', body={'itemId': item_id, 'ownerDepartmentId': owner_department_id, 'projectName': project_name}))
 
 @mcp.tool(annotations={'destructiveHint': True})
 async def update_project_status(project_id: int, status: str) -> Any:

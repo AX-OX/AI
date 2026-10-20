@@ -30,7 +30,7 @@ async def test_real_mcp_protocol_gateway_decodes_tool():
     gateway = Gateway(cfg)
     async def no_callback(*args, **kwargs): pass
     gateway._spring = no_callback
-    with patch('agent.app.clients.StreamableHttpTransport', return_value=server):
+    with patch('agent.app.clients.mcp.StreamableHttpTransport', return_value=server):
         value = await gateway.tool('task', 'collect', 'get_company_profile', {'company_id': 1})
     assert value == {'company_id': 1, 'email': '[EMAIL]'}
 
@@ -110,7 +110,7 @@ async def test_rag_real_mcp_list_output_and_company_filter():
         gateway = Gateway(Settings(mode='mock', internal_token='test'))
         async def no_callback(*args, **kwargs): pass
         gateway._spring = no_callback
-        with patch('agent.app.clients.StreamableHttpTransport', return_value=module.mcp):
+        with patch('agent.app.clients.mcp.StreamableHttpTransport', return_value=module.mcp):
             result = await gateway.tool('task', 'retrieve', 'search_docs', {'query': '인사', 'process_id': 202})
     assert result[0]['content'] == '담당자 [EMAIL] [PHONE]'
     assert seen == [('인사', None, 202, 5)]

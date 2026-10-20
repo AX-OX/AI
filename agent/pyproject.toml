@@ -1,0 +1,29 @@
+[project]
+name = "ax-agent"
+version = "0.1.0"
+description = "AX Navigator AI - Agent (FastAPI + LangGraph)"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "fastmcp==2.14.7",
+    "uvicorn[standard]",
+    "pydantic>=2",
+    "pydantic-settings",
+    "httpx",
+    "pyyaml",
+    "langgraph>=1.0",
+    "langchain>=1.0",
+    "langchain-openai",
+    "langchain-mcp-adapters",
+    "langgraph-checkpoint-postgres",
+    "psycopg[binary,pool]",
+    "langsmith",
+]
+
+[dependency-groups]
+dev = ["pytest", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = [".."]

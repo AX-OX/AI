@@ -64,7 +64,7 @@ python examples/pgvector_ingest.py
 
 코퍼스 해시는 파일 이름 + NUL + 파일 바이트를 `pgvector_import.jsonl`, `doc_mapping.json` 순서로 SHA-256에 넣는다. 적재·검색 양쪽이 같은 규칙을 사용한다. 실제 적재는 회사·버전 단위 트랜잭션이며 실패 시 기존 색인을 보존한다. 모델·revision·코퍼스 해시가 달라지면 재색인해야 한다. 정확 검색을 사용하며 ANN 인덱스는 없다.
 
-**현재 프로젝트의 기존 서비스 코드와 자동으로 연결하지 않았다.** 기존 `rag-mcp/common.py`, `index.py`는 이전 JSONL 파일명·외부 업무 매핑을 사용한다. v3 전환 시 해당 로더를 `pgvector_import.jsonl` 및 doc_mapping의 related_process_ids로 맞추고, 활성 index_version·코퍼스 해시 규칙을 적재/검색 양쪽에 맞춰야 한다. compose의 CORPUS_DIR 마운트도 v3로 바꾼다. 기존 데이터 볼륨에는 init SQL이 자동 재적용되지 않으므로 검토된 migration 또는 새로운 테스트 DB를 사용한다. 이 패키지는 기존 실행 서비스·DB·NoRole 원본을 변경하지 않는다.
+**이 절은 패키지 생성 시점의 기록이다. 현재 저장소의 Agent·MCP·compose는 v3로 전환되었으며 최신 상태는 루트 README와 통합 안내를 따른다.** 기존 `rag-mcp/common.py`, `index.py`는 이전 JSONL 파일명·외부 업무 매핑을 사용한다. v3 전환 시 해당 로더를 `pgvector_import.jsonl` 및 doc_mapping의 related_process_ids로 맞추고, 활성 index_version·코퍼스 해시 규칙을 적재/검색 양쪽에 맞춰야 한다. compose의 CORPUS_DIR 마운트도 v3로 바꾼다. 기존 데이터 볼륨에는 init SQL이 자동 재적용되지 않으므로 검토된 migration 또는 새로운 테스트 DB를 사용한다. 이 패키지는 기존 실행 서비스·DB·NoRole 원본을 변경하지 않는다.
 
 ## 계산 정답
 

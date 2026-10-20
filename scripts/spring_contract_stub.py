@@ -8,6 +8,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from fastapi import FastAPI, Request, HTTPException
 from agent.app.config import Settings
 from agent.app.mock import MockGateway
+from agent.app.contracts import snake_keys
 
 if os.getenv('AX_TEST_STUB')!='1':
     raise RuntimeError('Test fixture server requires AX_TEST_STUB=1')
@@ -34,9 +35,10 @@ async def contract(path:str,request:Request):
         name='optimize_ax_portfolio'
         args={'company_id':body['companyId'],'candidates':[{'process_id':p['processId'],'solution_id':p['solutionId']} for p in body['candidates']],'max_items':body['maxItems']}
     elif path=='assessments':
-        name='save_assessment';args={'task_id':body['taskId'],'scores':body['scores'],'criteria_version':body['criteriaVersion'],'evidence':body['evidence']}
+        areas={'data':'data_score','infra':'infra_score','automation':'automation_score','aiCapability':'ai_capability_score','governance':'governance_score'}
+        name='save_assessment';args={'task_id':body['taskId'],'scores':{areas.get(k,k):v for k,v in body['scores'].items()},'criteria_version':body['criteriaVersion'],'evidence':body['evidence']}
     elif path=='roadmaps':
-        name='create_ax_roadmap';args={'task_id':body['taskId'],'company_id':body['companyId'],'assessment_id':body['assessmentId'],'roadmap_name':body['roadmapName'],'items':body['items']}
+        name='create_ax_roadmap';args={'task_id':body['taskId'],'company_id':body['companyId'],'assessment_id':body['assessmentId'],'roadmap_name':body['roadmapName'],'items':snake_keys(body['items'])}
     elif path=='projects': name='create_ax_project';args={'item_id':body['itemId'],'owner_department_id':body['ownerDepartmentId'],'project_name':body['projectName']}
     elif pieces[0]=='tasks' and (request.method=='PATCH' or pieces[-1]=='events'):
         return {'ok':True}

@@ -14,6 +14,8 @@ from agent.app.reasoning import MockReasoner
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
+REPORTS=ROOT/'.local/reports'
+REPORTS.mkdir(parents=True,exist_ok=True)
 sys.path.insert(0,str(ROOT/'rag-mcp'))
 import common
 import pgvector_client as pg
@@ -56,7 +58,7 @@ def test_real_embedding_semantic_search():
     report={'dataset':'v3','engine':'PostgreSQL pgvector','postgresql_version':version,'pgvector_version':extension,
             'embedding_model':common.MODEL,'embedding_revision':common.REVISION,'index_version':common.INDEX_VERSION,
             'chunks':34,'top_hits':hits}
-    (ROOT/'reports/pgvector_search_v3.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+    (REPORTS/'pgvector_search_v3.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
 
 
 @pytest.mark.asyncio
@@ -91,6 +93,6 @@ async def test_fastapi_actual_mcp_and_pgvector_pipeline():
             assert len(final['result']['registration']['projects'])==3
     report={'scope':'FastAPI ASGI + real Business/RAG MCP HTTP + actual pgvector + Postgres checkpoint; Spring responses and LLM reasoning are fixture mocks',
             'production_spring_tested':False,'live_llm_tested':False,'status':final['status'],'checkpoint_restart_resume':True,'result':final['result']}
-    (ROOT/'reports/agent_v3_demo.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+    (REPORTS/'agent_v3_demo.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     async with httpx.AsyncClient() as client:
         assert (await client.post(base+'/ax/roi',json={'processId':201,'solutionId':501})).status_code==403

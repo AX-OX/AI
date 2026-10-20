@@ -9,6 +9,8 @@ from agent.app.contracts import normalize_read
 from agent.app.main import create_app
 from agent.app.mock import MockGateway
 from agent.app.presentation import maturity_dto
+from agent.app.clients import Gateway
+from agent.app.clients.spring import SpringClient
 
 
 def test_spring_months_and_system_links_are_preserved():
@@ -29,6 +31,28 @@ def test_spring_months_and_system_links_are_preserved():
 
 def test_no_invented_maturity_total():
     assert maturity_dto({'scores': {'data_score': 55}}) is None
+
+
+@pytest.mark.asyncio
+async def test_team_spring_client_preserves_internal_prefix_and_callback_contract():
+    cfg = Settings(mode='mock', internal_token='test-token', spring_url='http://spring/internal')
+    requests = []
+    def respond(request):
+        requests.append(request)
+        return httpx.Response(200, json={'ok':True})
+    async with httpx.AsyncClient(base_url=cfg.spring_url+'/', transport=httpx.MockTransport(respond)) as http:
+        spring = SpringClient(cfg, client=http)
+        gateway = Gateway(cfg)
+        gateway._spring = spring.request
+        await gateway.status('task-id', 'RUNNING', trace_url='https://example.com/trace', error_message=None)
+        await spring.emit('task-id', 'TOKEN', node='roadmap', data={'text':'검증된 설명'})
+    import json
+    assert requests[0].url.path == '/internal/tasks/task-id'
+    assert json.loads(requests[0].content)['traceUrl'] == 'https://example.com/trace'
+    assert 'errorMessage' in json.loads(requests[0].content)
+    assert requests[1].url.path == '/internal/tasks/task-id/events'
+    assert requests[1].headers['content-type'] == 'application/json'
+    assert all(r.headers['x-internal-token'] == 'test-token' for r in requests)
 
 
 @pytest.mark.asyncio

@@ -37,7 +37,7 @@ LLM_MODEL=gpt-4.1-mini
 
 ```sh
 .venv/bin/python scripts/chat_agent.py --prompt '예산 3억 원 안에서 AX 과제 3개를 선정해줘'
-# 공개 결과·실행 기록을 JSON으로 저장하려면 --output reports/my_llm_demo.json 추가
+# 공개 결과·실행 기록을 JSON으로 저장하려면 --output .local/reports/my_llm_demo.json 추가
 ```
 
 모델은 `--model` → `LLM_MODEL` → `gpt-4.1-mini` 순으로 선택한다. 실제 호출에는 API 사용량이 발생한다. 다른 모델은 계정 접근 권한과 도구 호출 지원을 확인해야 한다.

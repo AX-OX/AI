@@ -1,6 +1,6 @@
 # pgvector 및 v3 AX점수 전환
 
-현재 실행 기준은 `AX_NAVIGATOR_CONTEXT.md`와 `AX_Navigator_AI_MVP_v3/config/`다. 이전 50/35/15 가중치·2,000시간 정규화·Confidence 가산 정책은 실행 경로에서 제거했다. `docs/EVALUATION_PROPOSAL.md`와 `config/ax_opportunity_v1.json`은 과거 제안 기록이며 현재 계약이 아니다.
+현재 실행 기준은 `AX_NAVIGATOR_CONTEXT.md`와 `AX_Navigator_AI_MVP_v3/config/`다. 이전 50/35/15 가중치·2,000시간 정규화·Confidence 가산 정책은 실행 경로에서 제거했다. 과거 제안·정책은 `.local/archive/`로 보관하며 업로드하지 않는다.
 
 ## 저장과 검색
 
@@ -27,6 +27,6 @@ Spring이 기준 문서 §6의 AX점수·ROI·조합을 계산한다. Agent는 �
 
 ## 전환과 검증
 
-compose는 v3 corpus와 새 init SQL을 사용한다. 기존 볼륨에는 자동 적용되지 않으며 새 테스트 DB 또는 별도 검토한 migration이 필요하다. 자동 삭제·리셋은 수행하지 않았다. backend-evaluation은 compose와 검증 스크립트에서 제외했으며 내부 계산 API는 팀 Spring으로 연결한다.
+compose는 v3 corpus와 새 init SQL을 사용한다. 기존 볼륨에는 자동 적용되지 않으며 새 테스트 DB 또는 별도 검토한 migration이 필요하다. 자동 삭제·리셋은 수행하지 않았다. 내부 계산 API는 팀 Spring으로 연결한다.
 
-`./scripts/verify_pgvector.sh`는 임시 DB, 실제 RAG/Business MCP HTTP, 고정 모델, FastAPI ASGI, PostgreSQL checkpoint 재시작·승인 재개를 검증한다. Spring은 테스트용 계약 fixture이고 LLM도 mock이다. reports/agent_v3_demo.json에 이 범위를 명시한다. 목표 PostgreSQL 16과 로컬 검증 버전은 다를 수 있으므로 reports/pgvector_search_v3.json의 실제 버전을 확인한다.
+`./scripts/verify_pgvector.sh`는 임시 DB, 실제 RAG/Business MCP HTTP, 고정 모델, FastAPI ASGI, PostgreSQL checkpoint 재시작·승인 재개를 검증한다. Spring은 테스트용 계약 fixture이고 LLM도 mock이다. .local/reports/agent_v3_demo.json에 이 범위를 명시한다. 목표 PostgreSQL 16과 로컬 검증 버전은 다를 수 있으므로 .local/reports/pgvector_search_v3.json의 실제 버전을 확인한다.
