@@ -5,6 +5,7 @@ from agent.app.harness.guardrails import mask_pii, mask_text
 from agent.app.harness.limits import LimitExceeded, LoopGuard, truncate_result
 from agent.app.harness.recovery import call_with_recovery
 from agent.app.harness.tool_output import prepare_tool_output
+from agent.app.maturity import compute_total_score, load_criteria
 
 
 def test_mask_email_and_phone():
@@ -97,3 +98,17 @@ async def test_recovery_raises_without_fallback():
     with pytest.raises(RuntimeError):
         await call_with_recovery(primary, base_delay=0)
 
+
+def test_maturity_weights_sum_to_one():
+    areas = load_criteria()["areas"]
+    assert round(sum(a["weight"] for a in areas.values()), 6) == 1.0
+
+
+def test_total_score_weighted_sum():
+    scores = {"data": 80, "infra": 60, "automation": 40, "ai_capability": 20, "governance": 100}
+    # 80*.25 + 60*.2 + 40*.2 + 20*.2 + 100*.15 = 20+12+8+4+15
+    assert compute_total_score(scores) == 59.0
+
+
+def test_total_score_none_when_area_missing():
+    assert compute_total_score({"data": 80, "infra": 60}) is None

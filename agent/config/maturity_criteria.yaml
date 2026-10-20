@@ -1,0 +1,62 @@
+# AX 성숙도 평가 기준 (§6). 버전은 ax_assessments.criteria_version에 저장된다.
+# 가중합(total_score)은 코드(app/maturity.py)에서 계산한다. LLM은 영역별 점수와 근거만 낸다.
+version: "v1"
+
+areas:
+  data:
+    column: data_score
+    label: 데이터 준비도
+    weight: 0.25
+    evidence_sources: [DATA_QUALITY, SYSTEM_SPEC, MANUAL]
+    rubric:
+      - {range: [0, 20],   when: "업무 데이터가 거의 없거나 수기 기록 위주. 측정값 없이 ASSUMED가 대부분"}
+      - {range: [21, 40],  when: "일부 업무만 데이터화. SURVEY 위주이고 품질 점검 기록이 없음"}
+      - {range: [41, 60],  when: "주요 업무는 데이터화됐으나 품질 이슈(결측·중복)가 문서에 언급됨"}
+      - {range: [61, 80],  when: "대부분 MEASURED 지표가 있고 품질 점검표가 존재"}
+      - {range: [81, 100], when: "전 업무 MEASURED, 품질 점검이 정례화되고 접근 경로가 정리됨"}
+  infra:
+    column: infra_score
+    label: IT 인프라
+    weight: 0.20
+    evidence_sources: [SYSTEM_SPEC]
+    rubric:
+      - {range: [0, 20],   when: "핵심 시스템에 API가 없고 온프레미스 단독"}
+      - {range: [21, 40],  when: "API 제공 시스템이 소수이며 데이터 접근이 대부분 NONE/RESTRICTED"}
+      - {range: [41, 60],  when: "핵심 시스템 일부에 API가 있고 일부 클라우드"}
+      - {range: [61, 80],  when: "핵심 시스템 대부분 API 제공, 접근 수준 OPEN 다수"}
+      - {range: [81, 100], when: "전 시스템 API·클라우드 기반, 연동 표준이 문서화됨"}
+  automation:
+    column: automation_score
+    label: 업무 자동화
+    weight: 0.20
+    evidence_sources: [MANUAL, PROJECT_REPORT]
+    rubric:
+      - {range: [0, 20],   when: "표준화 수준이 낮고 수작업 중심"}
+      - {range: [21, 40],  when: "절차는 있으나 예외가 많고 자동화 사례가 거의 없음"}
+      - {range: [41, 60],  when: "표준화 수준 중간, 일부 업무에 RPA/스크립트 사용"}
+      - {range: [61, 80],  when: "표준화 수준 높고 여러 업무에 자동화 적용 사례"}
+      - {range: [81, 100], when: "대부분 업무가 표준화·자동화되고 성과가 보고서로 관리됨"}
+  ai_capability:
+    column: ai_capability_score
+    label: AI 활용 역량
+    weight: 0.20
+    evidence_sources: [AI_STATUS, PROJECT_REPORT]
+    rubric:
+      - {range: [0, 20],   when: "AI 활용 경험·전담 인력 없음"}
+      - {range: [21, 40],  when: "개인 단위 생성형 AI 사용만 있음"}
+      - {range: [41, 60],  when: "PoC 경험이 있으나 운영 사례가 없음"}
+      - {range: [61, 80],  when: "운영 중인 AI 사례가 있고 담당 조직이 있음"}
+      - {range: [81, 100], when: "다수의 운영 사례와 성과 측정·재학습 체계"}
+  governance:
+    column: governance_score
+    label: AI 거버넌스
+    weight: 0.15
+    evidence_sources: [POLICY]
+    rubric:
+      - {range: [0, 20],   when: "AI·데이터 관련 정책 문서가 없음"}
+      - {range: [21, 40],  when: "일반 보안 정책만 있고 AI 사용 규정은 없음"}
+      - {range: [41, 60],  when: "AI 사용 가이드가 있으나 승인·점검 절차가 불명확"}
+      - {range: [61, 80],  when: "AI 사용 정책과 승인 절차가 있고 개인정보 처리 기준이 명시됨"}
+      - {range: [81, 100], when: "정책·승인·감사·사고 대응이 갖춰지고 정기 점검됨"}
+
+# 문서·데이터 근거가 없는 영역은 점수를 내지 않고 insufficient_data에 넣는다.
