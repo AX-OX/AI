@@ -1,0 +1,77 @@
+{
+  "chroma_collection": "ax_navigator_docs_mvp",
+  "document_chunk_counts": {
+    "401": 7,
+    "402": 7,
+    "403": 6,
+    "404": 7,
+    "405": 3,
+    "406": 8,
+    "407": 1,
+    "408": 4,
+    "409": 2,
+    "410": 9
+  },
+  "documents": [
+    {
+      "document_id": 401,
+      "title": "영업 업무 통합 매뉴얼",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://401"
+    },
+    {
+      "document_id": 402,
+      "title": "구매 업무 통합 매뉴얼",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://402"
+    },
+    {
+      "document_id": 403,
+      "title": "인사 업무 통합 매뉴얼",
+      "access_level": "CONFIDENTIAL",
+      "file_uri": "docs://403"
+    },
+    {
+      "document_id": 404,
+      "title": "고객지원 업무 통합 매뉴얼",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://404"
+    },
+    {
+      "document_id": 405,
+      "title": "통합 보안·승인 정책",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://405"
+    },
+    {
+      "document_id": 406,
+      "title": "IT 시스템 연동 통합 명세",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://406"
+    },
+    {
+      "document_id": 407,
+      "title": "부서별 AI 활용 현황 점검표",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://407"
+    },
+    {
+      "document_id": 408,
+      "title": "데이터 품질·접근성 점검표",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://408"
+    },
+    {
+      "document_id": 409,
+      "title": "기존 AX PoC 결과 보고서",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://409"
+    },
+    {
+      "document_id": 410,
+      "title": "고객지원 제품 FAQ 기술 가이드",
+      "access_level": "INTERNAL",
+      "file_uri": "docs://410"
+    }
+  ]
+}

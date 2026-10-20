@@ -1,0 +1,16 @@
+{
+  "criteria_version": "v1.0",
+  "score_range": [
+    0,
+    100
+  ],
+  "weights": {
+    "data_score": 0.25,
+    "infra_score": 0.2,
+    "automation_score": 0.2,
+    "ai_capability_score": 0.2,
+    "governance_score": 0.15
+  },
+  "synthetic_input_policy": "모든 input 업무수치는 실제 측정값이 아닌 가상 ASSUMED",
+  "missing_input_policy": "If no metric or permissions not verified, mark insufficient_data and do not auto-fabricate."
+}

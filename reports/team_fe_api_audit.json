@@ -1,0 +1,9 @@
+{
+  "mode": "unchanged FE API modules → actual Vite proxy → actual Spring",
+  "login": "PASS (seed user 602)",
+  "taskCreation": "BLOCKED: actual Spring POST /api/ai/tasks returns 404",
+  "paths": [
+    "/api/auth/login",
+    "/api/ai/tasks"
+  ]
+}

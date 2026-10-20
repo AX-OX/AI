@@ -1,0 +1,5 @@
+﻿department_id,company_id,department_name,manager_name,manager_email,manager_phone
+101,1,영업,,,
+102,1,구매,,,
+103,1,인사,,,
+104,1,고객지원,,,

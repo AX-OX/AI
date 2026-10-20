@@ -1,0 +1,15 @@
+{
+  "version": "v1.0",
+  "source": "ai_solution_catalog only",
+  "formula": {
+    "baseline_annual_hours": "SUM(last 3 complete months of processing_count * avg_processing_minutes / 60) * 4",
+    "annual_saved_hours": "baseline_annual_hours * automation_rate_{scenario} * time_reduction_rate_{scenario}",
+    "gross_annual_savings_krw": "annual_saved_hours * weighted_hourly_labor_cost_krw",
+    "annual_run_cost_krw": "monthly_run_cost_krw * 12",
+    "first_year_tco_krw": "base_build_cost_krw + annual_run_cost_krw",
+    "first_year_roi_pct": "(gross_annual_savings_krw - first_year_tco_krw)/first_year_tco_krw * 100",
+    "payback_months": "12 * base_build_cost_krw / (gross_annual_savings_krw - annual_run_cost_krw) if positive"
+  },
+  "rounding_note": "rates are NUMERIC(3,2) in supplied DDL; recalculated results may not match prior 12-month dataset",
+  "cost_scope": "labor hour economic potential; not realized cash saving"
+}

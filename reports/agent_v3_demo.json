@@ -1,0 +1,819 @@
+{
+  "scope": "FastAPI ASGI + real Business/RAG MCP HTTP + actual pgvector + Postgres checkpoint; Spring responses and LLM reasoning are fixture mocks",
+  "production_spring_tested": false,
+  "live_llm_tested": false,
+  "status": "DONE",
+  "checkpoint_restart_resume": true,
+  "result": {
+    "scope": {
+      "wholeCompany": true,
+      "departmentIds": [
+        101,
+        102,
+        103
+      ],
+      "departmentNames": [
+        "인사",
+        "기획",
+        "개발"
+      ],
+      "processIds": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ]
+    },
+    "assessment": {
+      "scores": {
+        "data_score": 60.0,
+        "infra_score": 65.0,
+        "automation_score": 40.0,
+        "ai_capability_score": 35.0,
+        "governance_score": 45.0
+      },
+      "evidence": [
+        {
+          "area": "data_score",
+          "document_id": 407,
+          "section": "표준화 점검",
+          "summary": "MOCK 가상 전문가 영역 점수. 201: standardization_level=0.88\n202: standardization_level=0.80\n203: standardization_level=0.75\n204: standardization_level=0.85\n205: standardization_level=0.70\n206: standardization_level=0.90\n207: sta"
+        },
+        {
+          "area": "infra_score",
+          "document_id": 405,
+          "section": "시스템과 API",
+          "summary": "MOCK 가상 전문가 영역 점수. 301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api"
+        },
+        {
+          "area": "automation_score",
+          "document_id": 408,
+          "section": "선행 과제",
+          "summary": "MOCK 가상 전문가 영역 점수. 509 기술·API 문서 구축에서 사람이 승인한 문서를 먼저 마련한 뒤 508 코드 리뷰 보조가 이를 검색하도록 한다. 같은 개발 부서 과제이며 포트폴리오에 함께 포함되어야 한다. 문서 게시 승인 전 코드 리뷰 보조를 적용하지 않는다."
+        },
+        {
+          "area": "ai_capability_score",
+          "document_id": 406,
+          "section": "현재 활용",
+          "summary": "MOCK 가상 전문가 영역 점수. 문서 초안 작성과 티켓 분류를 소규모 시험 중이라는 가상 시나리오다. 운영 자동 실행·효과 측정은 아직 없다. AI 사용 지침은 초안이고 정기 교육·평가 체계가 부족하다."
+        },
+        {
+          "area": "governance_score",
+          "document_id": 404,
+          "section": "문서 범위",
+          "summary": "MOCK 가상 전문가 영역 점수. 가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 404, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+        }
+      ],
+      "insufficient_data": [],
+      "criteria_version": "v1.0",
+      "assessment_id": 701,
+      "total_score": 49.75
+    },
+    "maturity": {
+      "assessmentId": 701,
+      "totalScore": 49.75,
+      "criteriaVersion": "v1.0",
+      "scores": {
+        "data": 60.0,
+        "infra": 65.0,
+        "automation": 40.0,
+        "aiCapability": 35.0,
+        "governance": 45.0
+      },
+      "insufficientData": [],
+      "evidence": [
+        {
+          "area": "data",
+          "document_id": 407,
+          "section": "표준화 점검",
+          "summary": "MOCK 가상 전문가 영역 점수. 201: standardization_level=0.88\n202: standardization_level=0.80\n203: standardization_level=0.75\n204: standardization_level=0.85\n205: standardization_level=0.70\n206: standardization_level=0.90\n207: sta",
+          "documentId": 407
+        },
+        {
+          "area": "infra",
+          "document_id": 405,
+          "section": "시스템과 API",
+          "summary": "MOCK 가상 전문가 영역 점수. 301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api",
+          "documentId": 405
+        },
+        {
+          "area": "automation",
+          "document_id": 408,
+          "section": "선행 과제",
+          "summary": "MOCK 가상 전문가 영역 점수. 509 기술·API 문서 구축에서 사람이 승인한 문서를 먼저 마련한 뒤 508 코드 리뷰 보조가 이를 검색하도록 한다. 같은 개발 부서 과제이며 포트폴리오에 함께 포함되어야 한다. 문서 게시 승인 전 코드 리뷰 보조를 적용하지 않는다.",
+          "documentId": 408
+        },
+        {
+          "area": "aiCapability",
+          "document_id": 406,
+          "section": "현재 활용",
+          "summary": "MOCK 가상 전문가 영역 점수. 문서 초안 작성과 티켓 분류를 소규모 시험 중이라는 가상 시나리오다. 운영 자동 실행·효과 측정은 아직 없다. AI 사용 지침은 초안이고 정기 교육·평가 체계가 부족하다.",
+          "documentId": 406
+        },
+        {
+          "area": "governance",
+          "document_id": 404,
+          "section": "문서 범위",
+          "summary": "MOCK 가상 전문가 영역 점수. 가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 404, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다.",
+          "documentId": 404
+        }
+      ]
+    },
+    "candidates": [
+      {
+        "processId": 201,
+        "solutionId": 501,
+        "dependsOnSolutionId": null,
+        "axScore": 68.2,
+        "impactScore": 51.8,
+        "feasibilityScore": 92.8,
+        "savedHoursBase": 1296.52,
+        "apiOk": true,
+        "humanReviewRequired": false,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 45000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 29505622,
+            "roiPct": -34.43,
+            "paybackMonths": 21.1,
+            "threeYearNetKrw": 25516865
+          },
+          "base": {
+            "annualSavingKrw": 45393264,
+            "roiPct": 0.87,
+            "paybackMonths": 11.9,
+            "threeYearNetKrw": 73179792
+          },
+          "high": {
+            "annualSavingKrw": 57876412,
+            "roiPct": 28.61,
+            "paybackMonths": 8.8,
+            "threeYearNetKrw": 110629235
+          }
+        },
+        "processName": "사내 규정 문의 응답",
+        "departmentName": "인사",
+        "solutionName": "규정 근거 검색 도우미",
+        "solutionType": "RAG",
+        "firstYearCostKrw": 45000000,
+        "priority": 68.2,
+        "selected": false
+      },
+      {
+        "processId": 202,
+        "solutionId": 502,
+        "dependsOnSolutionId": null,
+        "axScore": 56.9,
+        "impactScore": 36.2,
+        "feasibilityScore": 88.0,
+        "savedHoursBase": 904.5,
+        "apiOk": true,
+        "humanReviewRequired": false,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 50000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 19658621,
+            "roiPct": -60.68,
+            "paybackMonths": 59.5,
+            "threeYearNetKrw": -15024138
+          },
+          "base": {
+            "annualSavingKrw": 31661721,
+            "roiPct": -36.68,
+            "paybackMonths": 23.2,
+            "threeYearNetKrw": 20985163
+          },
+          "high": {
+            "annualSavingKrw": 41238998,
+            "roiPct": -17.52,
+            "paybackMonths": 15.6,
+            "threeYearNetKrw": 49716993
+          }
+        },
+        "processName": "신규 입사자 온보딩 안내",
+        "departmentName": "인사",
+        "solutionName": "온보딩 안내 도우미",
+        "solutionType": "AI_AGENT",
+        "firstYearCostKrw": 50000000,
+        "priority": 56.9,
+        "selected": false
+      },
+      {
+        "processId": 204,
+        "solutionId": 504,
+        "dependsOnSolutionId": null,
+        "axScore": 86.7,
+        "impactScore": 83.8,
+        "feasibilityScore": 91.0,
+        "savedHoursBase": 2095.24,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 120000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 61028722,
+            "roiPct": -49.14,
+            "paybackMonths": 28.4,
+            "threeYearNetKrw": 27086165
+          },
+          "base": {
+            "annualSavingKrw": 94317115,
+            "roiPct": -21.4,
+            "paybackMonths": 16.0,
+            "threeYearNetKrw": 126951346
+          },
+          "high": {
+            "annualSavingKrw": 120472282,
+            "roiPct": 0.39,
+            "paybackMonths": 11.9,
+            "threeYearNetKrw": 205416845
+          }
+        },
+        "processName": "주간 업무 보고 취합",
+        "departmentName": "기획",
+        "solutionName": "주간 보고 취합 자동화",
+        "solutionType": "RPA",
+        "firstYearCostKrw": 120000000,
+        "priority": 86.7,
+        "selected": false
+      },
+      {
+        "processId": 205,
+        "solutionId": 505,
+        "dependsOnSolutionId": null,
+        "axScore": 62.8,
+        "impactScore": 76.6,
+        "feasibilityScore": 42.0,
+        "savedHoursBase": 1915.84,
+        "apiOk": false,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [
+          "LOW_STANDARDIZATION"
+        ],
+        "firstYearTcoKrw": 90000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 53385790,
+            "roiPct": -40.68,
+            "paybackMonths": 24.4,
+            "threeYearNetKrw": 34157369
+          },
+          "base": {
+            "annualSavingKrw": 86238583,
+            "roiPct": -4.18,
+            "paybackMonths": 12.7,
+            "threeYearNetKrw": 132715750
+          },
+          "high": {
+            "annualSavingKrw": 112418153,
+            "roiPct": 24.91,
+            "paybackMonths": 9.2,
+            "threeYearNetKrw": 211254459
+          }
+        },
+        "processName": "시장·경쟁사 동향 리포트 작성",
+        "departmentName": "기획",
+        "solutionName": "시장 동향 리포트 초안",
+        "solutionType": "AI_AGENT",
+        "firstYearCostKrw": 90000000,
+        "priority": 62.8,
+        "selected": false
+      },
+      {
+        "processId": 206,
+        "solutionId": 506,
+        "dependsOnSolutionId": null,
+        "axScore": 73.9,
+        "impactScore": 60.5,
+        "feasibilityScore": 94.0,
+        "savedHoursBase": 1512.6,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 80000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 42150888,
+            "roiPct": -47.31,
+            "paybackMonths": 27.1,
+            "threeYearNetKrw": 22452664
+          },
+          "base": {
+            "annualSavingKrw": 68089896,
+            "roiPct": -14.89,
+            "paybackMonths": 14.5,
+            "threeYearNetKrw": 100269688
+          },
+          "high": {
+            "annualSavingKrw": 88760043,
+            "roiPct": 10.95,
+            "paybackMonths": 10.6,
+            "threeYearNetKrw": 162280129
+          }
+        },
+        "processName": "회의록 작성·액션 아이템 정리",
+        "departmentName": "기획",
+        "solutionName": "회의록·액션 정리 보조",
+        "solutionType": "AI_AGENT",
+        "firstYearCostKrw": 80000000,
+        "priority": 73.9,
+        "selected": false
+      },
+      {
+        "processId": 207,
+        "solutionId": 507,
+        "dependsOnSolutionId": null,
+        "axScore": 97.6,
+        "impactScore": 100.0,
+        "feasibilityScore": 94.0,
+        "savedHoursBase": 2500.85,
+        "apiOk": true,
+        "humanReviewRequired": false,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 125000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 79852859,
+            "roiPct": -36.12,
+            "paybackMonths": 20.8,
+            "threeYearNetKrw": 78558576
+          },
+          "base": {
+            "annualSavingKrw": 125084198,
+            "roiPct": 0.07,
+            "paybackMonths": 12.0,
+            "threeYearNetKrw": 214252595
+          },
+          "high": {
+            "annualSavingKrw": 160822541,
+            "roiPct": 28.66,
+            "paybackMonths": 9.0,
+            "threeYearNetKrw": 321467622
+          }
+        },
+        "processName": "장애 티켓 분류·배정",
+        "departmentName": "개발",
+        "solutionName": "장애 티켓 분류·배정 보조",
+        "solutionType": "CLASSIFICATION",
+        "firstYearCostKrw": 125000000,
+        "priority": 97.6,
+        "selected": true
+      },
+      {
+        "processId": 208,
+        "solutionId": 508,
+        "dependsOnSolutionId": 509,
+        "axScore": 90.4,
+        "impactScore": 88.0,
+        "feasibilityScore": 94.0,
+        "savedHoursBase": 2201.26,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 115000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 73198091,
+            "roiPct": -36.35,
+            "paybackMonths": 21.1,
+            "threeYearNetKrw": 68594273
+          },
+          "base": {
+            "annualSavingKrw": 121109569,
+            "roiPct": 5.31,
+            "paybackMonths": 11.3,
+            "threeYearNetKrw": 212328706
+          },
+          "high": {
+            "annualSavingKrw": 159704926,
+            "roiPct": 38.87,
+            "paybackMonths": 8.2,
+            "threeYearNetKrw": 328114777
+          }
+        },
+        "processName": "코드 리뷰 보조",
+        "departmentName": "개발",
+        "solutionName": "기술 문서 기반 코드 리뷰 보조",
+        "solutionType": "RAG",
+        "firstYearCostKrw": 115000000,
+        "priority": 90.4,
+        "selected": true
+      },
+      {
+        "processId": 209,
+        "solutionId": 509,
+        "dependsOnSolutionId": null,
+        "axScore": 77.0,
+        "impactScore": 68.5,
+        "feasibilityScore": 89.8,
+        "savedHoursBase": 1714.29,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 55000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 58386786,
+            "roiPct": 6.16,
+            "paybackMonths": 11.1,
+            "threeYearNetKrw": 96160357
+          },
+          "base": {
+            "annualSavingKrw": 94317115,
+            "roiPct": 71.49,
+            "paybackMonths": 6.3,
+            "threeYearNetKrw": 203951346
+          },
+          "high": {
+            "annualSavingKrw": 122949097,
+            "roiPct": 123.54,
+            "paybackMonths": 4.7,
+            "threeYearNetKrw": 289847290
+          }
+        },
+        "processName": "기술·API 문서 작성",
+        "departmentName": "개발",
+        "solutionName": "승인형 기술·API 문서 구축",
+        "solutionType": "AI_AGENT",
+        "firstYearCostKrw": 55000000,
+        "priority": 77.0,
+        "selected": true
+      }
+    ],
+    "portfolio": {
+      "insufficient": false,
+      "budgetKrw": 300000000,
+      "selected": [
+        {
+          "processId": 207,
+          "solutionId": 507,
+          "dependsOnSolutionId": null,
+          "axScore": 97.6,
+          "impactScore": 100.0,
+          "feasibilityScore": 94.0,
+          "savedHoursBase": 2500.85,
+          "apiOk": true,
+          "humanReviewRequired": false,
+          "dataConfidence": "ASSUMED",
+          "warnings": [],
+          "firstYearTcoKrw": 125000000,
+          "scenarios": {
+            "low": {
+              "annualSavingKrw": 79852859,
+              "roiPct": -36.12,
+              "paybackMonths": 20.8,
+              "threeYearNetKrw": 78558576
+            },
+            "base": {
+              "annualSavingKrw": 125084198,
+              "roiPct": 0.07,
+              "paybackMonths": 12.0,
+              "threeYearNetKrw": 214252595
+            },
+            "high": {
+              "annualSavingKrw": 160822541,
+              "roiPct": 28.66,
+              "paybackMonths": 9.0,
+              "threeYearNetKrw": 321467622
+            }
+          }
+        },
+        {
+          "processId": 208,
+          "solutionId": 508,
+          "dependsOnSolutionId": 509,
+          "axScore": 90.4,
+          "impactScore": 88.0,
+          "feasibilityScore": 94.0,
+          "savedHoursBase": 2201.26,
+          "apiOk": true,
+          "humanReviewRequired": true,
+          "dataConfidence": "ASSUMED",
+          "warnings": [],
+          "firstYearTcoKrw": 115000000,
+          "scenarios": {
+            "low": {
+              "annualSavingKrw": 73198091,
+              "roiPct": -36.35,
+              "paybackMonths": 21.1,
+              "threeYearNetKrw": 68594273
+            },
+            "base": {
+              "annualSavingKrw": 121109569,
+              "roiPct": 5.31,
+              "paybackMonths": 11.3,
+              "threeYearNetKrw": 212328706
+            },
+            "high": {
+              "annualSavingKrw": 159704926,
+              "roiPct": 38.87,
+              "paybackMonths": 8.2,
+              "threeYearNetKrw": 328114777
+            }
+          }
+        },
+        {
+          "processId": 209,
+          "solutionId": 509,
+          "dependsOnSolutionId": null,
+          "axScore": 77.0,
+          "impactScore": 68.5,
+          "feasibilityScore": 89.8,
+          "savedHoursBase": 1714.29,
+          "apiOk": true,
+          "humanReviewRequired": true,
+          "dataConfidence": "ASSUMED",
+          "warnings": [],
+          "firstYearTcoKrw": 55000000,
+          "scenarios": {
+            "low": {
+              "annualSavingKrw": 58386786,
+              "roiPct": 6.16,
+              "paybackMonths": 11.1,
+              "threeYearNetKrw": 96160357
+            },
+            "base": {
+              "annualSavingKrw": 94317115,
+              "roiPct": 71.49,
+              "paybackMonths": 6.3,
+              "threeYearNetKrw": 203951346
+            },
+            "high": {
+              "annualSavingKrw": 122949097,
+              "roiPct": 123.54,
+              "paybackMonths": 4.7,
+              "threeYearNetKrw": 289847290
+            }
+          }
+        }
+      ],
+      "totalAxScore": 265.0,
+      "totalFirstYearTcoKrw": 295000000,
+      "remainingBudgetKrw": 5000000,
+      "evaluatedCombinations": 56,
+      "validCombinations": 39,
+      "excluded": [
+        {
+          "processId": 203,
+          "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+        }
+      ]
+    },
+    "excluded": [
+      {
+        "processId": 203,
+        "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+      }
+    ],
+    "roadmap": {
+      "roadmapName": "AX 도입 로드맵 초안",
+      "totalAllocatedKrw": 295000000,
+      "budgetKrw": 300000000,
+      "totalAxScore": 265.0,
+      "effectBasis": "가정 데이터 기반 인력 시간 환산 가치. 현금 절감·실측 성과 아님.",
+      "scheduleBasis": "3개월 단위 MVP 일정 초안. 실제 일정과 PoC 성공 기준은 담당자 검토 필요.",
+      "pocSuccessCriteria": [
+        "표본 업무 전후 처리 시간을 측정하고 사람 검토 시간을 포함한다.",
+        "담당자가 품질·오류율 기준과 자동화 중단 조건을 확정한다."
+      ],
+      "budgetLimitKrw": 300000000,
+      "approvalStatus": "APPROVED",
+      "items": [
+        {
+          "processId": 207,
+          "solutionId": 507,
+          "itemName": "장애 티켓 분류·배정",
+          "priorityOrder": 1,
+          "phase": "SHORT",
+          "startMonth": 1,
+          "durationMonths": 3,
+          "allocatedBudgetKrw": 125000000,
+          "axScore": 97.6,
+          "impactScore": 100.0,
+          "feasibilityScore": 94.0,
+          "expectedAnnualSavingKrw": 125084198,
+          "roiPct": 0.07,
+          "paybackMonths": 12.0,
+          "threeYearNetKrw": 214252595,
+          "rationale": "AX점수 기준 선정. MOCK: v3 카탈로그·문서 연결 검증용 후보. 실제 추천이 아님.",
+          "evidence": [
+            {
+              "document_id": 403,
+              "section": "가상 담당자",
+              "summary": "이름 [NAME], 이메일 [EMAIL], 연락처 [PHONE]. 외부 답변은 이름·이메일·전화번호를 마스킹하고 문서 ID·절을 인용한다.",
+              "documentId": 403
+            },
+            {
+              "document_id": 403,
+              "section": "207 장애 티켓 분류·배정",
+              "summary": "process_id=207. 목적: 반복 장애의 초기 분류·담당 팀 배정 초안을 만들어 대응 대기시간을 줄인다.\n절차:\n1. 장애 티켓 접수\n2. 비밀값 제거\n3. 유형·긴급도 초안 분류\n4. 담당 팀 배정\n5. 예외 티켓 이관\nrequires_approval=false. 정해진 예외는 담당자에게 이관한다.\n예외 규칙: 보안사고·최고 심각도 장애·낮은 분류 확신은 온콜 담당자에게 즉시 이관한다. 운영 시스템 복구 명령은 실행하지 않는다.",
+              "documentId": 403
+            },
+            {
+              "document_id": 403,
+              "section": "209 기술·API 문서 작성",
+              "summary": "process_id=209. 목적: 코드와 명세로 기술·API 문서 초안을 만들고 사람이 검토한 버전을 지식 기반으로 관리한다.\n절차:\n1. 변경 명세 수집\n2. 기존 문서·코드 대조\n3. API 문서 초안 작성\n4. 개발자 검토·승인\n5. 버전 게시\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 시크릿·고객 데이터는 문서에 넣지 않는다. 승인 전 문서는 리뷰 보조 지식 기반에 게시하지 않는다.",
+              "documentId": 403
+            }
+          ],
+          "processName": "장애 티켓 분류·배정",
+          "departmentName": "개발",
+          "solutionName": "장애 티켓 분류·배정 보조",
+          "solutionType": "CLASSIFICATION",
+          "humanReviewRequired": false
+        },
+        {
+          "processId": 209,
+          "solutionId": 509,
+          "itemName": "기술·API 문서 작성",
+          "priorityOrder": 2,
+          "phase": "SHORT",
+          "startMonth": 1,
+          "durationMonths": 3,
+          "allocatedBudgetKrw": 55000000,
+          "axScore": 77.0,
+          "impactScore": 68.5,
+          "feasibilityScore": 89.8,
+          "expectedAnnualSavingKrw": 94317115,
+          "roiPct": 71.49,
+          "paybackMonths": 6.3,
+          "threeYearNetKrw": 203951346,
+          "rationale": "AX점수 기준 선정. MOCK: v3 카탈로그·문서 연결 검증용 후보. 실제 추천이 아님. 업무 완료 전 사람 최종 검토·승인이 필요합니다.",
+          "evidence": [
+            {
+              "document_id": 403,
+              "section": "가상 담당자",
+              "summary": "이름 [NAME], 이메일 [EMAIL], 연락처 [PHONE]. 외부 답변은 이름·이메일·전화번호를 마스킹하고 문서 ID·절을 인용한다.",
+              "documentId": 403
+            },
+            {
+              "document_id": 403,
+              "section": "207 장애 티켓 분류·배정",
+              "summary": "process_id=207. 목적: 반복 장애의 초기 분류·담당 팀 배정 초안을 만들어 대응 대기시간을 줄인다.\n절차:\n1. 장애 티켓 접수\n2. 비밀값 제거\n3. 유형·긴급도 초안 분류\n4. 담당 팀 배정\n5. 예외 티켓 이관\nrequires_approval=false. 정해진 예외는 담당자에게 이관한다.\n예외 규칙: 보안사고·최고 심각도 장애·낮은 분류 확신은 온콜 담당자에게 즉시 이관한다. 운영 시스템 복구 명령은 실행하지 않는다.",
+              "documentId": 403
+            },
+            {
+              "document_id": 403,
+              "section": "209 기술·API 문서 작성",
+              "summary": "process_id=209. 목적: 코드와 명세로 기술·API 문서 초안을 만들고 사람이 검토한 버전을 지식 기반으로 관리한다.\n절차:\n1. 변경 명세 수집\n2. 기존 문서·코드 대조\n3. API 문서 초안 작성\n4. 개발자 검토·승인\n5. 버전 게시\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 시크릿·고객 데이터는 문서에 넣지 않는다. 승인 전 문서는 리뷰 보조 지식 기반에 게시하지 않는다.",
+              "documentId": 403
+            }
+          ],
+          "processName": "기술·API 문서 작성",
+          "departmentName": "개발",
+          "solutionName": "승인형 기술·API 문서 구축",
+          "solutionType": "AI_AGENT",
+          "humanReviewRequired": true
+        },
+        {
+          "processId": 208,
+          "solutionId": 508,
+          "itemName": "코드 리뷰 보조",
+          "priorityOrder": 3,
+          "phase": "MID",
+          "startMonth": 4,
+          "durationMonths": 3,
+          "allocatedBudgetKrw": 115000000,
+          "axScore": 90.4,
+          "impactScore": 88.0,
+          "feasibilityScore": 94.0,
+          "expectedAnnualSavingKrw": 121109569,
+          "roiPct": 5.31,
+          "paybackMonths": 11.3,
+          "threeYearNetKrw": 212328706,
+          "rationale": "AX점수 기준 선정. MOCK: v3 카탈로그·문서 연결 검증용 후보. 실제 추천이 아님. 업무 완료 전 사람 최종 검토·승인이 필요합니다. 선행 솔루션 509 완료 후 시작합니다.",
+          "evidence": [
+            {
+              "document_id": 403,
+              "section": "가상 담당자",
+              "summary": "이름 [NAME], 이메일 [EMAIL], 연락처 [PHONE]. 외부 답변은 이름·이메일·전화번호를 마스킹하고 문서 ID·절을 인용한다.",
+              "documentId": 403
+            },
+            {
+              "document_id": 403,
+              "section": "207 장애 티켓 분류·배정",
+              "summary": "process_id=207. 목적: 반복 장애의 초기 분류·담당 팀 배정 초안을 만들어 대응 대기시간을 줄인다.\n절차:\n1. 장애 티켓 접수\n2. 비밀값 제거\n3. 유형·긴급도 초안 분류\n4. 담당 팀 배정\n5. 예외 티켓 이관\nrequires_approval=false. 정해진 예외는 담당자에게 이관한다.\n예외 규칙: 보안사고·최고 심각도 장애·낮은 분류 확신은 온콜 담당자에게 즉시 이관한다. 운영 시스템 복구 명령은 실행하지 않는다.",
+              "documentId": 403
+            },
+            {
+              "document_id": 403,
+              "section": "209 기술·API 문서 작성",
+              "summary": "process_id=209. 목적: 코드와 명세로 기술·API 문서 초안을 만들고 사람이 검토한 버전을 지식 기반으로 관리한다.\n절차:\n1. 변경 명세 수집\n2. 기존 문서·코드 대조\n3. API 문서 초안 작성\n4. 개발자 검토·승인\n5. 버전 게시\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 시크릿·고객 데이터는 문서에 넣지 않는다. 승인 전 문서는 리뷰 보조 지식 기반에 게시하지 않는다.",
+              "documentId": 403
+            }
+          ],
+          "processName": "코드 리뷰 보조",
+          "departmentName": "개발",
+          "solutionName": "기술 문서 기반 코드 리뷰 보조",
+          "solutionType": "RAG",
+          "humanReviewRequired": true
+        }
+      ]
+    },
+    "evaluationPolicy": {
+      "version": "v1.0",
+      "weights": {
+        "impact": 0.6,
+        "feasibility": 0.4
+      },
+      "impact": {
+        "normalization": "max_saved_hours_of_eligible_candidates"
+      },
+      "feasibility": {
+        "standardization_multiplier": 60,
+        "api_ok_points": 40
+      },
+      "rounding": 1,
+      "portfolio": {
+        "max_items": 3,
+        "objective": "max_sum_ax_score",
+        "tie_breakers": [
+          "max_sum_three_year_net",
+          "min_total_first_year_tco"
+        ],
+        "constraints": [
+          "budget",
+          "unique_process",
+          "dependency_in_same_portfolio"
+        ]
+      },
+      "exclusions": [
+        {
+          "process_id": 203,
+          "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+        }
+      ],
+      "data_confidence": "display_only"
+    },
+    "insufficientData": [],
+    "registration": {
+      "roadmap_id": 801,
+      "projects": [
+        {
+          "item_id": 901,
+          "owner_department_id": 103,
+          "project_name": "장애 티켓 분류·배정",
+          "project_id": 10001,
+          "project_status": "REGISTERED"
+        },
+        {
+          "item_id": 902,
+          "owner_department_id": 103,
+          "project_name": "기술·API 문서 작성",
+          "project_id": 10002,
+          "project_status": "REGISTERED"
+        },
+        {
+          "item_id": 903,
+          "owner_department_id": 103,
+          "project_name": "코드 리뷰 보조",
+          "project_id": 10003,
+          "project_status": "REGISTERED"
+        }
+      ]
+    },
+    "projects": [
+      {
+        "projectId": 10001,
+        "itemId": 901,
+        "projectName": "장애 티켓 분류·배정",
+        "ownerDepartmentId": 103,
+        "projectStatus": "REGISTERED"
+      },
+      {
+        "projectId": 10002,
+        "itemId": 902,
+        "projectName": "기술·API 문서 작성",
+        "ownerDepartmentId": 103,
+        "projectStatus": "REGISTERED"
+      },
+      {
+        "projectId": 10003,
+        "itemId": 903,
+        "projectName": "코드 리뷰 보조",
+        "ownerDepartmentId": 103,
+        "projectStatus": "REGISTERED"
+      }
+    ],
+    "answer": "MOCK: 가정 데이터의 AX점수와 예산·선행 조건에 맞춘 로드맵 초안입니다.\n\n- 장애 티켓 분류·배정: AX점수 97.6, 초년도 비용 125,000,000원. AX점수 기준 선정. MOCK: v3 카탈로그·문서 연결 검증용 후보. 실제 추천이 아님. (문서 403)\n  예외·제한: 보안사고·최고 심각도 장애·낮은 분류 확신은 온콜 담당자에게 즉시 이관한다. 운영 시스템 복구 명령은 실행하지 않는다.\n- 기술·API 문서 작성: AX점수 77.0, 초년도 비용 55,000,000원. AX점수 기준 선정. MOCK: v3 카탈로그·문서 연결 검증용 후보. 실제 추천이 아님. 업무 완료 전 사람 최종 검토·승인이 필요합니다. (문서 403)\n  예외·제한: 시크릿·고객 데이터는 문서에 넣지 않는다. 승인 전 문서는 리뷰 보조 지식 기반에 게시하지 않는다.\n  사람 최종 검토·승인 필요.\n- 코드 리뷰 보조: AX점수 90.4, 초년도 비용 115,000,000원. AX점수 기준 선정. MOCK: v3 카탈로그·문서 연결 검증용 후보. 실제 추천이 아님. 업무 완료 전 사람 최종 검토·승인이 필요합니다. 선행 솔루션 509 완료 후 시작합니다. (문서 403)\n  예외·제한: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다.\n  사람 최종 검토·승인 필요.\n\n총 AX점수 265.0, 총비용 295,000,000원, 잔여 예산 5,000,000원.\n가정 데이터 기반 인력 시간 환산 가치입니다. 실제 성과나 확정 현금 절감을 보장하지 않습니다.\n로드맵·프로젝트 가상 등록을 완료했습니다.",
+    "mode": "mock",
+    "priorityBasis": "AX_SCORE",
+    "notice": "가정 데이터 기반. 절감액은 인력 시간 환산 가치이며 확정 현금 절감이 아닙니다."
+  }
+}

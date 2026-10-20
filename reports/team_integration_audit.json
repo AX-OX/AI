@@ -1,0 +1,175 @@
+{
+  "database": "isolated PostgreSQL 17 + pgvector 0.8.1, teammate SQL",
+  "spring": "actual teammate Boot 4.1.1 jar, unchanged copy",
+  "businessMcp": "actual HTTP server",
+  "llm": "MockReasoner (no OpenAI call)",
+  "callbacks": "local capture only; actual endpoints probed separately",
+  "readTools": [
+    "get_business_processes",
+    "get_company_profile",
+    "get_operational_metrics",
+    "get_project_budget",
+    "get_solution_catalog",
+    "get_system_inventory"
+  ],
+  "roiOracleMatches": 8,
+  "portfolio": {
+    "insufficient": false,
+    "budgetKrw": 300000000,
+    "selected": [
+      {
+        "processId": 207,
+        "solutionId": 507,
+        "dependsOnSolutionId": null,
+        "axScore": 97.6,
+        "impactScore": 100.0,
+        "feasibilityScore": 94.0,
+        "savedHoursBase": 2500.85,
+        "apiOk": true,
+        "humanReviewRequired": false,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 125000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 79852859,
+            "roiPct": -36.12,
+            "paybackMonths": 20.8,
+            "threeYearNetKrw": 78558576
+          },
+          "base": {
+            "annualSavingKrw": 125084198,
+            "roiPct": 0.07,
+            "paybackMonths": 12.0,
+            "threeYearNetKrw": 214252595
+          },
+          "high": {
+            "annualSavingKrw": 160822541,
+            "roiPct": 28.66,
+            "paybackMonths": 9.0,
+            "threeYearNetKrw": 321467622
+          }
+        }
+      },
+      {
+        "processId": 208,
+        "solutionId": 508,
+        "dependsOnSolutionId": 509,
+        "axScore": 90.4,
+        "impactScore": 88.0,
+        "feasibilityScore": 94.0,
+        "savedHoursBase": 2201.26,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 115000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 73198091,
+            "roiPct": -36.35,
+            "paybackMonths": 21.1,
+            "threeYearNetKrw": 68594273
+          },
+          "base": {
+            "annualSavingKrw": 121109569,
+            "roiPct": 5.31,
+            "paybackMonths": 11.3,
+            "threeYearNetKrw": 212328706
+          },
+          "high": {
+            "annualSavingKrw": 159704926,
+            "roiPct": 38.87,
+            "paybackMonths": 8.2,
+            "threeYearNetKrw": 328114777
+          }
+        }
+      },
+      {
+        "processId": 209,
+        "solutionId": 509,
+        "dependsOnSolutionId": null,
+        "axScore": 77.0,
+        "impactScore": 68.5,
+        "feasibilityScore": 89.8,
+        "savedHoursBase": 1714.29,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 55000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 58386786,
+            "roiPct": 6.16,
+            "paybackMonths": 11.1,
+            "threeYearNetKrw": 96160357
+          },
+          "base": {
+            "annualSavingKrw": 94317115,
+            "roiPct": 71.49,
+            "paybackMonths": 6.3,
+            "threeYearNetKrw": 203951346
+          },
+          "high": {
+            "annualSavingKrw": 122949097,
+            "roiPct": 123.54,
+            "paybackMonths": 4.7,
+            "threeYearNetKrw": 289847290
+          }
+        }
+      }
+    ],
+    "totalAxScore": 265.0,
+    "totalFirstYearTcoKrw": 295000000,
+    "remainingBudgetKrw": 5000000,
+    "evaluatedCombinations": 56,
+    "validCombinations": 39,
+    "excluded": [
+      {
+        "processId": 203,
+        "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+      }
+    ],
+    "runnerUp": {
+      "solutionIds": [
+        504,
+        507,
+        509
+      ],
+      "totalAxScore": 261.3
+    },
+    "greedyTop3": {
+      "solutionIds": [
+        507,
+        508,
+        504
+      ],
+      "totalAxScore": 274.7,
+      "totalFirstYearTcoKrw": 360000000,
+      "violations": [
+        "BUDGET_EXCEEDED",
+        "MISSING_DEPENDENCY"
+      ]
+    },
+    "warnings": []
+  },
+  "graphBlocker": "assess/save_assessment: actual Spring HTTP 404 (RAG and LLM fixtures for this isolated probe)",
+  "health": {
+    "status": "UP"
+  },
+  "missingApiResponses": {
+    "POST /api/ai/tasks": 404,
+    "GET /api/ai/tasks/ff51fae2-35aa-4d76-bec9-629f37903ab5": 404,
+    "GET /api/ai/tasks/ff51fae2-35aa-4d76-bec9-629f37903ab5/stream": 404,
+    "POST /api/ai/tasks/ff51fae2-35aa-4d76-bec9-629f37903ab5/approval": 404,
+    "GET /api/docs/403": 404,
+    "PATCH /internal/tasks/ff51fae2-35aa-4d76-bec9-629f37903ab5": 404,
+    "POST /internal/tasks/ff51fae2-35aa-4d76-bec9-629f37903ab5/events": 404,
+    "POST /internal/assessments": 404,
+    "POST /internal/roadmaps": 404,
+    "POST /internal/projects": 404,
+    "PATCH /internal/projects/10001/status": 404
+  },
+  "endToEnd": "BLOCKED: teammate Spring task/SSE/write/document endpoints absent; no fake replacement added"
+}

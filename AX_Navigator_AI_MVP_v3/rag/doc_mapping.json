@@ -1,0 +1,121 @@
+{
+  "version": "v3",
+  "documents": [
+    {
+      "document_id": 401,
+      "company_id": 1,
+      "process_id": 201,
+      "title": "인사 업무 매뉴얼",
+      "doc_type": "MANUAL",
+      "file_uri": "docs://401",
+      "access_level": "CONFIDENTIAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [
+        201,
+        202,
+        203
+      ],
+      "local_path": "docs/401.md"
+    },
+    {
+      "document_id": 402,
+      "company_id": 1,
+      "process_id": 204,
+      "title": "기획 업무 매뉴얼",
+      "doc_type": "MANUAL",
+      "file_uri": "docs://402",
+      "access_level": "INTERNAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [
+        204,
+        205,
+        206
+      ],
+      "local_path": "docs/402.md"
+    },
+    {
+      "document_id": 403,
+      "company_id": 1,
+      "process_id": 207,
+      "title": "개발 업무 매뉴얼",
+      "doc_type": "MANUAL",
+      "file_uri": "docs://403",
+      "access_level": "INTERNAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [
+        207,
+        208,
+        209
+      ],
+      "local_path": "docs/403.md"
+    },
+    {
+      "document_id": 404,
+      "company_id": 1,
+      "process_id": null,
+      "title": "보안·데이터 처리 정책",
+      "doc_type": "POLICY",
+      "file_uri": "docs://404",
+      "access_level": "INTERNAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [],
+      "local_path": "docs/404.md"
+    },
+    {
+      "document_id": 405,
+      "company_id": 1,
+      "process_id": null,
+      "title": "IT 시스템 명세",
+      "doc_type": "SYSTEM_SPEC",
+      "file_uri": "docs://405",
+      "access_level": "INTERNAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [],
+      "local_path": "docs/405.md"
+    },
+    {
+      "document_id": 406,
+      "company_id": 1,
+      "process_id": null,
+      "title": "AI 활용 현황",
+      "doc_type": "AI_STATUS",
+      "file_uri": "docs://406",
+      "access_level": "INTERNAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [],
+      "local_path": "docs/406.md"
+    },
+    {
+      "document_id": 407,
+      "company_id": 1,
+      "process_id": null,
+      "title": "데이터 품질 점검표",
+      "doc_type": "DATA_QUALITY",
+      "file_uri": "docs://407",
+      "access_level": "INTERNAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [],
+      "local_path": "docs/407.md"
+    },
+    {
+      "document_id": 408,
+      "company_id": 1,
+      "process_id": null,
+      "title": "과거 프로젝트 보고서",
+      "doc_type": "PROJECT_REPORT",
+      "file_uri": "docs://408",
+      "access_level": "INTERNAL",
+      "version": "v3",
+      "created_at": "2026-10-20 09:00:00",
+      "related_process_ids": [],
+      "local_path": "docs/408.md"
+    }
+  ]
+}

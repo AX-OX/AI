@@ -1,0 +1,7 @@
+﻿system_id,company_id,system_name,system_type,api_available,data_access_level,cloud_based
+301,1,통합 ERP,ERP,1,OPEN,0
+302,1,고객관계관리 CRM,CRM,1,OPEN,1
+303,1,전자결재·그룹웨어,GROUPWARE,1,OPEN,1
+304,1,인사정보시스템,HR,0,RESTRICTED,0
+305,1,VOC·티켓 시스템,CS,1,OPEN,1
+306,1,문서 관리 시스템,DMS,0,RESTRICTED,0

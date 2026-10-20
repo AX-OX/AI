@@ -1,0 +1,7 @@
+system_id,company_id,system_name,system_type,api_available,data_access_level,cloud_based
+301,1,인사정보 HRIS,HR,false,RESTRICTED,false
+302,1,그룹웨어,GROUPWARE,true,RESTRICTED,true
+303,1,이슈 트래커,ETC,true,RESTRICTED,true
+304,1,코드 저장소,ETC,true,RESTRICTED,false
+305,1,사내 위키,ETC,false,RESTRICTED,false
+306,1,제조 ERP,ERP,false,RESTRICTED,false

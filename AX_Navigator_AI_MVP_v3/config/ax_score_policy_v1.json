@@ -1,0 +1,35 @@
+{
+  "version": "v1.0",
+  "weights": {
+    "impact": 0.6,
+    "feasibility": 0.4
+  },
+  "impact": {
+    "normalization": "max_saved_hours_of_eligible_candidates"
+  },
+  "feasibility": {
+    "standardization_multiplier": 60,
+    "api_ok_points": 40
+  },
+  "rounding": 1,
+  "portfolio": {
+    "max_items": 3,
+    "objective": "max_sum_ax_score",
+    "tie_breakers": [
+      "max_sum_three_year_net",
+      "min_total_first_year_tco"
+    ],
+    "constraints": [
+      "budget",
+      "unique_process",
+      "dependency_in_same_portfolio"
+    ]
+  },
+  "exclusions": [
+    {
+      "process_id": 203,
+      "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+    }
+  ],
+  "data_confidence": "display_only"
+}

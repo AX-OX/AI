@@ -1,0 +1,2413 @@
+{
+  "taskId": "0661f93c-dffc-4faf-80fb-aa3560148404",
+  "status": "WAITING_APPROVAL",
+  "mode": "llm-demo",
+  "next": [
+    "approval"
+  ],
+  "roadmap": {
+    "roadmapName": "AX 도입 로드맵 초안",
+    "totalAllocatedKrw": 295000000,
+    "budgetKrw": 300000000,
+    "totalAxScore": 265.0,
+    "effectBasis": "가정 데이터 기반 인력 시간 환산 가치. 현금 절감·실측 성과 아님.",
+    "scheduleBasis": "3개월 단위 MVP 일정 초안. 실제 일정과 PoC 성공 기준은 담당자 검토 필요.",
+    "pocSuccessCriteria": [
+      "표본 업무 전후 처리 시간을 측정하고 사람 검토 시간을 포함한다.",
+      "담당자가 품질·오류율 기준과 자동화 중단 조건을 확정한다."
+    ],
+    "items": [
+      {
+        "processId": 207,
+        "solutionId": 507,
+        "itemName": "장애 티켓 분류·배정",
+        "priorityOrder": 1,
+        "phase": "SHORT",
+        "startMonth": 1,
+        "durationMonths": 3,
+        "allocatedBudgetKrw": 125000000,
+        "axScore": 97.6,
+        "impactScore": 100.0,
+        "feasibilityScore": 94.0,
+        "expectedAnnualSavingKrw": 125084198,
+        "roiPct": 0.07,
+        "paybackMonths": 12.0,
+        "threeYearNetKrw": 214252595,
+        "rationale": "AX점수 기준 선정. 개발부 207 장애 티켓 분류·배정은 반복 장애 초기 분류와 담당 배정 자동화로 대응 대기시간을 줄인다. API 사용 가능하며 승인 불필요하다. 장애 보안사고·최고 심각도 등 예외는 담당자 이관한다. Confident data included.",
+        "evidence": [
+          {
+            "document_id": 403,
+            "section": "208 코드 리뷰 보조",
+            "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+          },
+          {
+            "document_id": 405,
+            "section": "문서 범위",
+            "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+          },
+          {
+            "document_id": 405,
+            "section": "시스템과 API",
+            "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+          }
+        ],
+        "humanReviewRequired": false
+      },
+      {
+        "processId": 209,
+        "solutionId": 509,
+        "itemName": "기술·API 문서 작성",
+        "priorityOrder": 2,
+        "phase": "SHORT",
+        "startMonth": 1,
+        "durationMonths": 3,
+        "allocatedBudgetKrw": 55000000,
+        "axScore": 77.0,
+        "impactScore": 68.5,
+        "feasibilityScore": 89.8,
+        "expectedAnnualSavingKrw": 94317115,
+        "roiPct": 71.49,
+        "paybackMonths": 6.3,
+        "threeYearNetKrw": 203951346,
+        "rationale": "AX점수 기준 선정. 개발부 209 기술·API 문서 작성은 코드와 명세로 문서 초안을 만들어 사람이 최종 검토·승인한다. AI 자동화 목적이고 API 활용 가능하다. standardization 0.83, requires_approval=true, 문서와 절차가 명확하다. 업무 완료 전 사람 최종 검토·승인이 필요합니다.",
+        "evidence": [
+          {
+            "document_id": 403,
+            "section": "208 코드 리뷰 보조",
+            "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+          },
+          {
+            "document_id": 405,
+            "section": "문서 범위",
+            "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+          },
+          {
+            "document_id": 405,
+            "section": "시스템과 API",
+            "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+          }
+        ],
+        "humanReviewRequired": true
+      },
+      {
+        "processId": 208,
+        "solutionId": 508,
+        "itemName": "코드 리뷰 보조",
+        "priorityOrder": 3,
+        "phase": "MID",
+        "startMonth": 4,
+        "durationMonths": 3,
+        "allocatedBudgetKrw": 115000000,
+        "axScore": 90.4,
+        "impactScore": 88.0,
+        "feasibilityScore": 94.0,
+        "expectedAnnualSavingKrw": 121109569,
+        "roiPct": 5.31,
+        "paybackMonths": 11.3,
+        "threeYearNetKrw": 212328706,
+        "rationale": "AX점수 기준 선정. 개발부 208 코드 리뷰 보조는 승인된 기술 문서 검색 기반 초안 작성으로 검토 효율화 목적이다. requires_approval=true로 사람이 최종 검토한다. 선행 솔루션 509 기술·API 문서 구축 완료 후 적용해야 한다. API 가능, standardization 0.9, 검토 필요 포인트 반영됨. 업무 완료 전 사람 최종 검토·승인이 필요합니다. 선행 솔루션 509 완료 후 시작합니다.",
+        "evidence": [
+          {
+            "document_id": 403,
+            "section": "208 코드 리뷰 보조",
+            "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+          },
+          {
+            "document_id": 405,
+            "section": "문서 범위",
+            "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+          },
+          {
+            "document_id": 405,
+            "section": "시스템과 API",
+            "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+          }
+        ],
+        "humanReviewRequired": true
+      }
+    ]
+  },
+  "result": {
+    "scope": {
+      "wholeCompany": false,
+      "departmentIds": [
+        103
+      ],
+      "departmentNames": [
+        "개발"
+      ],
+      "processIds": [
+        207,
+        208,
+        209
+      ]
+    },
+    "assessment": {
+      "scores": {
+        "data_score": 75.0,
+        "infra_score": 70.0,
+        "automation_score": 40.0,
+        "ai_capability_score": 35.0,
+        "governance_score": 60.0
+      },
+      "evidence": [
+        {
+          "area": "data_score",
+          "document_id": 407,
+          "section": "관측 범위",
+          "summary": "2026년 7~9월 201~209 업무에 대해 27건 지표가 제공되고 모두 가상측정치임. 표준화 수준은 0.7~0.9대이다."
+        },
+        {
+          "area": "infra_score",
+          "document_id": 405,
+          "section": "시스템과 API",
+          "summary": "HRIS 등 핵심 시스템은 대부분 API 미제공이나 그룹웨어, 이슈 트래커, 코드 저장소는 API 제공 가능하다."
+        },
+        {
+          "area": "automation_score",
+          "document_id": 404,
+          "section": "사람의 최종 판단",
+          "summary": "코드 리뷰 의견 초안 작성에 AI 사용하나, 최종 승인과 코드 병합, 배포는 사람이 결정한다."
+        },
+        {
+          "area": "ai_capability_score",
+          "document_id": 406,
+          "section": "현재 활용",
+          "summary": "문서 초안 작성과 티켓 분류를 소규모 시험 중, 정기 교육 및 평가 체계 부족하다."
+        },
+        {
+          "area": "governance_score",
+          "document_id": 404,
+          "section": "사람의 최종 판단",
+          "summary": "AI 업무 수행 시 개인정보 제거 및 승인 프로세스 준수, AI 제외 인사 평가 등 예외 규정 존재."
+        }
+      ],
+      "insufficient_data": [],
+      "criteria_version": "v1.0",
+      "assessment_id": 701
+    },
+    "candidates": [
+      {
+        "processId": 207,
+        "solutionId": 507,
+        "dependsOnSolutionId": null,
+        "axScore": 97.6,
+        "impactScore": 100.0,
+        "feasibilityScore": 94.0,
+        "savedHoursBase": 2500.85,
+        "apiOk": true,
+        "humanReviewRequired": false,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 125000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 79852859,
+            "roiPct": -36.12,
+            "paybackMonths": 20.8,
+            "threeYearNetKrw": 78558576
+          },
+          "base": {
+            "annualSavingKrw": 125084198,
+            "roiPct": 0.07,
+            "paybackMonths": 12.0,
+            "threeYearNetKrw": 214252595
+          },
+          "high": {
+            "annualSavingKrw": 160822541,
+            "roiPct": 28.66,
+            "paybackMonths": 9.0,
+            "threeYearNetKrw": 321467622
+          }
+        }
+      },
+      {
+        "processId": 208,
+        "solutionId": 508,
+        "dependsOnSolutionId": 509,
+        "axScore": 90.4,
+        "impactScore": 88.0,
+        "feasibilityScore": 94.0,
+        "savedHoursBase": 2201.26,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 115000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 73198091,
+            "roiPct": -36.35,
+            "paybackMonths": 21.1,
+            "threeYearNetKrw": 68594273
+          },
+          "base": {
+            "annualSavingKrw": 121109569,
+            "roiPct": 5.31,
+            "paybackMonths": 11.3,
+            "threeYearNetKrw": 212328706
+          },
+          "high": {
+            "annualSavingKrw": 159704926,
+            "roiPct": 38.87,
+            "paybackMonths": 8.2,
+            "threeYearNetKrw": 328114777
+          }
+        }
+      },
+      {
+        "processId": 209,
+        "solutionId": 509,
+        "dependsOnSolutionId": null,
+        "axScore": 77.0,
+        "impactScore": 68.5,
+        "feasibilityScore": 89.8,
+        "savedHoursBase": 1714.29,
+        "apiOk": true,
+        "humanReviewRequired": true,
+        "dataConfidence": "ASSUMED",
+        "warnings": [],
+        "firstYearTcoKrw": 55000000,
+        "scenarios": {
+          "low": {
+            "annualSavingKrw": 58386786,
+            "roiPct": 6.16,
+            "paybackMonths": 11.1,
+            "threeYearNetKrw": 96160357
+          },
+          "base": {
+            "annualSavingKrw": 94317115,
+            "roiPct": 71.49,
+            "paybackMonths": 6.3,
+            "threeYearNetKrw": 203951346
+          },
+          "high": {
+            "annualSavingKrw": 122949097,
+            "roiPct": 123.54,
+            "paybackMonths": 4.7,
+            "threeYearNetKrw": 289847290
+          }
+        }
+      }
+    ],
+    "portfolio": {
+      "insufficient": false,
+      "budgetKrw": 300000000,
+      "selected": [
+        {
+          "processId": 207,
+          "solutionId": 507,
+          "dependsOnSolutionId": null,
+          "axScore": 97.6,
+          "impactScore": 100.0,
+          "feasibilityScore": 94.0,
+          "savedHoursBase": 2500.85,
+          "apiOk": true,
+          "humanReviewRequired": false,
+          "dataConfidence": "ASSUMED",
+          "warnings": [],
+          "firstYearTcoKrw": 125000000,
+          "scenarios": {
+            "low": {
+              "annualSavingKrw": 79852859,
+              "roiPct": -36.12,
+              "paybackMonths": 20.8,
+              "threeYearNetKrw": 78558576
+            },
+            "base": {
+              "annualSavingKrw": 125084198,
+              "roiPct": 0.07,
+              "paybackMonths": 12.0,
+              "threeYearNetKrw": 214252595
+            },
+            "high": {
+              "annualSavingKrw": 160822541,
+              "roiPct": 28.66,
+              "paybackMonths": 9.0,
+              "threeYearNetKrw": 321467622
+            }
+          }
+        },
+        {
+          "processId": 208,
+          "solutionId": 508,
+          "dependsOnSolutionId": 509,
+          "axScore": 90.4,
+          "impactScore": 88.0,
+          "feasibilityScore": 94.0,
+          "savedHoursBase": 2201.26,
+          "apiOk": true,
+          "humanReviewRequired": true,
+          "dataConfidence": "ASSUMED",
+          "warnings": [],
+          "firstYearTcoKrw": 115000000,
+          "scenarios": {
+            "low": {
+              "annualSavingKrw": 73198091,
+              "roiPct": -36.35,
+              "paybackMonths": 21.1,
+              "threeYearNetKrw": 68594273
+            },
+            "base": {
+              "annualSavingKrw": 121109569,
+              "roiPct": 5.31,
+              "paybackMonths": 11.3,
+              "threeYearNetKrw": 212328706
+            },
+            "high": {
+              "annualSavingKrw": 159704926,
+              "roiPct": 38.87,
+              "paybackMonths": 8.2,
+              "threeYearNetKrw": 328114777
+            }
+          }
+        },
+        {
+          "processId": 209,
+          "solutionId": 509,
+          "dependsOnSolutionId": null,
+          "axScore": 77.0,
+          "impactScore": 68.5,
+          "feasibilityScore": 89.8,
+          "savedHoursBase": 1714.29,
+          "apiOk": true,
+          "humanReviewRequired": true,
+          "dataConfidence": "ASSUMED",
+          "warnings": [],
+          "firstYearTcoKrw": 55000000,
+          "scenarios": {
+            "low": {
+              "annualSavingKrw": 58386786,
+              "roiPct": 6.16,
+              "paybackMonths": 11.1,
+              "threeYearNetKrw": 96160357
+            },
+            "base": {
+              "annualSavingKrw": 94317115,
+              "roiPct": 71.49,
+              "paybackMonths": 6.3,
+              "threeYearNetKrw": 203951346
+            },
+            "high": {
+              "annualSavingKrw": 122949097,
+              "roiPct": 123.54,
+              "paybackMonths": 4.7,
+              "threeYearNetKrw": 289847290
+            }
+          }
+        }
+      ],
+      "totalAxScore": 265.0,
+      "totalFirstYearTcoKrw": 295000000,
+      "remainingBudgetKrw": 5000000,
+      "evaluatedCombinations": 1,
+      "validCombinations": 1,
+      "excluded": [
+        {
+          "processId": 203,
+          "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+        }
+      ]
+    },
+    "excluded": [
+      {
+        "processId": 203,
+        "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+      }
+    ],
+    "roadmap": {
+      "roadmapName": "AX 도입 로드맵 초안",
+      "totalAllocatedKrw": 295000000,
+      "budgetKrw": 300000000,
+      "totalAxScore": 265.0,
+      "effectBasis": "가정 데이터 기반 인력 시간 환산 가치. 현금 절감·실측 성과 아님.",
+      "scheduleBasis": "3개월 단위 MVP 일정 초안. 실제 일정과 PoC 성공 기준은 담당자 검토 필요.",
+      "pocSuccessCriteria": [
+        "표본 업무 전후 처리 시간을 측정하고 사람 검토 시간을 포함한다.",
+        "담당자가 품질·오류율 기준과 자동화 중단 조건을 확정한다."
+      ],
+      "items": [
+        {
+          "processId": 207,
+          "solutionId": 507,
+          "itemName": "장애 티켓 분류·배정",
+          "priorityOrder": 1,
+          "phase": "SHORT",
+          "startMonth": 1,
+          "durationMonths": 3,
+          "allocatedBudgetKrw": 125000000,
+          "axScore": 97.6,
+          "impactScore": 100.0,
+          "feasibilityScore": 94.0,
+          "expectedAnnualSavingKrw": 125084198,
+          "roiPct": 0.07,
+          "paybackMonths": 12.0,
+          "threeYearNetKrw": 214252595,
+          "rationale": "AX점수 기준 선정. 개발부 207 장애 티켓 분류·배정은 반복 장애 초기 분류와 담당 배정 자동화로 대응 대기시간을 줄인다. API 사용 가능하며 승인 불필요하다. 장애 보안사고·최고 심각도 등 예외는 담당자 이관한다. Confident data included.",
+          "evidence": [
+            {
+              "document_id": 403,
+              "section": "208 코드 리뷰 보조",
+              "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+            },
+            {
+              "document_id": 405,
+              "section": "문서 범위",
+              "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+            },
+            {
+              "document_id": 405,
+              "section": "시스템과 API",
+              "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+            }
+          ],
+          "humanReviewRequired": false
+        },
+        {
+          "processId": 209,
+          "solutionId": 509,
+          "itemName": "기술·API 문서 작성",
+          "priorityOrder": 2,
+          "phase": "SHORT",
+          "startMonth": 1,
+          "durationMonths": 3,
+          "allocatedBudgetKrw": 55000000,
+          "axScore": 77.0,
+          "impactScore": 68.5,
+          "feasibilityScore": 89.8,
+          "expectedAnnualSavingKrw": 94317115,
+          "roiPct": 71.49,
+          "paybackMonths": 6.3,
+          "threeYearNetKrw": 203951346,
+          "rationale": "AX점수 기준 선정. 개발부 209 기술·API 문서 작성은 코드와 명세로 문서 초안을 만들어 사람이 최종 검토·승인한다. AI 자동화 목적이고 API 활용 가능하다. standardization 0.83, requires_approval=true, 문서와 절차가 명확하다. 업무 완료 전 사람 최종 검토·승인이 필요합니다.",
+          "evidence": [
+            {
+              "document_id": 403,
+              "section": "208 코드 리뷰 보조",
+              "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+            },
+            {
+              "document_id": 405,
+              "section": "문서 범위",
+              "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+            },
+            {
+              "document_id": 405,
+              "section": "시스템과 API",
+              "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+            }
+          ],
+          "humanReviewRequired": true
+        },
+        {
+          "processId": 208,
+          "solutionId": 508,
+          "itemName": "코드 리뷰 보조",
+          "priorityOrder": 3,
+          "phase": "MID",
+          "startMonth": 4,
+          "durationMonths": 3,
+          "allocatedBudgetKrw": 115000000,
+          "axScore": 90.4,
+          "impactScore": 88.0,
+          "feasibilityScore": 94.0,
+          "expectedAnnualSavingKrw": 121109569,
+          "roiPct": 5.31,
+          "paybackMonths": 11.3,
+          "threeYearNetKrw": 212328706,
+          "rationale": "AX점수 기준 선정. 개발부 208 코드 리뷰 보조는 승인된 기술 문서 검색 기반 초안 작성으로 검토 효율화 목적이다. requires_approval=true로 사람이 최종 검토한다. 선행 솔루션 509 기술·API 문서 구축 완료 후 적용해야 한다. API 가능, standardization 0.9, 검토 필요 포인트 반영됨. 업무 완료 전 사람 최종 검토·승인이 필요합니다. 선행 솔루션 509 완료 후 시작합니다.",
+          "evidence": [
+            {
+              "document_id": 403,
+              "section": "208 코드 리뷰 보조",
+              "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+            },
+            {
+              "document_id": 405,
+              "section": "문서 범위",
+              "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+            },
+            {
+              "document_id": 405,
+              "section": "시스템과 API",
+              "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+            }
+          ],
+          "humanReviewRequired": true
+        }
+      ]
+    },
+    "evaluationPolicy": {
+      "version": "v1.0",
+      "weights": {
+        "impact": 0.6,
+        "feasibility": 0.4
+      },
+      "impact": {
+        "normalization": "max_saved_hours_of_eligible_candidates"
+      },
+      "feasibility": {
+        "standardization_multiplier": 60,
+        "api_ok_points": 40
+      },
+      "rounding": 1,
+      "portfolio": {
+        "max_items": 3,
+        "objective": "max_sum_ax_score",
+        "tie_breakers": [
+          "max_sum_three_year_net",
+          "min_total_first_year_tco"
+        ],
+        "constraints": [
+          "budget",
+          "unique_process",
+          "dependency_in_same_portfolio"
+        ]
+      },
+      "exclusions": [
+        {
+          "process_id": 203,
+          "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+        }
+      ],
+      "data_confidence": "display_only"
+    },
+    "insufficientData": [],
+    "registration": null,
+    "answer": "개발부에 적합한 AX 과제는 AX점수 합산 기준과 선행 과제 관계를 반영하여 장애 티켓 분류·배정, 기술·API 문서 작성, 코드 리뷰 보조 3개입니다. ROI는 보조 지표이며, 사람 검토와 승인 필요 여부, 예외 조건을 준수하는 것이 중요합니다.\n\n- 장애 티켓 분류·배정: AX점수 97.6, 초년도 비용 125,000,000원. 반복 장애 티켓의 초기 분류와 담당 팀 배정으로 대응 대기시간을 줄이는 자동화 과제입니다. API 사용 가능하고 승인 불필요하며, 보안사고·최고 심각도 장애 등 예외는 담당자 이관 규칙을 지킵니다. (문서 403, 405)\n  예외·제한: 보안사고·최고 심각도 장애·낮은 분류 확신은 온콜 담당자에게 즉시 이관한다. 운영 시스템 복구 명령은 실행하지 않는다.\n- 기술·API 문서 작성: AX점수 77.0, 초년도 비용 55,000,000원. 기술·API 문서 초안을 코드와 명세로 작성하고, 사람이 최종 검토·승인 후 지식 기반에 관리하는 과제입니다. AI 자동화 목적이며 API 활용 가능하고 승인 절차를 반드시 거칩니다. 문서에는 시크릿·고객 데이터 제외 등 예외 규칙이 적용됩니다. (문서 403, 405)\n  예외·제한: 시크릿·고객 데이터는 문서에 넣지 않는다. 승인 전 문서는 리뷰 보조 지식 기반에 게시하지 않는다.\n  사람 최종 검토·승인 필요.\n- 코드 리뷰 보조: AX점수 90.4, 초년도 비용 115,000,000원. 승인된 기술 문서 검색을 기반으로 코드 변경 검토 초안을 제공하여 리뷰 효율을 향상합니다. 선행 과제인 509 기술·API 문서 작성 완료 후 시작하며, 사람의 최종 검토·승인이 필요합니다. API 사용 가능하며 예외 규칙에 코드 병합·배포는 개발자가 담당합니다. (문서 403, 405)\n  예외·제한: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다.\n  사람 최종 검토·승인 필요.\n\n총 AX점수 265.0, 총비용 295,000,000원, 잔여 예산 5,000,000원.\n가정 데이터 기반 인력 시간 환산 가치입니다. 실제 성과나 확정 현금 절감을 보장하지 않습니다.\n요청자 승인 후 로드맵·프로젝트를 등록합니다.",
+    "mode": "llm-demo",
+    "notice": "가정 데이터 기반. 절감액은 인력 시간 환산 가치이며 확정 현금 절감이 아닙니다."
+  },
+  "errors": [],
+  "trace": [
+    {
+      "seq": 1,
+      "ts": "2026-10-20T04:22:53.714102+00:00",
+      "node": "collect",
+      "type": "NODE_START",
+      "data": {}
+    },
+    {
+      "seq": 2,
+      "ts": "2026-10-20T04:22:53.742434+00:00",
+      "node": "collect",
+      "type": "LLM_REQUEST",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "attempt": 1
+      }
+    },
+    {
+      "seq": 3,
+      "ts": "2026-10-20T04:22:55.807680+00:00",
+      "node": "collect",
+      "type": "LLM_RESPONSE",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "responseType": "AIMessage",
+        "usage": {
+          "input_tokens": 381,
+          "output_tokens": 111,
+          "total_tokens": 492,
+          "input_token_details": {
+            "cache_creation": 0,
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "reasoning": 0
+          }
+        },
+        "toolCalls": [
+          "get_business_processes",
+          "get_company_profile",
+          "get_operational_metrics",
+          "get_project_budget",
+          "get_solution_catalog",
+          "get_system_inventory"
+        ]
+      }
+    },
+    {
+      "seq": 4,
+      "ts": "2026-10-20T04:22:55.807729+00:00",
+      "node": "collect",
+      "type": "LLM_TOOL_CALL",
+      "data": {
+        "tool": "get_business_processes",
+        "arguments": {
+          "company_id": 1
+        }
+      }
+    },
+    {
+      "seq": 5,
+      "ts": "2026-10-20T04:22:55.808067+00:00",
+      "node": "collect",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "get_business_processes"
+      }
+    },
+    {
+      "seq": 6,
+      "ts": "2026-10-20T04:22:55.808088+00:00",
+      "node": "collect",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "get_business_processes",
+        "arguments": {
+          "company_id": 1
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 7,
+      "ts": "2026-10-20T04:22:55.808129+00:00",
+      "node": "collect",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "get_business_processes",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 8,
+      "ts": "2026-10-20T04:22:55.808139+00:00",
+      "node": "collect",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "get_business_processes",
+        "ok": true
+      }
+    },
+    {
+      "seq": 9,
+      "ts": "2026-10-20T04:22:55.808412+00:00",
+      "node": "collect",
+      "type": "LLM_TOOL_CALL",
+      "data": {
+        "tool": "get_company_profile",
+        "arguments": {
+          "company_id": 1
+        }
+      }
+    },
+    {
+      "seq": 10,
+      "ts": "2026-10-20T04:22:55.808594+00:00",
+      "node": "collect",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "get_company_profile"
+      }
+    },
+    {
+      "seq": 11,
+      "ts": "2026-10-20T04:22:55.808609+00:00",
+      "node": "collect",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "get_company_profile",
+        "arguments": {
+          "company_id": 1
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 12,
+      "ts": "2026-10-20T04:22:55.808632+00:00",
+      "node": "collect",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "get_company_profile",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 13,
+      "ts": "2026-10-20T04:22:55.808638+00:00",
+      "node": "collect",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "get_company_profile",
+        "ok": true
+      }
+    },
+    {
+      "seq": 14,
+      "ts": "2026-10-20T04:22:55.808739+00:00",
+      "node": "collect",
+      "type": "LLM_TOOL_CALL",
+      "data": {
+        "tool": "get_operational_metrics",
+        "arguments": {
+          "company_id": 1
+        }
+      }
+    },
+    {
+      "seq": 15,
+      "ts": "2026-10-20T04:22:55.808896+00:00",
+      "node": "collect",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "get_operational_metrics"
+      }
+    },
+    {
+      "seq": 16,
+      "ts": "2026-10-20T04:22:55.808913+00:00",
+      "node": "collect",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "get_operational_metrics",
+        "arguments": {
+          "company_id": 1
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 17,
+      "ts": "2026-10-20T04:22:55.808998+00:00",
+      "node": "collect",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "get_operational_metrics",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 18,
+      "ts": "2026-10-20T04:22:55.809005+00:00",
+      "node": "collect",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "get_operational_metrics",
+        "ok": true
+      }
+    },
+    {
+      "seq": 19,
+      "ts": "2026-10-20T04:22:55.809462+00:00",
+      "node": "collect",
+      "type": "LLM_TOOL_CALL",
+      "data": {
+        "tool": "get_project_budget",
+        "arguments": {
+          "company_id": 1
+        }
+      }
+    },
+    {
+      "seq": 20,
+      "ts": "2026-10-20T04:22:55.809606+00:00",
+      "node": "collect",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "get_project_budget"
+      }
+    },
+    {
+      "seq": 21,
+      "ts": "2026-10-20T04:22:55.809621+00:00",
+      "node": "collect",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "get_project_budget",
+        "arguments": {
+          "company_id": 1
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 22,
+      "ts": "2026-10-20T04:22:55.809631+00:00",
+      "node": "collect",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "get_project_budget",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 23,
+      "ts": "2026-10-20T04:22:55.809638+00:00",
+      "node": "collect",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "get_project_budget",
+        "ok": true
+      }
+    },
+    {
+      "seq": 24,
+      "ts": "2026-10-20T04:22:55.809684+00:00",
+      "node": "collect",
+      "type": "LLM_TOOL_CALL",
+      "data": {
+        "tool": "get_solution_catalog",
+        "arguments": {}
+      }
+    },
+    {
+      "seq": 25,
+      "ts": "2026-10-20T04:22:55.809822+00:00",
+      "node": "collect",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "get_solution_catalog"
+      }
+    },
+    {
+      "seq": 26,
+      "ts": "2026-10-20T04:22:55.809837+00:00",
+      "node": "collect",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "get_solution_catalog",
+        "arguments": {},
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 27,
+      "ts": "2026-10-20T04:22:55.809894+00:00",
+      "node": "collect",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "get_solution_catalog",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 28,
+      "ts": "2026-10-20T04:22:55.809900+00:00",
+      "node": "collect",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "get_solution_catalog",
+        "ok": true
+      }
+    },
+    {
+      "seq": 29,
+      "ts": "2026-10-20T04:22:55.810218+00:00",
+      "node": "collect",
+      "type": "LLM_TOOL_CALL",
+      "data": {
+        "tool": "get_system_inventory",
+        "arguments": {
+          "company_id": 1
+        }
+      }
+    },
+    {
+      "seq": 30,
+      "ts": "2026-10-20T04:22:55.810357+00:00",
+      "node": "collect",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "get_system_inventory"
+      }
+    },
+    {
+      "seq": 31,
+      "ts": "2026-10-20T04:22:55.810371+00:00",
+      "node": "collect",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "get_system_inventory",
+        "arguments": {
+          "company_id": 1
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 32,
+      "ts": "2026-10-20T04:22:55.810417+00:00",
+      "node": "collect",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "get_system_inventory",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 33,
+      "ts": "2026-10-20T04:22:55.810423+00:00",
+      "node": "collect",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "get_system_inventory",
+        "ok": true
+      }
+    },
+    {
+      "seq": 34,
+      "ts": "2026-10-20T04:22:55.811570+00:00",
+      "node": "collect",
+      "type": "REQUEST_SCOPE",
+      "data": {
+        "wholeCompany": false,
+        "departmentIds": [
+          103
+        ],
+        "departmentNames": [
+          "개발"
+        ],
+        "processIds": [
+          207,
+          208,
+          209
+        ]
+      }
+    },
+    {
+      "seq": 35,
+      "ts": "2026-10-20T04:22:55.811591+00:00",
+      "node": "collect",
+      "type": "NODE_END",
+      "data": {
+        "updatedFields": [
+          "company",
+          "processes",
+          "metrics",
+          "systems",
+          "budget",
+          "solutions",
+          "status",
+          "evaluation_policy",
+          "scope"
+        ]
+      }
+    },
+    {
+      "seq": 36,
+      "ts": "2026-10-20T04:22:55.812330+00:00",
+      "node": "retrieve",
+      "type": "NODE_START",
+      "data": {}
+    },
+    {
+      "seq": 37,
+      "ts": "2026-10-20T04:22:55.812340+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 38,
+      "ts": "2026-10-20T04:22:55.812357+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "개발부에서 지금 AX 과제 도출해줘 MANUAL",
+          "doc_type": "MANUAL",
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 39,
+      "ts": "2026-10-20T04:22:55.812442+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 40,
+      "ts": "2026-10-20T04:22:55.812447+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 41,
+      "ts": "2026-10-20T04:22:55.812527+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 42,
+      "ts": "2026-10-20T04:22:55.812541+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "개발부에서 지금 AX 과제 도출해줘 SYSTEM_SPEC",
+          "doc_type": "SYSTEM_SPEC",
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 43,
+      "ts": "2026-10-20T04:22:55.812581+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 44,
+      "ts": "2026-10-20T04:22:55.812586+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 45,
+      "ts": "2026-10-20T04:22:55.812674+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 46,
+      "ts": "2026-10-20T04:22:55.812686+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "개발부에서 지금 AX 과제 도출해줘 POLICY",
+          "doc_type": "POLICY",
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 47,
+      "ts": "2026-10-20T04:22:55.812720+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 48,
+      "ts": "2026-10-20T04:22:55.812725+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 49,
+      "ts": "2026-10-20T04:22:55.812790+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 50,
+      "ts": "2026-10-20T04:22:55.812803+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "개발부에서 지금 AX 과제 도출해줘 AI_STATUS",
+          "doc_type": "AI_STATUS",
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 51,
+      "ts": "2026-10-20T04:22:55.812833+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 52,
+      "ts": "2026-10-20T04:22:55.812838+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 53,
+      "ts": "2026-10-20T04:22:55.812902+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 54,
+      "ts": "2026-10-20T04:22:55.812915+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "개발부에서 지금 AX 과제 도출해줘 DATA_QUALITY",
+          "doc_type": "DATA_QUALITY",
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 55,
+      "ts": "2026-10-20T04:22:55.812946+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 56,
+      "ts": "2026-10-20T04:22:55.812950+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 57,
+      "ts": "2026-10-20T04:22:55.813035+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 58,
+      "ts": "2026-10-20T04:22:55.813229+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "개발부에서 지금 AX 과제 도출해줘 PROJECT_REPORT",
+          "doc_type": "PROJECT_REPORT",
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 59,
+      "ts": "2026-10-20T04:22:55.813266+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 60,
+      "ts": "2026-10-20T04:22:55.813271+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 61,
+      "ts": "2026-10-20T04:22:55.813337+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 62,
+      "ts": "2026-10-20T04:22:55.813350+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "201 사내 규정 문의 응답",
+          "doc_type": "MANUAL",
+          "process_id": 201,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 63,
+      "ts": "2026-10-20T04:22:55.813388+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 64,
+      "ts": "2026-10-20T04:22:55.813393+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 65,
+      "ts": "2026-10-20T04:22:55.813463+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 66,
+      "ts": "2026-10-20T04:22:55.813475+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "202 신규 입사자 온보딩 안내",
+          "doc_type": "MANUAL",
+          "process_id": 202,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 67,
+      "ts": "2026-10-20T04:22:55.813510+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 68,
+      "ts": "2026-10-20T04:22:55.813514+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 69,
+      "ts": "2026-10-20T04:22:55.813581+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 70,
+      "ts": "2026-10-20T04:22:55.813593+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "203 인사평가 등급 산정",
+          "doc_type": "MANUAL",
+          "process_id": 203,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 71,
+      "ts": "2026-10-20T04:22:55.813625+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 72,
+      "ts": "2026-10-20T04:22:55.813629+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 73,
+      "ts": "2026-10-20T04:22:55.813696+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 74,
+      "ts": "2026-10-20T04:22:55.813707+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "204 주간 업무 보고 취합",
+          "doc_type": "MANUAL",
+          "process_id": 204,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 75,
+      "ts": "2026-10-20T04:22:55.813741+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 76,
+      "ts": "2026-10-20T04:22:55.813745+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 77,
+      "ts": "2026-10-20T04:22:55.813810+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 78,
+      "ts": "2026-10-20T04:22:55.813823+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "205 시장·경쟁사 동향 리포트 작성",
+          "doc_type": "MANUAL",
+          "process_id": 205,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 79,
+      "ts": "2026-10-20T04:22:55.813856+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 80,
+      "ts": "2026-10-20T04:22:55.813860+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 81,
+      "ts": "2026-10-20T04:22:55.813935+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 82,
+      "ts": "2026-10-20T04:22:55.813951+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "206 회의록 작성·액션 아이템 정리",
+          "doc_type": "MANUAL",
+          "process_id": 206,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 83,
+      "ts": "2026-10-20T04:22:55.813986+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 84,
+      "ts": "2026-10-20T04:22:55.813991+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 85,
+      "ts": "2026-10-20T04:22:55.814059+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 86,
+      "ts": "2026-10-20T04:22:55.814070+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "207 장애 티켓 분류·배정",
+          "doc_type": "MANUAL",
+          "process_id": 207,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 87,
+      "ts": "2026-10-20T04:22:55.814102+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 88,
+      "ts": "2026-10-20T04:22:55.814107+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 89,
+      "ts": "2026-10-20T04:22:55.814173+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 90,
+      "ts": "2026-10-20T04:22:55.814184+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "208 코드 리뷰 보조",
+          "doc_type": "MANUAL",
+          "process_id": 208,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 91,
+      "ts": "2026-10-20T04:22:55.814216+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 92,
+      "ts": "2026-10-20T04:22:55.814220+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 93,
+      "ts": "2026-10-20T04:22:55.814295+00:00",
+      "node": "retrieve",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "search_docs"
+      }
+    },
+    {
+      "seq": 94,
+      "ts": "2026-10-20T04:22:55.814306+00:00",
+      "node": "retrieve",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "search_docs",
+        "arguments": {
+          "query": "209 기술·API 문서 작성",
+          "doc_type": "MANUAL",
+          "process_id": 209,
+          "top_k": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 95,
+      "ts": "2026-10-20T04:22:55.814337+00:00",
+      "node": "retrieve",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "search_docs",
+        "resultType": "list"
+      }
+    },
+    {
+      "seq": 96,
+      "ts": "2026-10-20T04:22:55.814341+00:00",
+      "node": "retrieve",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "search_docs",
+        "ok": true
+      }
+    },
+    {
+      "seq": 97,
+      "ts": "2026-10-20T04:22:55.814426+00:00",
+      "node": "retrieve",
+      "type": "NODE_END",
+      "data": {
+        "updatedFields": [
+          "evidence"
+        ]
+      }
+    },
+    {
+      "seq": 98,
+      "ts": "2026-10-20T04:22:55.814812+00:00",
+      "node": "assess",
+      "type": "NODE_START",
+      "data": {}
+    },
+    {
+      "seq": 99,
+      "ts": "2026-10-20T04:22:55.815423+00:00",
+      "node": "assess",
+      "type": "LLM_REQUEST",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "attempt": 1
+      }
+    },
+    {
+      "seq": 100,
+      "ts": "2026-10-20T04:22:58.395101+00:00",
+      "node": "assess",
+      "type": "LLM_RESPONSE",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "responseType": "Assessment"
+      }
+    },
+    {
+      "seq": 101,
+      "ts": "2026-10-20T04:22:58.395305+00:00",
+      "node": "assess",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "save_assessment"
+      }
+    },
+    {
+      "seq": 102,
+      "ts": "2026-10-20T04:22:58.395439+00:00",
+      "node": "assess",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "save_assessment",
+        "arguments": {
+          "task_id": "0661f93c-dffc-4faf-80fb-aa3560148404",
+          "scores": {
+            "data_score": 75.0,
+            "infra_score": 70.0,
+            "automation_score": 40.0,
+            "ai_capability_score": 35.0,
+            "governance_score": 60.0
+          },
+          "criteria_version": "v1.0",
+          "evidence": [
+            {
+              "area": "data_score",
+              "document_id": 407,
+              "section": "관측 범위",
+              "summary": "2026년 7~9월 201~209 업무에 대해 27건 지표가 제공되고 모두 가상측정치임. 표준화 수준은 0.7~0.9대이다."
+            },
+            {
+              "area": "infra_score",
+              "document_id": 405,
+              "section": "시스템과 API",
+              "summary": "HRIS 등 핵심 시스템은 대부분 API 미제공이나 그룹웨어, 이슈 트래커, 코드 저장소는 API 제공 가능하다."
+            },
+            {
+              "area": "automation_score",
+              "document_id": 404,
+              "section": "사람의 최종 판단",
+              "summary": "코드 리뷰 의견 초안 작성에 AI 사용하나, 최종 승인과 코드 병합, 배포는 사람이 결정한다."
+            },
+            {
+              "area": "ai_capability_score",
+              "document_id": 406,
+              "section": "현재 활용",
+              "summary": "문서 초안 작성과 티켓 분류를 소규모 시험 중, 정기 교육 및 평가 체계 부족하다."
+            },
+            {
+              "area": "governance_score",
+              "document_id": 404,
+              "section": "사람의 최종 판단",
+              "summary": "AI 업무 수행 시 개인정보 제거 및 승인 프로세스 준수, AI 제외 인사 평가 등 예외 규정 존재."
+            }
+          ]
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 103,
+      "ts": "2026-10-20T04:22:58.400487+00:00",
+      "node": "assess",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "save_assessment",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 104,
+      "ts": "2026-10-20T04:22:58.400510+00:00",
+      "node": "assess",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "save_assessment",
+        "ok": true
+      }
+    },
+    {
+      "seq": 105,
+      "ts": "2026-10-20T04:22:58.400553+00:00",
+      "node": "assess",
+      "type": "NODE_END",
+      "data": {
+        "updatedFields": [
+          "maturity",
+          "insufficient_data"
+        ]
+      }
+    },
+    {
+      "seq": 106,
+      "ts": "2026-10-20T04:22:58.401547+00:00",
+      "node": "discover",
+      "type": "NODE_START",
+      "data": {}
+    },
+    {
+      "seq": 107,
+      "ts": "2026-10-20T04:22:58.402872+00:00",
+      "node": "discover",
+      "type": "LLM_REQUEST",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "attempt": 1
+      }
+    },
+    {
+      "seq": 108,
+      "ts": "2026-10-20T04:23:00.958959+00:00",
+      "node": "discover",
+      "type": "LLM_RESPONSE",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "responseType": "Discovery"
+      }
+    },
+    {
+      "seq": 109,
+      "ts": "2026-10-20T04:23:00.959094+00:00",
+      "node": "discover",
+      "type": "CANDIDATES_PROPOSED",
+      "data": {
+        "candidates": [
+          {
+            "process_id": 207,
+            "solution_id": 507,
+            "reason": "개발부 207 장애 티켓 분류·배정은 반복 장애 초기 분류와 담당 배정 자동화로 대응 대기시간을 줄인다. API 사용 가능하며 승인 불필요하다. 장애 보안사고·최고 심각도 등 예외는 담당자 이관한다. Confident data included.",
+            "document_ids": [
+              403,
+              405
+            ]
+          },
+          {
+            "process_id": 208,
+            "solution_id": 508,
+            "reason": "개발부 208 코드 리뷰 보조는 승인된 기술 문서 검색 기반 초안 작성으로 검토 효율화 목적이다. requires_approval=true로 사람이 최종 검토한다. 선행 솔루션 509 기술·API 문서 구축 완료 후 적용해야 한다. API 가능, standardization 0.9, 검토 필요 포인트 반영됨.",
+            "document_ids": [
+              403,
+              405,
+              408
+            ]
+          },
+          {
+            "process_id": 209,
+            "solution_id": 509,
+            "reason": "개발부 209 기술·API 문서 작성은 코드와 명세로 문서 초안을 만들어 사람이 최종 검토·승인한다. AI 자동화 목적이고 API 활용 가능하다. standardization 0.83, requires_approval=true, 문서와 절차가 명확하다.",
+            "document_ids": [
+              403,
+              405
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seq": 110,
+      "ts": "2026-10-20T04:23:00.959228+00:00",
+      "node": "discover",
+      "type": "NODE_END",
+      "data": {
+        "updatedFields": [
+          "candidates",
+          "excluded"
+        ]
+      }
+    },
+    {
+      "seq": 111,
+      "ts": "2026-10-20T04:23:00.960434+00:00",
+      "node": "evaluate",
+      "type": "NODE_START",
+      "data": {}
+    },
+    {
+      "seq": 112,
+      "ts": "2026-10-20T04:23:00.960484+00:00",
+      "node": "evaluate",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "calculate_ax_roi"
+      }
+    },
+    {
+      "seq": 113,
+      "ts": "2026-10-20T04:23:00.960519+00:00",
+      "node": "evaluate",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "arguments": {
+          "process_id": 207,
+          "solution_id": 507
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 114,
+      "ts": "2026-10-20T04:23:00.960603+00:00",
+      "node": "evaluate",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 115,
+      "ts": "2026-10-20T04:23:00.960615+00:00",
+      "node": "evaluate",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "ok": true
+      }
+    },
+    {
+      "seq": 116,
+      "ts": "2026-10-20T04:23:00.960778+00:00",
+      "node": "evaluate",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "calculate_ax_roi"
+      }
+    },
+    {
+      "seq": 117,
+      "ts": "2026-10-20T04:23:00.960804+00:00",
+      "node": "evaluate",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "arguments": {
+          "process_id": 208,
+          "solution_id": 508
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 118,
+      "ts": "2026-10-20T04:23:00.960865+00:00",
+      "node": "evaluate",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 119,
+      "ts": "2026-10-20T04:23:00.960876+00:00",
+      "node": "evaluate",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "ok": true
+      }
+    },
+    {
+      "seq": 120,
+      "ts": "2026-10-20T04:23:00.960941+00:00",
+      "node": "evaluate",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "calculate_ax_roi"
+      }
+    },
+    {
+      "seq": 121,
+      "ts": "2026-10-20T04:23:00.960966+00:00",
+      "node": "evaluate",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "arguments": {
+          "process_id": 209,
+          "solution_id": 509
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 122,
+      "ts": "2026-10-20T04:23:00.961026+00:00",
+      "node": "evaluate",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 123,
+      "ts": "2026-10-20T04:23:00.961037+00:00",
+      "node": "evaluate",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "calculate_ax_roi",
+        "ok": true
+      }
+    },
+    {
+      "seq": 124,
+      "ts": "2026-10-20T04:23:00.961112+00:00",
+      "node": "evaluate",
+      "type": "TOOL_START",
+      "data": {
+        "tool": "optimize_ax_portfolio"
+      }
+    },
+    {
+      "seq": 125,
+      "ts": "2026-10-20T04:23:00.961144+00:00",
+      "node": "evaluate",
+      "type": "TOOL_CALL",
+      "data": {
+        "tool": "optimize_ax_portfolio",
+        "arguments": {
+          "company_id": 1,
+          "candidates": [
+            {
+              "process_id": 207,
+              "solution_id": 507
+            },
+            {
+              "process_id": 208,
+              "solution_id": 508
+            },
+            {
+              "process_id": 209,
+              "solution_id": 509
+            }
+          ],
+          "max_items": 3
+        },
+        "backend": "v3-fixture"
+      }
+    },
+    {
+      "seq": 126,
+      "ts": "2026-10-20T04:23:00.961381+00:00",
+      "node": "evaluate",
+      "type": "TOOL_RESULT",
+      "data": {
+        "tool": "optimize_ax_portfolio",
+        "resultType": "dict"
+      }
+    },
+    {
+      "seq": 127,
+      "ts": "2026-10-20T04:23:00.961394+00:00",
+      "node": "evaluate",
+      "type": "TOOL_END",
+      "data": {
+        "tool": "optimize_ax_portfolio",
+        "ok": true
+      }
+    },
+    {
+      "seq": 128,
+      "ts": "2026-10-20T04:23:00.961606+00:00",
+      "node": "evaluate",
+      "type": "NODE_END",
+      "data": {
+        "updatedFields": [
+          "roi",
+          "portfolio",
+          "opportunities"
+        ]
+      }
+    },
+    {
+      "seq": 129,
+      "ts": "2026-10-20T04:23:00.962826+00:00",
+      "node": "roadmap",
+      "type": "NODE_START",
+      "data": {}
+    },
+    {
+      "seq": 130,
+      "ts": "2026-10-20T04:23:00.964238+00:00",
+      "node": "respond",
+      "type": "LLM_REQUEST",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "attempt": 1
+      }
+    },
+    {
+      "seq": 131,
+      "ts": "2026-10-20T04:23:04.579320+00:00",
+      "node": "respond",
+      "type": "LLM_RESPONSE",
+      "data": {
+        "model": "gpt-4.1-mini",
+        "responseType": "Narrative"
+      }
+    },
+    {
+      "seq": 132,
+      "ts": "2026-10-20T04:23:04.579562+00:00",
+      "node": "roadmap",
+      "type": "NODE_END",
+      "data": {
+        "updatedFields": [
+          "roadmap",
+          "answer"
+        ]
+      }
+    },
+    {
+      "seq": 133,
+      "ts": "2026-10-20T04:23:04.583310+00:00",
+      "node": "approval",
+      "type": "APPROVAL_REQUIRED",
+      "data": {
+        "roadmap": {
+          "roadmapName": "AX 도입 로드맵 초안",
+          "totalAllocatedKrw": 295000000,
+          "budgetKrw": 300000000,
+          "totalAxScore": 265.0,
+          "effectBasis": "가정 데이터 기반 인력 시간 환산 가치. 현금 절감·실측 성과 아님.",
+          "scheduleBasis": "3개월 단위 MVP 일정 초안. 실제 일정과 PoC 성공 기준은 담당자 검토 필요.",
+          "pocSuccessCriteria": [
+            "표본 업무 전후 처리 시간을 측정하고 사람 검토 시간을 포함한다.",
+            "담당자가 품질·오류율 기준과 자동화 중단 조건을 확정한다."
+          ],
+          "items": [
+            {
+              "processId": 207,
+              "solutionId": 507,
+              "itemName": "장애 티켓 분류·배정",
+              "priorityOrder": 1,
+              "phase": "SHORT",
+              "startMonth": 1,
+              "durationMonths": 3,
+              "allocatedBudgetKrw": 125000000,
+              "axScore": 97.6,
+              "impactScore": 100.0,
+              "feasibilityScore": 94.0,
+              "expectedAnnualSavingKrw": 125084198,
+              "roiPct": 0.07,
+              "paybackMonths": 12.0,
+              "threeYearNetKrw": 214252595,
+              "rationale": "AX점수 기준 선정. 개발부 207 장애 티켓 분류·배정은 반복 장애 초기 분류와 담당 배정 자동화로 대응 대기시간을 줄인다. API 사용 가능하며 승인 불필요하다. 장애 보안사고·최고 심각도 등 예외는 담당자 이관한다. Confident data included.",
+              "evidence": [
+                {
+                  "document_id": 403,
+                  "section": "208 코드 리뷰 보조",
+                  "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+                },
+                {
+                  "document_id": 405,
+                  "section": "문서 범위",
+                  "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+                },
+                {
+                  "document_id": 405,
+                  "section": "시스템과 API",
+                  "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+                }
+              ],
+              "humanReviewRequired": false
+            },
+            {
+              "processId": 209,
+              "solutionId": 509,
+              "itemName": "기술·API 문서 작성",
+              "priorityOrder": 2,
+              "phase": "SHORT",
+              "startMonth": 1,
+              "durationMonths": 3,
+              "allocatedBudgetKrw": 55000000,
+              "axScore": 77.0,
+              "impactScore": 68.5,
+              "feasibilityScore": 89.8,
+              "expectedAnnualSavingKrw": 94317115,
+              "roiPct": 71.49,
+              "paybackMonths": 6.3,
+              "threeYearNetKrw": 203951346,
+              "rationale": "AX점수 기준 선정. 개발부 209 기술·API 문서 작성은 코드와 명세로 문서 초안을 만들어 사람이 최종 검토·승인한다. AI 자동화 목적이고 API 활용 가능하다. standardization 0.83, requires_approval=true, 문서와 절차가 명확하다. 업무 완료 전 사람 최종 검토·승인이 필요합니다.",
+              "evidence": [
+                {
+                  "document_id": 403,
+                  "section": "208 코드 리뷰 보조",
+                  "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+                },
+                {
+                  "document_id": 405,
+                  "section": "문서 범위",
+                  "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+                },
+                {
+                  "document_id": 405,
+                  "section": "시스템과 API",
+                  "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+                }
+              ],
+              "humanReviewRequired": true
+            },
+            {
+              "processId": 208,
+              "solutionId": 508,
+              "itemName": "코드 리뷰 보조",
+              "priorityOrder": 3,
+              "phase": "MID",
+              "startMonth": 4,
+              "durationMonths": 3,
+              "allocatedBudgetKrw": 115000000,
+              "axScore": 90.4,
+              "impactScore": 88.0,
+              "feasibilityScore": 94.0,
+              "expectedAnnualSavingKrw": 121109569,
+              "roiPct": 5.31,
+              "paybackMonths": 11.3,
+              "threeYearNetKrw": 212328706,
+              "rationale": "AX점수 기준 선정. 개발부 208 코드 리뷰 보조는 승인된 기술 문서 검색 기반 초안 작성으로 검토 효율화 목적이다. requires_approval=true로 사람이 최종 검토한다. 선행 솔루션 509 기술·API 문서 구축 완료 후 적용해야 한다. API 가능, standardization 0.9, 검토 필요 포인트 반영됨. 업무 완료 전 사람 최종 검토·승인이 필요합니다. 선행 솔루션 509 완료 후 시작합니다.",
+              "evidence": [
+                {
+                  "document_id": 403,
+                  "section": "208 코드 리뷰 보조",
+                  "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+                },
+                {
+                  "document_id": 405,
+                  "section": "문서 범위",
+                  "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+                },
+                {
+                  "document_id": 405,
+                  "section": "시스템과 API",
+                  "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+                }
+              ],
+              "humanReviewRequired": true
+            }
+          ]
+        },
+        "items": [
+          {
+            "processId": 207,
+            "solutionId": 507,
+            "itemName": "장애 티켓 분류·배정",
+            "priorityOrder": 1,
+            "phase": "SHORT",
+            "startMonth": 1,
+            "durationMonths": 3,
+            "allocatedBudgetKrw": 125000000,
+            "axScore": 97.6,
+            "impactScore": 100.0,
+            "feasibilityScore": 94.0,
+            "expectedAnnualSavingKrw": 125084198,
+            "roiPct": 0.07,
+            "paybackMonths": 12.0,
+            "threeYearNetKrw": 214252595,
+            "rationale": "AX점수 기준 선정. 개발부 207 장애 티켓 분류·배정은 반복 장애 초기 분류와 담당 배정 자동화로 대응 대기시간을 줄인다. API 사용 가능하며 승인 불필요하다. 장애 보안사고·최고 심각도 등 예외는 담당자 이관한다. Confident data included.",
+            "evidence": [
+              {
+                "document_id": 403,
+                "section": "208 코드 리뷰 보조",
+                "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+              },
+              {
+                "document_id": 405,
+                "section": "문서 범위",
+                "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+              },
+              {
+                "document_id": 405,
+                "section": "시스템과 API",
+                "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+              }
+            ],
+            "humanReviewRequired": false
+          },
+          {
+            "processId": 209,
+            "solutionId": 509,
+            "itemName": "기술·API 문서 작성",
+            "priorityOrder": 2,
+            "phase": "SHORT",
+            "startMonth": 1,
+            "durationMonths": 3,
+            "allocatedBudgetKrw": 55000000,
+            "axScore": 77.0,
+            "impactScore": 68.5,
+            "feasibilityScore": 89.8,
+            "expectedAnnualSavingKrw": 94317115,
+            "roiPct": 71.49,
+            "paybackMonths": 6.3,
+            "threeYearNetKrw": 203951346,
+            "rationale": "AX점수 기준 선정. 개발부 209 기술·API 문서 작성은 코드와 명세로 문서 초안을 만들어 사람이 최종 검토·승인한다. AI 자동화 목적이고 API 활용 가능하다. standardization 0.83, requires_approval=true, 문서와 절차가 명확하다. 업무 완료 전 사람 최종 검토·승인이 필요합니다.",
+            "evidence": [
+              {
+                "document_id": 403,
+                "section": "208 코드 리뷰 보조",
+                "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+              },
+              {
+                "document_id": 405,
+                "section": "문서 범위",
+                "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+              },
+              {
+                "document_id": 405,
+                "section": "시스템과 API",
+                "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+              }
+            ],
+            "humanReviewRequired": true
+          },
+          {
+            "processId": 208,
+            "solutionId": 508,
+            "itemName": "코드 리뷰 보조",
+            "priorityOrder": 3,
+            "phase": "MID",
+            "startMonth": 4,
+            "durationMonths": 3,
+            "allocatedBudgetKrw": 115000000,
+            "axScore": 90.4,
+            "impactScore": 88.0,
+            "feasibilityScore": 94.0,
+            "expectedAnnualSavingKrw": 121109569,
+            "roiPct": 5.31,
+            "paybackMonths": 11.3,
+            "threeYearNetKrw": 212328706,
+            "rationale": "AX점수 기준 선정. 개발부 208 코드 리뷰 보조는 승인된 기술 문서 검색 기반 초안 작성으로 검토 효율화 목적이다. requires_approval=true로 사람이 최종 검토한다. 선행 솔루션 509 기술·API 문서 구축 완료 후 적용해야 한다. API 가능, standardization 0.9, 검토 필요 포인트 반영됨. 업무 완료 전 사람 최종 검토·승인이 필요합니다. 선행 솔루션 509 완료 후 시작합니다.",
+            "evidence": [
+              {
+                "document_id": 403,
+                "section": "208 코드 리뷰 보조",
+                "summary": "process_id=208. 목적: 승인된 기술 문서를 근거로 코드 변경의 검토 초안을 제공한다.\n절차:\n1. 변경 요청 수집\n2. 승인된 기술·API 문서 검색\n3. 정적 검사 결과 확인\n4. 리뷰 의견 초안 작성\n5. 개발자 최종 검토·승인\nrequires_approval=true. 사람의 최종 검토·승인 후 진행한다.\n예외 규칙: 코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다."
+              },
+              {
+                "document_id": 405,
+                "section": "문서 범위",
+                "summary": "가온비즈정밀 주식회사 (가상), company_id=1. 문서 ID 405, 버전 v3. 모든 인물·연락처·업무수치·사례는 가상이며 data_source=ASSUMED다. 실제 도입 효과로 주장하지 않는다."
+              },
+              {
+                "document_id": 405,
+                "section": "시스템과 API",
+                "summary": "301 인사정보 HRIS: api_available=false, data_access_level=RESTRICTED\n302 그룹웨어: api_available=true, data_access_level=RESTRICTED\n303 이슈 트래커: api_available=true, data_access_level=RESTRICTED\n304 코드 저장소: api_available=true, data_access_level=RESTRICTED\n305 사내 위키: api_available=false, data_access_level=RESTRICTED\n306 제조 ERP: api_available=false, data_access_level=RESTRICTED"
+              }
+            ],
+            "humanReviewRequired": true
+          }
+        ],
+        "totalAllocatedKrw": 295000000,
+        "budgetKrw": 300000000,
+        "totalAxScore": 265.0,
+        "excluded": [
+          {
+            "processId": 203,
+            "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+          }
+        ],
+        "assessment": {
+          "scores": {
+            "data_score": 75.0,
+            "infra_score": 70.0,
+            "automation_score": 40.0,
+            "ai_capability_score": 35.0,
+            "governance_score": 60.0
+          },
+          "evidence": [
+            {
+              "area": "data_score",
+              "document_id": 407,
+              "section": "관측 범위",
+              "summary": "2026년 7~9월 201~209 업무에 대해 27건 지표가 제공되고 모두 가상측정치임. 표준화 수준은 0.7~0.9대이다."
+            },
+            {
+              "area": "infra_score",
+              "document_id": 405,
+              "section": "시스템과 API",
+              "summary": "HRIS 등 핵심 시스템은 대부분 API 미제공이나 그룹웨어, 이슈 트래커, 코드 저장소는 API 제공 가능하다."
+            },
+            {
+              "area": "automation_score",
+              "document_id": 404,
+              "section": "사람의 최종 판단",
+              "summary": "코드 리뷰 의견 초안 작성에 AI 사용하나, 최종 승인과 코드 병합, 배포는 사람이 결정한다."
+            },
+            {
+              "area": "ai_capability_score",
+              "document_id": 406,
+              "section": "현재 활용",
+              "summary": "문서 초안 작성과 티켓 분류를 소규모 시험 중, 정기 교육 및 평가 체계 부족하다."
+            },
+            {
+              "area": "governance_score",
+              "document_id": 404,
+              "section": "사람의 최종 판단",
+              "summary": "AI 업무 수행 시 개인정보 제거 및 승인 프로세스 준수, AI 제외 인사 평가 등 예외 규정 존재."
+            }
+          ],
+          "insufficient_data": [],
+          "criteria_version": "v1.0",
+          "assessment_id": 701
+        }
+      }
+    }
+  ]
+}

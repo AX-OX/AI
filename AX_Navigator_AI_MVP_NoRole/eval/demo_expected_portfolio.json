@@ -1,0 +1,14 @@
+{
+  "budget_limit_krw": 300000000,
+  "selected_candidate_ids": [
+    "AX-S01",
+    "AX-C01",
+    "AX-P02"
+  ],
+  "total_allocated_krw": 284000000,
+  "remaining_budget_krw": 16000000,
+  "sum_three_year_net_value_krw": 189221743,
+  "eligible_portfolios": 94,
+  "constraint": "Three projects, dependency-aware, max sum 3yr net value",
+  "assumptions": "derived from 2026-07..09 ×4, synthetic inputs and rounded catalog rates"
+}

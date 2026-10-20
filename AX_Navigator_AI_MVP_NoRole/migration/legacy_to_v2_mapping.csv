@@ -1,0 +1,18 @@
+legacy_source,new_table_or_store,transformation
+company_profile.csv,companies,company_id COMP-001 → 1; AX budget 300M
+departments.csv,departments,4 in-scope departments retained; 3 excluded out-of-scope departments
+business_processes.csv,business_processes,20→12 processes; 3 per target department; source SOP procedures to JSONB
+operational_metrics_monthly.csv,process_metrics,240→36 metrics; last 3 months; data_source ASSUMED
+system_inventory.csv,it_systems,9→6 systems; api and access flags normalized
+process_system_links.csv,process_systems,20+ mapping with synthetic secondary system relations
+document_index.csv + docs/*.md,documents,41→10 consolidated/new documents; source URI docs://id
+document_chunks.jsonl,Chroma import JSONL,"regenerated chunks, no duplicate PostgreSQL chunk text"
+ax_candidates.csv + roi_scenarios.csv,ai_solution_catalog,11 fixed catalog templates; scenario parameters rounded to two decimals
+maturity_assessments.csv,ai_tasks.result + ax_assessments,"output only in demo fixture, original 5 dimension scores averaged across scope"
+ax_candidates.csv,ai_tasks.result,"analysis snapshots only, not PostgreSQL opportunity table"
+roi_scenarios.csv,ai_tasks.result,recalculated for 3-month annualization; cost fixed via catalog
+recommended_roadmap.csv,ax_roadmaps + roadmap_items,output only after requester self-approval demo
+pending_approvals.csv,ai_tasks + ax_roadmaps,WAITING_APPROVAL then approved via Spring; no project before approval
+existing_ax_projects.csv,excluded,out-of-scope historical PoCs; docs retained for RAG
+project_kpis_monthly.csv,excluded,MVP DDL has no monitoring KPI table yet
+ERP/CRM/support/HR events CSV,excluded,MVP schema aggregates to business processes/metrics; legacy samples separately available

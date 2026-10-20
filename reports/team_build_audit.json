@@ -1,0 +1,28 @@
+{
+  "originalSourcesUnchanged": true,
+  "checkedFileCount": 211,
+  "beTests": {
+    "tests": 40,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "beBuild": "PASS: exact Gradle 9.8.1 / Boot 4.1.1 / Java 21 in disposable copy",
+  "feBuild": "PASS: tsc + vite production build in disposable copy",
+  "feLint": "PASS: oxlint in disposable copy",
+  "limitations": [
+    "Full FE-BE-Agent end-to-end blocked by missing teammate BE endpoints",
+    "OpenAI not invoked in this audit",
+    "FE rendered via React SSR; browser clicks not tested",
+    "PostgreSQL17 used locally; target PostgreSQL16 not tested in this audit"
+  ],
+  "agentIntegrationTests": {
+    "passed": 37,
+    "failed": 0,
+    "spring": "fixture",
+    "llm": "mock",
+    "pgvector": "real",
+    "checkpointer": "real PostgreSQL"
+  },
+  "cliAutomaticRegistration": "PASS: DONE, 3 mock projects, no approval input"
+}

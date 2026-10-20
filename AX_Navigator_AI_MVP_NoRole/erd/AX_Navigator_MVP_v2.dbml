@@ -1,0 +1,197 @@
+// AX Navigator AI · revised MVP · 14 PostgreSQL tables
+
+Table companies {
+  company_id bigint [pk, not null, increment]
+  company_name varchar(100) [not null]
+  industry varchar(50) [not null]
+  employee_count integer [not null]
+  ax_budget_krw bigint [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table departments {
+  department_id bigint [pk, not null, increment]
+  company_id bigint [not null]
+  department_name varchar(50) [not null]
+  manager_name varchar(50)
+  manager_email varchar(100)
+  manager_phone varchar(20)
+}
+
+Table business_processes {
+  process_id bigint [pk, not null, increment]
+  department_id bigint [not null]
+  process_name varchar(100) [not null]
+  purpose text
+  process_steps jsonb
+  standardization_level numeric(3,2)
+  requires_approval boolean [not null, default: `FALSE`]
+  exception_rules text
+}
+
+Table process_metrics {
+  metric_id bigint [pk, not null, increment]
+  process_id bigint [not null]
+  period_start date [not null]
+  period_end date [not null]
+  processing_count integer [not null]
+  avg_processing_minutes numeric(8,2) [not null]
+  error_rate numeric(5,4)
+  hourly_labor_cost_krw integer [not null]
+  data_source varchar(20) [not null]
+}
+
+Table it_systems {
+  system_id bigint [pk, not null, increment]
+  company_id bigint [not null]
+  system_name varchar(100) [not null]
+  system_type varchar(30) [not null]
+  api_available boolean [not null, default: `FALSE`]
+  data_access_level varchar(20) [not null]
+  cloud_based boolean [not null, default: `FALSE`]
+}
+
+Table process_systems {
+  process_id bigint [not null]
+  system_id bigint [not null]
+  usage_purpose varchar(200)
+  Indexes {
+    (process_id, system_id) [pk]
+  }
+}
+
+Table documents {
+  document_id bigint [pk, not null, increment]
+  company_id bigint [not null]
+  process_id bigint
+  title varchar(200) [not null]
+  doc_type varchar(30) [not null]
+  file_uri varchar(500) [not null]
+  access_level varchar(20) [not null]
+  version varchar(20) [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table ai_solution_catalog {
+  solution_id bigint [pk, not null, increment]
+  solution_type varchar(30) [not null]
+  solution_name varchar(100) [not null]
+  description text
+  base_build_cost_krw bigint [not null]
+  monthly_run_cost_krw bigint [not null]
+  automation_rate_low numeric(3,2) [not null]
+  automation_rate_base numeric(3,2) [not null]
+  automation_rate_high numeric(3,2) [not null]
+  time_reduction_rate_low numeric(3,2) [not null]
+  time_reduction_rate_base numeric(3,2) [not null]
+  time_reduction_rate_high numeric(3,2) [not null]
+  min_standardization_level numeric(3,2)
+  requires_api boolean [not null, default: `FALSE`]
+  data_source varchar(20) [not null]
+}
+
+Table users {
+  user_id bigint [pk, not null, increment]
+  company_id bigint [not null]
+  email varchar(100) [not null]
+  password_hash varchar(200) [not null]
+  user_name varchar(50) [not null]
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table ai_tasks {
+  task_id varchar(36) [pk, not null]
+  user_id bigint [not null]
+  company_id bigint [not null]
+  request_text text [not null]
+  status varchar(30) [not null]
+  result jsonb
+  error_message text
+  trace_url varchar(500)
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  completed_at timestamp
+}
+
+Table ax_assessments {
+  assessment_id bigint [pk, not null, increment]
+  company_id bigint [not null]
+  task_id varchar(36) [not null]
+  data_score numeric(5,2) [not null]
+  infra_score numeric(5,2) [not null]
+  automation_score numeric(5,2) [not null]
+  ai_capability_score numeric(5,2) [not null]
+  governance_score numeric(5,2) [not null]
+  total_score numeric(5,2) [not null]
+  criteria_version varchar(20) [not null]
+  evidence jsonb
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table ax_roadmaps {
+  roadmap_id bigint [pk, not null, increment]
+  company_id bigint [not null]
+  task_id varchar(36) [not null]
+  assessment_id bigint
+  roadmap_name varchar(200) [not null]
+  budget_limit_krw bigint [not null]
+  total_allocated_krw bigint [not null]
+  approval_status varchar(20) [not null]
+  approved_by bigint
+  approved_at timestamp
+  rejection_reason text
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table roadmap_items {
+  item_id bigint [pk, not null, increment]
+  roadmap_id bigint [not null]
+  process_id bigint [not null]
+  solution_id bigint [not null]
+  item_name varchar(200) [not null]
+  priority_order integer [not null]
+  phase varchar(10) [not null]
+  start_month integer [not null]
+  duration_months integer [not null]
+  allocated_budget_krw bigint [not null]
+  expected_annual_saving_krw bigint [not null]
+  roi_pct numeric(7,2) [not null]
+  payback_months numeric(5,1)
+  rationale text [not null]
+  evidence jsonb
+}
+
+Table ax_projects {
+  project_id bigint [pk, not null, increment]
+  item_id bigint [not null]
+  owner_department_id bigint [not null]
+  project_name varchar(200) [not null]
+  project_status varchar(20) [not null]
+  start_date date
+  end_date date
+  created_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Ref: departments.company_id > companies.company_id
+Ref: business_processes.department_id > departments.department_id
+Ref: process_metrics.process_id > business_processes.process_id
+Ref: it_systems.company_id > companies.company_id
+Ref: process_systems.process_id > business_processes.process_id
+Ref: process_systems.system_id > it_systems.system_id
+Ref: documents.company_id > companies.company_id
+Ref: documents.process_id > business_processes.process_id
+Ref: users.company_id > companies.company_id
+Ref: ai_tasks.user_id > users.user_id
+Ref: ai_tasks.company_id > companies.company_id
+Ref: ax_assessments.company_id > companies.company_id
+Ref: ax_assessments.task_id > ai_tasks.task_id
+Ref: ax_roadmaps.company_id > companies.company_id
+Ref: ax_roadmaps.task_id > ai_tasks.task_id
+Ref: ax_roadmaps.assessment_id > ax_assessments.assessment_id
+Ref: ax_roadmaps.approved_by > users.user_id
+Ref: roadmap_items.roadmap_id > ax_roadmaps.roadmap_id
+Ref: roadmap_items.process_id > business_processes.process_id
+Ref: roadmap_items.solution_id > ai_solution_catalog.solution_id
+Ref: ax_projects.item_id > roadmap_items.item_id
+Ref: ax_projects.owner_department_id > departments.department_id

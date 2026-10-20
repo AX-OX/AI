@@ -1,0 +1,12 @@
+﻿solution_id,solution_type,solution_name,description,base_build_cost_krw,monthly_run_cost_krw,automation_rate_low,automation_rate_base,automation_rate_high,time_reduction_rate_low,time_reduction_rate_base,time_reduction_rate_high,min_standardization_level,requires_api,data_source
+501,AI_AGENT,CRM 영업활동 자동기록 Agent,"LLM Agent + CRM API; 합성 기준값, 기존 후보 ID AX-S01",80000000,1500000,0.51,0.75,0.82,0.59,0.74,0.81,0.65,1,ASSUMED
+502,RAG,제안·견적 초안 생성 Copilot,"RAG + LLM; 합성 기준값, 기존 후보 ID AX-S02",56000000,1000000,0.42,0.62,0.69,0.48,0.6,0.66,0.65,0,ASSUMED
+503,PREDICTION,리드 우선순위 예측,"ML Classification; 합성 기준값, 기존 후보 ID AX-S03",95000000,1833333,0.34,0.5,0.56,0.24,0.3,0.33,0.55,1,ASSUMED
+504,AI_AGENT,공급업체 견적 비교 Agent,"OCR + RAG + Agent; 합성 기준값, 기존 후보 ID AX-P01",75000000,1166667,0.45,0.66,0.72,0.56,0.7,0.77,0.65,1,ASSUMED
+505,RPA,발주서 자동 검증·등록,"Rules + RPA + ERP API; 합성 기준값, 기존 후보 ID AX-P02",78000000,1333333,0.55,0.81,0.89,0.56,0.7,0.77,0.65,1,ASSUMED
+506,AI_AGENT,채용 서류 요약·검토 보조,"LLM + HITL; 합성 기준값, 기존 후보 ID AX-H01",42000000,1083333,0.29,0.42,0.46,0.28,0.35,0.39,0.55,0,ASSUMED
+507,RAG,사내 인사규정 Q&A Agent,"RAG + 권한검색; 합성 기준값, 기존 후보 ID AX-H02",30000000,666667,0.5,0.74,0.81,0.56,0.7,0.77,0.65,0,ASSUMED
+508,RAG,온보딩 안내 Agent,"RAG + Workflow; 합성 기준값, 기존 후보 ID AX-H03",35000000,750000,0.52,0.77,0.84,0.48,0.6,0.66,0.65,0,ASSUMED
+509,RAG,제품 문의 RAG 상담 Agent,"RAG + 상담시스템 API; 합성 기준값, 기존 후보 ID AX-C01",75000000,1416667,0.53,0.78,0.86,0.58,0.72,0.79,0.65,1,ASSUMED
+510,CLASSIFICATION,티켓 자동 분류·배정,"Text Classification + API; 합성 기준값, 기존 후보 ID AX-C02",55000000,1166667,0.61,0.9,1.0,0.6,0.75,0.83,0.65,1,ASSUMED
+511,AI_AGENT,기술 문제 해결 Copilot,"GraphRAG + Agent; 합성 기준값, 기존 후보 ID AX-C03",100000000,1916667,0.31,0.45,0.5,0.36,0.45,0.5,0.55,1,ASSUMED
