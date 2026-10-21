@@ -1,0 +1,122 @@
+{
+  "label_source": "가상 전문가 레이블; 실측·실제 전문가 검증 아님",
+  "processes": [
+    {
+      "process_id": 201,
+      "process_name": "사내 규정 문의 응답",
+      "label": "CANDIDATE",
+      "human_review_required": false,
+      "reason": "개인별 급여·징계·법률 해석 문의는 인사 담당자에게 이관한다.",
+      "evidence": [
+        {
+          "document_id": 401,
+          "section": "201 사내 규정 문의 응답"
+        }
+      ]
+    },
+    {
+      "process_id": 202,
+      "process_name": "신규 입사자 온보딩 안내",
+      "label": "CANDIDATE",
+      "human_review_required": false,
+      "reason": "계정 권한 발급과 근로계약 확정은 담당자가 별도 처리한다.",
+      "evidence": [
+        {
+          "document_id": 401,
+          "section": "202 신규 입사자 온보딩 안내"
+        }
+      ]
+    },
+    {
+      "process_id": 203,
+      "process_name": "인사평가 등급 산정",
+      "label": "EXCLUDED",
+      "human_review_required": true,
+      "reason": "사람의 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다. 자료 정리와 최종 판단을 구분한다.",
+      "evidence": [
+        {
+          "document_id": 401,
+          "section": "203 인사평가 등급 산정"
+        }
+      ]
+    },
+    {
+      "process_id": 204,
+      "process_name": "주간 업무 보고 취합",
+      "label": "CANDIDATE",
+      "human_review_required": true,
+      "reason": "대외 공개 수치와 경영진 의사결정은 사람이 확인한다.",
+      "evidence": [
+        {
+          "document_id": 402,
+          "section": "204 주간 업무 보고 취합"
+        }
+      ]
+    },
+    {
+      "process_id": 205,
+      "process_name": "시장·경쟁사 동향 리포트 작성",
+      "label": "CANDIDATE",
+      "human_review_required": true,
+      "reason": "미확인 수치와 출처 없는 주장은 제외한다. 현재 연결 시스템에 API가 없어 수동 수집이 필요하다.",
+      "evidence": [
+        {
+          "document_id": 402,
+          "section": "205 시장·경쟁사 동향 리포트 작성"
+        }
+      ]
+    },
+    {
+      "process_id": 206,
+      "process_name": "회의록 작성·액션 아이템 정리",
+      "label": "CANDIDATE",
+      "human_review_required": true,
+      "reason": "동의 없는 녹취와 민감 인사 정보는 처리하지 않는다. 담당자·기한은 주관자가 확정한다.",
+      "evidence": [
+        {
+          "document_id": 402,
+          "section": "206 회의록 작성·액션 아이템 정리"
+        }
+      ]
+    },
+    {
+      "process_id": 207,
+      "process_name": "장애 티켓 분류·배정",
+      "label": "CANDIDATE",
+      "human_review_required": false,
+      "reason": "보안사고·최고 심각도 장애·낮은 분류 확신은 온콜 담당자에게 즉시 이관한다. 운영 시스템 복구 명령은 실행하지 않는다.",
+      "evidence": [
+        {
+          "document_id": 403,
+          "section": "207 장애 티켓 분류·배정"
+        }
+      ]
+    },
+    {
+      "process_id": 208,
+      "process_name": "코드 리뷰 보조",
+      "label": "CANDIDATE",
+      "human_review_required": true,
+      "reason": "코드 병합과 배포는 개발자가 결정한다. 선행 과제 509의 문서 구축 완료 후 적용한다.",
+      "evidence": [
+        {
+          "document_id": 403,
+          "section": "208 코드 리뷰 보조"
+        }
+      ]
+    },
+    {
+      "process_id": 209,
+      "process_name": "기술·API 문서 작성",
+      "label": "CANDIDATE",
+      "human_review_required": true,
+      "reason": "시크릿·고객 데이터는 문서에 넣지 않는다. 승인 전 문서는 리뷰 보조 지식 기반에 게시하지 않는다.",
+      "evidence": [
+        {
+          "document_id": 403,
+          "section": "209 기술·API 문서 작성"
+        }
+      ]
+    }
+  ]
+}

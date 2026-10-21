@@ -1,0 +1,414 @@
+{
+  "evaluation_as_of": "2026-10-01",
+  "budget_limit_krw": 300000000,
+  "selected_solution_ids": [
+    507,
+    508,
+    509
+  ],
+  "selected_process_ids": [
+    207,
+    208,
+    209
+  ],
+  "total_ax_score": 265.0,
+  "total_first_year_tco_krw": 295000000,
+  "remaining_budget_krw": 5000000,
+  "evaluated_combinations": 56,
+  "valid_combinations": 39,
+  "runner_up": {
+    "solution_ids": [
+      504,
+      507,
+      509
+    ],
+    "total_ax_score": 261.3
+  },
+  "runner_up_score_gap": 3.7,
+  "greedy_top3_by_score": {
+    "solution_ids": [
+      507,
+      508,
+      504
+    ],
+    "total_ax_score": 274.7,
+    "total_first_year_tco_krw": 360000000,
+    "violations": [
+      "BUDGET_EXCEEDED",
+      "MISSING_DEPENDENCY"
+    ]
+  },
+  "excluded": [
+    {
+      "processId": 203,
+      "reason": "사람에 대한 최종 평가 등급 결정은 AI 자동 실행 대상에서 제외한다."
+    }
+  ],
+  "per_candidate": [
+    {
+      "processId": 201,
+      "solutionId": 501,
+      "dependsOnSolutionId": null,
+      "axScore": 68.2,
+      "impactScore": 51.8,
+      "feasibilityScore": 92.8,
+      "savedHoursBase": 1296.52,
+      "apiOk": true,
+      "humanReviewRequired": false,
+      "dataConfidence": "ASSUMED",
+      "warnings": [],
+      "firstYearTcoKrw": 45000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 29505622,
+          "roiPct": -34.43,
+          "paybackMonths": 21.1,
+          "threeYearNetKrw": 25516865
+        },
+        "base": {
+          "annualSavingKrw": 45393264,
+          "roiPct": 0.87,
+          "paybackMonths": 11.9,
+          "threeYearNetKrw": 73179792
+        },
+        "high": {
+          "annualSavingKrw": 57876412,
+          "roiPct": 28.61,
+          "paybackMonths": 8.8,
+          "threeYearNetKrw": 110629235
+        }
+      }
+    },
+    {
+      "processId": 202,
+      "solutionId": 502,
+      "dependsOnSolutionId": null,
+      "axScore": 56.9,
+      "impactScore": 36.2,
+      "feasibilityScore": 88.0,
+      "savedHoursBase": 904.5,
+      "apiOk": true,
+      "humanReviewRequired": false,
+      "dataConfidence": "ASSUMED",
+      "warnings": [],
+      "firstYearTcoKrw": 50000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 19658621,
+          "roiPct": -60.68,
+          "paybackMonths": 59.5,
+          "threeYearNetKrw": -15024138
+        },
+        "base": {
+          "annualSavingKrw": 31661721,
+          "roiPct": -36.68,
+          "paybackMonths": 23.2,
+          "threeYearNetKrw": 20985163
+        },
+        "high": {
+          "annualSavingKrw": 41238998,
+          "roiPct": -17.52,
+          "paybackMonths": 15.6,
+          "threeYearNetKrw": 49716993
+        }
+      }
+    },
+    {
+      "processId": 204,
+      "solutionId": 504,
+      "dependsOnSolutionId": null,
+      "axScore": 86.7,
+      "impactScore": 83.8,
+      "feasibilityScore": 91.0,
+      "savedHoursBase": 2095.24,
+      "apiOk": true,
+      "humanReviewRequired": true,
+      "dataConfidence": "ASSUMED",
+      "warnings": [],
+      "firstYearTcoKrw": 120000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 61028722,
+          "roiPct": -49.14,
+          "paybackMonths": 28.4,
+          "threeYearNetKrw": 27086165
+        },
+        "base": {
+          "annualSavingKrw": 94317115,
+          "roiPct": -21.4,
+          "paybackMonths": 16.0,
+          "threeYearNetKrw": 126951346
+        },
+        "high": {
+          "annualSavingKrw": 120472282,
+          "roiPct": 0.39,
+          "paybackMonths": 11.9,
+          "threeYearNetKrw": 205416845
+        }
+      }
+    },
+    {
+      "processId": 205,
+      "solutionId": 505,
+      "dependsOnSolutionId": null,
+      "axScore": 62.8,
+      "impactScore": 76.6,
+      "feasibilityScore": 42.0,
+      "savedHoursBase": 1915.84,
+      "apiOk": false,
+      "humanReviewRequired": true,
+      "dataConfidence": "ASSUMED",
+      "warnings": [
+        "LOW_STANDARDIZATION"
+      ],
+      "firstYearTcoKrw": 90000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 53385790,
+          "roiPct": -40.68,
+          "paybackMonths": 24.4,
+          "threeYearNetKrw": 34157369
+        },
+        "base": {
+          "annualSavingKrw": 86238583,
+          "roiPct": -4.18,
+          "paybackMonths": 12.7,
+          "threeYearNetKrw": 132715750
+        },
+        "high": {
+          "annualSavingKrw": 112418153,
+          "roiPct": 24.91,
+          "paybackMonths": 9.2,
+          "threeYearNetKrw": 211254459
+        }
+      }
+    },
+    {
+      "processId": 206,
+      "solutionId": 506,
+      "dependsOnSolutionId": null,
+      "axScore": 73.9,
+      "impactScore": 60.5,
+      "feasibilityScore": 94.0,
+      "savedHoursBase": 1512.6,
+      "apiOk": true,
+      "humanReviewRequired": true,
+      "dataConfidence": "ASSUMED",
+      "warnings": [],
+      "firstYearTcoKrw": 80000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 42150888,
+          "roiPct": -47.31,
+          "paybackMonths": 27.1,
+          "threeYearNetKrw": 22452664
+        },
+        "base": {
+          "annualSavingKrw": 68089896,
+          "roiPct": -14.89,
+          "paybackMonths": 14.5,
+          "threeYearNetKrw": 100269688
+        },
+        "high": {
+          "annualSavingKrw": 88760043,
+          "roiPct": 10.95,
+          "paybackMonths": 10.6,
+          "threeYearNetKrw": 162280129
+        }
+      }
+    },
+    {
+      "processId": 207,
+      "solutionId": 507,
+      "dependsOnSolutionId": null,
+      "axScore": 97.6,
+      "impactScore": 100.0,
+      "feasibilityScore": 94.0,
+      "savedHoursBase": 2500.85,
+      "apiOk": true,
+      "humanReviewRequired": false,
+      "dataConfidence": "ASSUMED",
+      "warnings": [],
+      "firstYearTcoKrw": 125000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 79852859,
+          "roiPct": -36.12,
+          "paybackMonths": 20.8,
+          "threeYearNetKrw": 78558576
+        },
+        "base": {
+          "annualSavingKrw": 125084198,
+          "roiPct": 0.07,
+          "paybackMonths": 12.0,
+          "threeYearNetKrw": 214252595
+        },
+        "high": {
+          "annualSavingKrw": 160822541,
+          "roiPct": 28.66,
+          "paybackMonths": 9.0,
+          "threeYearNetKrw": 321467622
+        }
+      }
+    },
+    {
+      "processId": 208,
+      "solutionId": 508,
+      "dependsOnSolutionId": 509,
+      "axScore": 90.4,
+      "impactScore": 88.0,
+      "feasibilityScore": 94.0,
+      "savedHoursBase": 2201.26,
+      "apiOk": true,
+      "humanReviewRequired": true,
+      "dataConfidence": "ASSUMED",
+      "warnings": [],
+      "firstYearTcoKrw": 115000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 73198091,
+          "roiPct": -36.35,
+          "paybackMonths": 21.1,
+          "threeYearNetKrw": 68594273
+        },
+        "base": {
+          "annualSavingKrw": 121109569,
+          "roiPct": 5.31,
+          "paybackMonths": 11.3,
+          "threeYearNetKrw": 212328706
+        },
+        "high": {
+          "annualSavingKrw": 159704926,
+          "roiPct": 38.87,
+          "paybackMonths": 8.2,
+          "threeYearNetKrw": 328114777
+        }
+      }
+    },
+    {
+      "processId": 209,
+      "solutionId": 509,
+      "dependsOnSolutionId": null,
+      "axScore": 77.0,
+      "impactScore": 68.5,
+      "feasibilityScore": 89.8,
+      "savedHoursBase": 1714.29,
+      "apiOk": true,
+      "humanReviewRequired": true,
+      "dataConfidence": "ASSUMED",
+      "warnings": [],
+      "firstYearTcoKrw": 55000000,
+      "scenarios": {
+        "low": {
+          "annualSavingKrw": 58386786,
+          "roiPct": 6.16,
+          "paybackMonths": 11.1,
+          "threeYearNetKrw": 96160357
+        },
+        "base": {
+          "annualSavingKrw": 94317115,
+          "roiPct": 71.49,
+          "paybackMonths": 6.3,
+          "threeYearNetKrw": 203951346
+        },
+        "high": {
+          "annualSavingKrw": 122949097,
+          "roiPct": 123.54,
+          "paybackMonths": 4.7,
+          "threeYearNetKrw": 289847290
+        }
+      }
+    }
+  ],
+  "calculation_details": [
+    {
+      "solution_id": 501,
+      "annual_hours": 2160.864,
+      "labor_cost": 35011.662,
+      "saved_hours": 1296.5184,
+      "metric_ids": [
+        3,
+        2,
+        1
+      ]
+    },
+    {
+      "solution_id": 502,
+      "annual_hours": 1800.0,
+      "labor_cost": 35004.6667,
+      "saved_hours": 904.5,
+      "metric_ids": [
+        6,
+        5,
+        4
+      ]
+    },
+    {
+      "solution_id": 504,
+      "annual_hours": 3521.408,
+      "labor_cost": 45014.994,
+      "saved_hours": 2095.2378,
+      "metric_ids": [
+        12,
+        11,
+        10
+      ]
+    },
+    {
+      "solution_id": 505,
+      "annual_hours": 3801.2667,
+      "labor_cost": 45013.4955,
+      "saved_hours": 1915.8384,
+      "metric_ids": [
+        15,
+        14,
+        13
+      ]
+    },
+    {
+      "solution_id": 506,
+      "annual_hours": 3001.2,
+      "labor_cost": 45014.994,
+      "saved_hours": 1512.6048,
+      "metric_ids": [
+        18,
+        17,
+        16
+      ]
+    },
+    {
+      "solution_id": 507,
+      "annual_hours": 4465.8,
+      "labor_cost": 50016.7137,
+      "saved_hours": 2500.848,
+      "metric_ids": [
+        21,
+        20,
+        19
+      ]
+    },
+    {
+      "solution_id": 508,
+      "annual_hours": 4837.932,
+      "labor_cost": 55018.3169,
+      "saved_hours": 2201.2591,
+      "metric_ids": [
+        24,
+        23,
+        22
+      ]
+    },
+    {
+      "solution_id": 509,
+      "annual_hours": 3401.36,
+      "labor_cost": 55018.326,
+      "saved_hours": 1714.2854,
+      "metric_ids": [
+        27,
+        26,
+        25
+      ]
+    }
+  ],
+  "normalization_max_saved_hours": 2500.848
+}

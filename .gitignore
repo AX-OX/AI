@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.DS_Store
+__pycache__/
+.pytest_cache/
+.venv/
+target/
+.model-cache/
+reports/runtime/
+.local/
+/reports/
+dist/
+build/
+.coverage
+htmlcov/

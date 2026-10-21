@@ -1,1 +1,75 @@
-# AI
+# AX Navigator AI
+
+FastAPI·LangGraph Agent, Business/RAG MCP, PostgreSQL·pgvector 데이터 패키지입니다. 팀원 Agent 뼈대에 실제 노드를 연결했고, Spring이 업무 데이터 조회·AX점수/ROI·포트폴리오 계산·승인·결과 저장을 담당합니다.
+
+## 저장소 구조
+
+```text
+agent/                       # 기존 팀원 구조 + 실제 노드·MCP 연결·FastAPI
+business-mcp/                # Spring 내부 API를 Agent 도구로 제공
+rag-mcp/                     # PostgreSQL pgvector 문서 검색·색인
+AX_Navigator_AI_MVP_v3/      # 현재 시연 데이터·정책·계산 정답·문서
+db/                        # PostgreSQL 초기화 SQL·계정·ERD
+scripts/                     # 로컬 채팅·데이터 fixture 생성·통합 검사
+tests/                      # 공통 MCP 계약 검사
+docs/                        # 실행·연동·데이터 재생성 문서
+AX_NAVIGATOR_CONTEXT.md       # 공통 기준 문서
+compose.yaml                 # PostgreSQL·MCP·Agent 구성 (Spring은 별도)
+.env.example                 # 환경 변수 예시, 실제 .env는 Git 제외
+```
+
+`agent/`를 새 `AI/AI/` 폴더에 다시 감싸지 않고 기존 팀원 경로에 합칩니다. Agent는 루트의 v3 데이터와 MCP 서비스를 사용하므로 `agent/`만 업로드해서는 전체 실행에 필요한 파일이 갖춰지지 않습니다.
+
+## 로컬 Agent 확인
+
+프로젝트 루트에서:
+
+```sh
+uv sync --project agent --locked
+# 키 없이 시연 데이터와 가상 등록으로 실행
+uv run --project agent python scripts/chat_agent.py --mode mock
+# 실제 OpenAI + 시연 도구: .env에 OPENAI_API_KEY, LLM_MODEL 설정
+uv run --project agent python scripts/chat_agent.py
+```
+
+질문은 한 줄로 입력하거나 `/multi` → 여러 줄 질문 → `/send`를 사용합니다. `exit`로 종료합니다. CLI는 y/n 없이 가상 등록까지 진행하며 실제 DB에는 쓰지 않습니다.
+
+## 실제 서비스 연결
+
+`.env.example`을 참고해 `.env`를 설정합니다. 실제 키·비밀번호를 코드에 넣지 않습니다.
+
+- `AGENT_MODE=live`: 실제 LLM·Business MCP·RAG MCP·PostgreSQL 체크포인터.
+- `SPRING_INTERNAL_URL`: Spring의 `/internal` 주소.
+- `BUSINESS_MCP_URL`, `RAG_MCP_URL`, `AGENT_DATABASE_URL`: Agent에서 접근 가능한 서비스 주소.
+- `INTERNAL_TOKEN`: Spring·Agent·Business MCP에 동일하게 설정.
+- Spring은 `AGENT_ENABLED=true`, `AGENT_BASE_URL`을 설정합니다.
+
+```sh
+uv run --project agent uvicorn agent.app.main:app --port 8000 --workers 1 --http h11
+```
+
+`--http h11`은 Java HttpClient의 h2c 업그레이드 요청과의 호환을 위해 필요합니다. Docker 명령에도 적용되어 있습니다. 실제 서비스는 FE → Spring 작업/승인 API → Agent 순서로 호출합니다. FE에 내부 토큰이나 OpenAI 키를 전달하지 않습니다.
+
+`compose.yaml`은 PostgreSQL·MCP·Agent를 구성하며 팀원 Spring·FE는 포함하지 않습니다. 기존 DB 볼륨에 초기화 SQL을 다시 적용하거나 볼륨을 자동 삭제하지 않습니다.
+
+## 검사
+
+```sh
+uv run --project agent python -m pytest agent/tests tests -q
+# RAG 임베딩 라이브러리까지 설치된 기존 .venv에서 실제 DB·MCP 검사
+sh scripts/verify_pgvector.sh
+```
+
+통합 검사 스크립트는 임시 PostgreSQL·실제 MCP/pgvector/체크포인터를 사용하고 Spring·LLM은 fixture입니다. 최신 실제 Spring과 FE 채팅 모듈로도 승인·실제 저장·거절을 확인했습니다. 자세한 검증 범위와 미완료 표시 사항은 [통합 안내](docs/TEAM_AGENT_ALIGNMENT.md)를 참고하세요.
+
+## 문서와 로컬 보관
+
+- [Agent 구조·실행](agent/README.md)
+- [팀원 코드 통합·BE/FE 계약](docs/TEAM_AGENT_ALIGNMENT.md)
+- [최신 BE·FE 연동 점검](docs/LATEST_INTEGRATION_CHECK.md)
+- [실제 LLM 시연](docs/LLM_DEMO.md)
+- [pgvector 저장·검색](docs/PGVECTOR_AND_OPPORTUNITY.md)
+- [데이터 재생성 요구사항](docs/DATA_REBUILD_PROMPT.md)
+- [GitHub 업로드 범위](docs/REPOSITORY_LAYOUT.md)
+
+이전 패키지·참고 코드·중복 산출물은 `.local/archive/`, 실행 보고서는 `.local/reports/`에 로컬 보관하며 업로드하지 않습니다. 현재 v3 패키지의 SQLite 파일은 mock 실행이 읽는 시연 입력이므로 유지합니다.

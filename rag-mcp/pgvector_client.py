@@ -1,0 +1,81 @@
+"""pgvector 정확 cosine 검색. 업무 테이블은 조회하지 않으며 문서 소속 검증에만 JOIN한다."""
+import json
+import math
+import os
+from functools import lru_cache
+import psycopg
+from psycopg.rows import dict_row
+from common import MODEL, INDEX_VERSION, COMPANY_ID, REVISION, corpus_hash
+
+DIMENSIONS = 384
+
+
+def vector_literal(values):
+    values = [float(v) for v in values]
+    if len(values) != DIMENSIONS or not all(math.isfinite(v) for v in values) or sum(v*v for v in values) == 0:
+        raise ValueError('임베딩은 384차원의 유한한 비영벡터여야 합니다.')
+    return '[' + ','.join(repr(v) for v in values) + ']'
+
+
+@lru_cache(maxsize=1)
+def encoder():
+    from sentence_transformers import SentenceTransformer
+    return SentenceTransformer(MODEL, revision=REVISION or None)
+
+
+def embed(texts):
+    return encoder().encode(texts, normalize_embeddings=True, show_progress_bar=False).tolist()
+
+
+class PgVectorStore:
+    def __init__(self, *, dsn=None, embedder=None, write=False):
+        self.dsn = dsn or os.getenv('RAG_INDEX_DATABASE_URL' if write else 'RAG_DATABASE_URL')
+        if not self.dsn: raise ValueError('RAG_DATABASE_URL 또는 RAG_INDEX_DATABASE_URL이 필요합니다.')
+        self.embedder = embedder or embed
+
+    def replace(self, rows, docs):
+        if not rows or len({r['id'] for r in rows}) != len(rows): raise ValueError('빈 청크 또는 중복 청크 ID')
+        # 먼저 모든 임베딩과 메타데이터 검증. 실패하면 기존 색인은 변경하지 않는다.
+        vectors = self.embedder([r['document'] for r in rows])
+        if len(vectors) != len(rows): raise ValueError('임베딩 건수 불일치')
+        literals = [vector_literal(v) for v in vectors]
+        with psycopg.connect(self.dsn, row_factory=dict_row) as conn:
+            conn.execute('SELECT pg_advisory_xact_lock(hashtext(%s))', (f'rag:{COMPANY_ID}:{INDEX_VERSION}',))
+            for row in rows:
+                meta = row['metadata']
+                if meta['company_id'] != COMPANY_ID: raise ValueError('색인 회사 범위 불일치')
+                found = conn.execute('SELECT document_id,company_id,process_id,title,doc_type,access_level,version FROM documents WHERE document_id=%s AND company_id=%s', (meta['document_id'], COMPANY_ID)).fetchone()
+                doc = docs[str(meta['document_id'])]
+                if not found or any(found[k] != doc[k] for k in found): raise ValueError('PostgreSQL 문서 metadata·회사 불일치')
+                if any(meta[k] != doc[k] for k in ('company_id','process_id','title','doc_type','access_level','version')) or meta['embedding_model'] != MODEL:
+                    raise ValueError('청크 metadata·모델 불일치')
+            conn.execute('DELETE FROM rag_document_chunks WHERE company_id=%s AND index_version=%s', (COMPANY_ID, INDEX_VERSION))
+            conn.execute('''INSERT INTO rag_indexes(company_id,index_version,embedding_model,embedding_revision,corpus_hash,chunk_count)
+                            VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT(company_id,index_version) DO UPDATE SET
+                            embedding_model=excluded.embedding_model, embedding_revision=excluded.embedding_revision,
+                            corpus_hash=excluded.corpus_hash,chunk_count=excluded.chunk_count,indexed_at=now()''',
+                         (COMPANY_ID, INDEX_VERSION, MODEL, REVISION, corpus_hash(), len(rows)))
+            for row, vector in zip(rows, literals, strict=True):
+                meta = dict(row['metadata'])
+                doc = docs[str(meta['document_id'])]
+                meta['embedding_model'] = MODEL
+                conn.execute('''INSERT INTO rag_document_chunks(company_id,index_version,chunk_id,document_id,title,doc_type,section,page,chunk_index,related_process_ids,content,metadata,embedding)
+                                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::vector)''',
+                             (COMPANY_ID,INDEX_VERSION,row['id'],meta['document_id'],meta['title'],meta['doc_type'],meta['section'],meta['page'],meta['chunk_index'],doc['related_process_ids'],row['document'],json.dumps(meta,ensure_ascii=False),vector))
+        return len(rows)
+
+    def search(self, query, doc_type=None, process_id=None, top_k=5):
+        if not query.strip() or not 1 <= top_k <= 20: raise ValueError('검색어와 top_k 1~20이 필요합니다.')
+        with psycopg.connect(self.dsn, row_factory=dict_row) as conn:
+            index = conn.execute('SELECT * FROM rag_indexes WHERE company_id=%s AND index_version=%s', (COMPANY_ID, INDEX_VERSION)).fetchone()
+            if not index or (index['embedding_model'],index['embedding_revision'],index['corpus_hash']) != (MODEL,REVISION,corpus_hash()):
+                raise ValueError('색인이 없거나 모델·문서 버전이 다릅니다. index.py로 재색인하세요.')
+            vector = vector_literal(self.embedder([query])[0])
+            return conn.execute('''SELECT c.document_id,c.title,c.doc_type,c.section,c.page,c.content,
+                                          (c.embedding <=> %s::vector)::float8 AS score
+                                   FROM rag_document_chunks c JOIN documents d ON d.document_id=c.document_id AND d.company_id=c.company_id
+                                   WHERE c.company_id=%s AND c.index_version=%s
+                                     AND (%s::text IS NULL OR c.doc_type=%s)
+                                     AND (%s::bigint IS NULL OR %s=ANY(c.related_process_ids) OR cardinality(c.related_process_ids)=0)
+                                   ORDER BY c.embedding <=> %s::vector,c.chunk_id LIMIT %s''',
+                                (vector,COMPANY_ID,INDEX_VERSION,doc_type,doc_type,process_id,process_id,vector,top_k)).fetchall()

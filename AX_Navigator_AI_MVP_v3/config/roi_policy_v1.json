@@ -1,0 +1,18 @@
+{
+  "version": "v1.0",
+  "role": "auxiliary_indicator",
+  "source": "ai_solution_catalog only",
+  "formula": {
+    "baseline_annual_hours": "SUM(last 3 complete months of processing_count * avg_processing_minutes / 60) * 4",
+    "weighted_hourly_labor_cost_krw": "SUM(monthly_hours * hourly_labor_cost_krw) / SUM(monthly_hours)",
+    "annual_saved_hours": "baseline_annual_hours * automation_rate_{scenario} * time_reduction_rate_{scenario}",
+    "gross_annual_savings_krw": "annual_saved_hours * weighted_hourly_labor_cost_krw",
+    "annual_run_cost_krw": "monthly_run_cost_krw * 12",
+    "first_year_tco_krw": "base_build_cost_krw + annual_run_cost_krw",
+    "first_year_roi_pct": "(gross_annual_savings_krw - first_year_tco_krw) / first_year_tco_krw * 100",
+    "payback_months": "12 * base_build_cost_krw / (gross_annual_savings_krw - annual_run_cost_krw); denominator <= 0 => null",
+    "three_year_net_value": "3 * gross_annual_savings_krw - base_build_cost_krw - 36 * monthly_run_cost_krw"
+  },
+  "rounding_note": "Decimal ROUND_HALF_UP. Money rounded only after full formula; AX score 1dp; ROI 2dp; payback 1dp. Sum returned AX scores for portfolio objective.",
+  "cost_scope": "인력 시간 환산 가치. 현금 절감·인력 감축·측정된 효과를 보장하지 않는다."
+}

@@ -1,0 +1,4 @@
+department_id,company_id,department_name,manager_name,manager_email,manager_phone
+101,1,인사,가상담당자A,demo.101@gaon.example,010-0000-0001
+102,1,기획,가상담당자B,demo.102@gaon.example,010-0000-0002
+103,1,개발,가상담당자C,demo.103@gaon.example,010-0000-0003

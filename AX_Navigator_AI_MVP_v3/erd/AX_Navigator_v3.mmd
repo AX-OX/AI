@@ -1,0 +1,214 @@
+erDiagram
+    companies {
+        BIGINT company_id
+        VARCHAR_100_ company_name
+        VARCHAR_50_ industry
+        INTEGER employee_count
+        BIGINT ax_budget_krw
+        TIMESTAMP created_at
+    }
+    departments {
+        BIGINT department_id
+        BIGINT company_id
+        VARCHAR_50_ department_name
+        VARCHAR_50_ manager_name
+        VARCHAR_100_ manager_email
+        VARCHAR_20_ manager_phone
+    }
+    business_processes {
+        BIGINT process_id
+        BIGINT department_id
+        VARCHAR_100_ process_name
+        TEXT purpose
+        JSONB process_steps
+        NUMERIC_3_2_ standardization_level
+        BOOLEAN requires_approval
+        TEXT exception_rules
+    }
+    process_metrics {
+        BIGINT metric_id
+        BIGINT process_id
+        DATE period_start
+        DATE period_end
+        INTEGER processing_count
+        NUMERIC_8_2_ avg_processing_minutes
+        NUMERIC_5_4_ error_rate
+        INTEGER hourly_labor_cost_krw
+        VARCHAR_20_ data_source
+    }
+    it_systems {
+        BIGINT system_id
+        BIGINT company_id
+        VARCHAR_100_ system_name
+        VARCHAR_30_ system_type
+        BOOLEAN api_available
+        VARCHAR_20_ data_access_level
+        BOOLEAN cloud_based
+    }
+    process_systems {
+        BIGINT process_id
+        BIGINT system_id
+        VARCHAR_200_ usage_purpose
+    }
+    documents {
+        BIGINT document_id
+        BIGINT company_id
+        BIGINT process_id
+        VARCHAR_200_ title
+        VARCHAR_30_ doc_type
+        VARCHAR_500_ file_uri
+        VARCHAR_20_ access_level
+        VARCHAR_20_ version
+        TIMESTAMP created_at
+    }
+    ai_solution_catalog {
+        BIGINT solution_id
+        BIGINT target_process_id
+        BIGINT depends_on_solution_id
+        VARCHAR_30_ solution_type
+        VARCHAR_100_ solution_name
+        TEXT description
+        BIGINT base_build_cost_krw
+        BIGINT monthly_run_cost_krw
+        NUMERIC_3_2_ automation_rate_low
+        NUMERIC_3_2_ automation_rate_base
+        NUMERIC_3_2_ automation_rate_high
+        NUMERIC_3_2_ time_reduction_rate_low
+        NUMERIC_3_2_ time_reduction_rate_base
+        NUMERIC_3_2_ time_reduction_rate_high
+        NUMERIC_3_2_ min_standardization_level
+        BOOLEAN requires_api
+        VARCHAR_20_ data_source
+    }
+    users {
+        BIGINT user_id
+        BIGINT company_id
+        VARCHAR_100_ email
+        VARCHAR_200_ password_hash
+        VARCHAR_50_ user_name
+        TIMESTAMP created_at
+    }
+    ai_tasks {
+        VARCHAR_36_ task_id
+        BIGINT user_id
+        BIGINT company_id
+        TEXT request_text
+        VARCHAR_30_ status
+        JSONB result
+        TEXT error_message
+        VARCHAR_500_ trace_url
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        TIMESTAMP completed_at
+    }
+    ax_assessments {
+        BIGINT assessment_id
+        BIGINT company_id
+        VARCHAR_36_ task_id
+        NUMERIC_5_2_ data_score
+        NUMERIC_5_2_ infra_score
+        NUMERIC_5_2_ automation_score
+        NUMERIC_5_2_ ai_capability_score
+        NUMERIC_5_2_ governance_score
+        NUMERIC_5_2_ total_score
+        VARCHAR_20_ criteria_version
+        JSONB evidence
+        TIMESTAMP created_at
+    }
+    ax_roadmaps {
+        BIGINT roadmap_id
+        BIGINT company_id
+        VARCHAR_36_ task_id
+        BIGINT assessment_id
+        VARCHAR_200_ roadmap_name
+        BIGINT budget_limit_krw
+        BIGINT total_allocated_krw
+        VARCHAR_20_ approval_status
+        BIGINT approved_by
+        TIMESTAMP approved_at
+        TEXT rejection_reason
+        TIMESTAMP created_at
+    }
+    roadmap_items {
+        BIGINT item_id
+        BIGINT roadmap_id
+        BIGINT process_id
+        BIGINT solution_id
+        VARCHAR_200_ item_name
+        INTEGER priority_order
+        VARCHAR_10_ phase
+        INTEGER start_month
+        INTEGER duration_months
+        BIGINT allocated_budget_krw
+        NUMERIC_5_1_ ax_score
+        NUMERIC_5_1_ impact_score
+        NUMERIC_5_1_ feasibility_score
+        BIGINT expected_annual_saving_krw
+        NUMERIC_7_2_ roi_pct
+        NUMERIC_5_1_ payback_months
+        BIGINT three_year_net_value_krw
+        TEXT rationale
+        JSONB evidence
+    }
+    ax_projects {
+        BIGINT project_id
+        BIGINT item_id
+        BIGINT owner_department_id
+        VARCHAR_200_ project_name
+        VARCHAR_20_ project_status
+        DATE start_date
+        DATE end_date
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    rag_indexes {
+        BIGINT company_id
+        TEXT index_version
+        TEXT embedding_model
+        TEXT embedding_revision
+        TEXT corpus_hash
+        INTEGER chunk_count
+        TIMESTAMPTZ indexed_at
+    }
+    rag_document_chunks {
+        BIGINT company_id
+        TEXT index_version
+        TEXT chunk_id
+        BIGINT document_id
+        TEXT title
+        TEXT doc_type
+        TEXT section
+        INTEGER page
+        INTEGER chunk_index
+        BIGINT__ related_process_ids
+        TEXT content
+        JSONB metadata
+        vector_384_ embedding
+    }
+    companies ||--o{ departments : "company_id"
+    departments ||--o{ business_processes : "department_id"
+    business_processes ||--o{ process_metrics : "process_id"
+    companies ||--o{ it_systems : "company_id"
+    business_processes ||--o{ process_systems : "process_id"
+    it_systems ||--o{ process_systems : "system_id"
+    companies ||--o{ documents : "company_id"
+    business_processes ||--o{ documents : "process_id"
+    business_processes ||--o{ ai_solution_catalog : "target_process_id"
+    ai_solution_catalog ||--o{ ai_solution_catalog : "depends_on_solution_id"
+    companies ||--o{ users : "company_id"
+    users ||--o{ ai_tasks : "user_id"
+    companies ||--o{ ai_tasks : "company_id"
+    companies ||--o{ ax_assessments : "company_id"
+    ai_tasks ||--o{ ax_assessments : "task_id"
+    companies ||--o{ ax_roadmaps : "company_id"
+    ai_tasks ||--o{ ax_roadmaps : "task_id"
+    ax_assessments ||--o{ ax_roadmaps : "assessment_id"
+    users ||--o{ ax_roadmaps : "approved_by"
+    ax_roadmaps ||--o{ roadmap_items : "roadmap_id"
+    business_processes ||--o{ roadmap_items : "process_id"
+    ai_solution_catalog ||--o{ roadmap_items : "solution_id"
+    roadmap_items ||--o{ ax_projects : "item_id"
+    departments ||--o{ ax_projects : "owner_department_id"
+    companies ||--o{ rag_indexes : "company_id"
+    rag_indexes ||--o{ rag_document_chunks : "company_id, index_version"
+    documents ||--o{ rag_document_chunks : "document_id"
