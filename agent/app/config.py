@@ -15,7 +15,7 @@ class Settings:
     spring_url: str = 'http://backend:8080/internal'
     model: str = ''
     fallback_model: str = ''
-    timeout: float = 120
+    timeout: float = 300
     company_id: int = 1
     max_agent_turns: int = 8
     max_same_tool_calls: int = 3
@@ -56,7 +56,7 @@ class Settings:
                    checkpoint_url=checkpoint_url, business_url=os.getenv('BUSINESS_MCP_URL', cls.business_url),
                    rag_url=os.getenv('RAG_MCP_URL', cls.rag_url), spring_url=os.getenv('SPRING_INTERNAL_URL', cls.spring_url),
                    model=os.getenv('LLM_MODEL', ''), fallback_model=os.getenv('LLM_FALLBACK_MODEL', ''),
-                   timeout=float(os.getenv('AGENT_TIMEOUT_SECONDS', os.getenv('TASK_TIMEOUT_SECONDS', '120'))), company_id=int(os.getenv('AGENT_COMPANY_ID', '1')),
+                   timeout=float(os.getenv('AGENT_TIMEOUT_SECONDS', os.getenv('TASK_TIMEOUT_SECONDS', '300'))), company_id=int(os.getenv('AGENT_COMPANY_ID', '1')),
                    max_agent_turns=int(os.getenv('MAX_AGENT_TURNS', '8')),
                    max_same_tool_calls=int(os.getenv('MAX_SAME_TOOL_CALLS', '3')),
                    tool_result_max_chars=int(os.getenv('TOOL_RESULT_MAX_CHARS', '2000')),
