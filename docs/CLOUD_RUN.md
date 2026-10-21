@@ -242,3 +242,99 @@ FROM public.documents WHERE document_id BETWEEN 401 AND 408 ORDER BY document_id
 
 Cloud SQL 연결·실제 Spring·실제 LLM·Cloud Run 배포 동작은 검증하지 않았다.
 검증용 코드는 `/private/tmp`에서만 사용했으며 저장소의 기존 애플리케이션·테스트는 변경하지 않았다.
+
+## 조건부 인덱싱 명령 (추가)
+
+기존 8개 문서·34개 JSONL 청크의 인덱스만 관리한다. 운영 서비스 이름은 `axai`이며,
+앞부분의 초기 배포 예시와 관계없이 기존 서비스·URL을 유지한다.
+컨테이너 시작 스크립트는 변경하지 않았다. 일반 Agent 기동으로 색인이 실행되지 않는다.
+
+```sh
+# DB 쓰기 작업이다. 인덱싱 계정 DSN은 실행 환경의 Secret으로 주입한다.
+python rag-mcp/index.py --if-needed
+```
+
+- `RAG_INDEX_DATABASE_URL`: 기존 `axox` DB의 색인 전용 계정 DSN. 이 명령은 읽기 계정으로 대체하지 않는다.
+- 회사·색인 버전: `RAG_COMPANY_ID`(기본 1), `RAG_INDEX_VERSION`(기본 `ax-v3-pgvector-v1`).
+- 이미지에 포함된 corpus·모델·revision 설정을 서비스와 동일하게 사용한다.
+- 모델명 변경 시 JSONL의 `metadata.embedding_model`도 맞추고 이미지를 다시 빌드한다.
+  기존 모델·문서 메타데이터 일치 검사를 완화하지 않으며, 벡터는 계속 384차원이어야 한다.
+- 기존 인수 없는 `python rag-mcp/index.py`는 명시적인 강제 교체 동작을 유지한다.
+
+조건부 명령의 처리 순서:
+
+1. 회사·색인 버전별 PostgreSQL transaction advisory lock을 획득한다.
+2. 원본 `documents` 소속·메타데이터가 JSONL·매핑과 맞는지 검사한다. 불일치하면 중단한다.
+3. `rag_indexes`의 모델·revision·corpus hash·청크 수를 확인한다.
+4. 실제 청크의 ID·본문·메타데이터·업무 연결과 벡터의 384차원·유한성·비영 여부를 확인한다.
+5. 모두 일치하면 모델 로드나 DML 없이 `{"status":"skipped","chunks":34}`로 종료한다.
+6. 누락·불일치면 기존 적재 로직으로 실제 임베딩을 만들고 해당 회사·버전만 교체한다.
+7. 같은 트랜잭션에서 저장 결과를 다시 검사한 뒤 커밋하고 `{"status":"indexed","chunks":34}`로 종료한다.
+
+실패 시 0이 아닌 종료 코드를 반환한다. 로그는 처리 단계·예외 종류·SQLSTATE만 출력하고
+예외 원문·DSN·암호·본문은 출력하지 않는다. 커밋 전 오류는 해당 트랜잭션의 RAG 변경을 롤백한다.
+후속 실행은 잠금 획득 후 최신 상태를 다시 확인하므로 같은 정상 인덱스를 중복 생성하지 않는다.
+스키마·업무 데이터·다른 회사/색인 버전은 변경하지 않는다.
+
+### 향후 Cloud Run Job 연결 — 아직 적용하지 않음
+
+Job은 서비스와 **같은 커밋의 이미지 digest**를 사용하고 다음처럼 설정한다.
+
+| 항목 | 설정 |
+|---|---|
+| 서비스 | 기존 `axai` 유지, 서비스 시작 명령 변경 없음 |
+| Job 명령 재정의 | `python` |
+| Job 인수 | `rag-mcp/index.py`, `--if-needed` (별도 인수 두 개) |
+| 태스크 수 / 병렬성 / 초기 재시도 | 1 / 1 / 0 |
+| 리소스 시작값 / 제한 시간 | CPU 2 / 메모리 4 GiB / 600초 |
+| 일반 환경 | 서비스와 동일한 회사·색인 버전·모델·corpus 설정 |
+| 비밀 환경 | `RAG_INDEX_DATABASE_URL`만 색인 계정 Secret 숫자 버전으로 주입 |
+| 불필요한 비밀 | Agent 체크포인터·Spring 내부 토큰·OpenAI 키 |
+| 연결 | 기존 Cloud SQL 인스턴스 연결 이름, 필요 시 기존 VPC 경로 |
+| 런타임 IAM | DB 프로젝트의 Cloud SQL Client, 색인 Secret의 Secret Accessor |
+| PostgreSQL 권한 | 앞 절의 색인 전용 GRANT. 새로운 DDL·업무 쓰기 권한 불필요 |
+
+**자동 배포 연동은 완료되지 않았다.** 현재 GCP 트리거의 실제 설정은 이 환경에서 조회하지 않았다.
+코드 Merge만으로 기존 콘솔 관리 트리거에 Job 실행 단계가 추가되지는 않는다.
+GitHub Actions·Cloud Build 설정 파일·자동 트리거는 이번 수정에 추가/변경하지 않는다.
+
+사용자가 기존 트리거 설정을 확인한 후, **동일 트리거의 기존 배포 단계 앞에** 아래 순서를 연결해야 한다:
+
+```text
+기존 이미지 빌드·게시
+→ 같은 이미지의 조건부 인덱싱 Job 실행 및 성공 완료 대기
+→ 성공한 경우에만 기존 axai 배포 단계
+```
+
+Job 실행 대기는 `gcloud run jobs execute <JOB_NAME> --project=my-project-axox --region=asia-northeast1 --wait`를 사용할 수 있다.
+실패 코드를 무시하는 단계나 Job과 서비스 배포를 병렬 실행하는 구성은 사용하지 않는다.
+새 자동 배포 트리거를 중복 생성하지 않는다. 빌드 실행 계정은 Job 실행/결과 조회 권한이 필요하며,
+Job 이미지를 갱신한다면 갱신 권한과 Job 런타임 서비스 계정의 actAs 권한도 필요하다.
+동시 빌드에서는 공유 Job의 이미지 갱신과 실행 사이에 다른 빌드가 끼어들지 않도록
+빌드별 Job 또는 배포 직렬화로 이미지와 실행을 고정해야 한다. DB 잠금은 이 이미지 선택 문제까지 해결하지 않는다.
+
+문서·모델을 변경해 기존 서비스와 다른 corpus가 되는 배포에서는 새 `RAG_INDEX_VERSION`을 사용하고
+Job과 새 서비스 리비전에 같은 값을 지정한다. 그러면 기존 리비전의 인덱스를 보존할 수 있다.
+같은 버전을 덮어쓰면 원자적 교체이더라도 기존 리비전은 corpus hash 검사에서 검색을 거절할 수 있다.
+이전 버전 인덱스의 자동 삭제·새 문서 업로드·증분 색인은 이번 범위에 포함하지 않는다.
+
+### 로컬 조건부 인덱싱 검사
+
+`tests/test_conditional_index.py`는 기본적으로 Mock 명령 검사만 실행한다.
+DB 검사는 호스트 `127.0.0.1` 또는 `localhost`, DB 이름 `ax_rag_conditional_test`인
+새 격리 DB에만 연결하도록 방어한다. 운영 DSN을 테스트 환경변수에 넣지 않는다.
+
+```sh
+agent/.venv/bin/python -m pytest agent/tests tests -q
+# 새 로컬 pgvector 테스트 DB에만 설정:
+# AX_RAG_TEST_DATABASE_URL=<disposable local DSN>
+# python -m pytest tests/test_conditional_index.py -q
+```
+
+테스트는 최초 적재·쓰기 없는 생략·문서/모델/revision/corpus/색인 버전 변경·데이터 손상 복구,
+원본 불일치 중단·연결/모델/쓰기/사후 검증 실패 롤백·동시 실행 중복 방지·다른 버전 보존과
+실제 `search_docs` MCP 응답을 검증한다. 실제 CPU 모델이 있으면 의미 검색도 검사한다.
+
+이번 로컬 검증에서는 새 PostgreSQL 16 / pgvector 0.8.1 컨테이너와 CPU 모델 캐시를 사용했다.
+전체 85개 테스트 통과, 기존 외부 통합 설정이 없는 5개는 건너뛰었다. 이 중 새 조건부 인덱싱
+테스트 25개는 모두 통과했다. 운영 Cloud SQL·GCP 트리거는 사용하지 않았다.
