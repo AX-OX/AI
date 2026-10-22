@@ -16,5 +16,6 @@ def camel(value):
 
 def storage_result(value):
     names = {'assessmentId':'assessment_id', 'totalScore':'total_score', 'roadmapId':'roadmap_id',
-             'itemIds':'item_ids', 'projectId':'project_id', 'projectStatus':'project_status'}
+             'itemIds':'item_ids', 'projectId':'project_id', 'projectStatus':'project_status',
+             'draftId':'draft_id'}
     return {names.get(k,k):v for k,v in value.items()}

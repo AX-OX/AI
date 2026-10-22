@@ -4,16 +4,17 @@ import hmac
 import os
 from uuid import UUID
 
-from fastapi import FastAPI, Depends, Header, HTTPException
+from fastapi import FastAPI, Depends, Header, HTTPException, UploadFile, File, Form
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from .config import Settings
-from .schemas import RunRequest, ResumeRequest
+from .schemas import RunRequest, ResumeRequest, ConfirmRequest
 from .clients import Gateway
 from .mock import MockGateway
 from .reasoning import Reasoner, MockReasoner
 from .graph import build_graph, task_result
-from .runner import TaskRunner
+from .runner import TaskRunner, pending_kind
+from .ingest import Ingestor, MAX_BYTES
 
 
 
@@ -33,7 +34,9 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
             app.state.runner = TaskRunner(app.state.graph, app.state.gateway, settings)
             app.state.jobs = app.state.runner.jobs
             app.state.guard = app.state.runner.guard
+            app.state.ingestor = Ingestor(app.state.gateway)
             yield
+            await app.state.ingestor.close()
             await app.state.runner.close()
 
     app = FastAPI(title='AX Navigator Agent', lifespan=lifespan)
@@ -61,14 +64,33 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
     async def resume(task_id: UUID, request: ResumeRequest):
         return await app.state.runner.resume(task_id, request)
 
+    @app.post('/tasks/{task_id}/confirm', status_code=202, dependencies=[Depends(auth)])
+    async def confirm(task_id: UUID, request: ConfirmRequest):
+        return await app.state.runner.confirm(task_id, request)
+
+    @app.post('/documents/{document_id}/ingest', status_code=202, dependencies=[Depends(auth)])
+    async def ingest(document_id: int, companyId: int = Form(gt=0), fileName: str = Form(min_length=1, max_length=200),
+                     contentType: str = Form(), file: UploadFile = File()):
+        # Spring이 형식·크기를 먼저 검사한다. 여기서는 경계만 다시 확인하고 결과는 콜백으로 돌려준다.
+        if contentType != 'application/pdf': raise HTTPException(400, 'PDF만 색인합니다.')
+        data = await file.read(MAX_BYTES + 1)
+        if not data or len(data) > MAX_BYTES: raise HTTPException(400, 'PDF는 1바이트 이상 20MB 이하여야 합니다.')
+        try:
+            if not app.state.ingestor.start(document_id, companyId, fileName, data):
+                raise HTTPException(409, '이미 색인 중인 문서입니다.')
+        except OverflowError:
+            raise HTTPException(503, '동시 색인 한도 초과') from None
+        return {'documentId': document_id, 'status': 'UPLOADED'}
+
     # 개발·내부 상태 확인용. 공개 사용자 조회 API는 Spring에서 요청자 인가 후 제공한다.
     @app.get('/tasks/{task_id}', dependencies=[Depends(auth)])
     async def state(task_id: UUID):
         snapshot = await app.state.graph.aget_state(TaskRunner._cfg(task_id))
         if not snapshot.values: raise HTTPException(404, '작업이 없습니다.')
-        interrupted = any(t.interrupts for t in snapshot.tasks)
+        kind = pending_kind(snapshot)
         status = snapshot.values.get('status')
-        if interrupted and status not in {'FAILED', 'DONE', 'REJECTED'}: status = 'WAITING_APPROVAL'
+        if kind and status not in {'FAILED', 'DONE', 'REJECTED'}:
+            status = 'WAITING_CONFIRMATION' if kind == 'CONFIRMATION' else 'WAITING_APPROVAL'
         return {'taskId': str(task_id), 'status': status, 'mode': settings.mode, 'next': snapshot.next,
                 'roadmap': task_result(snapshot.values, settings.mode)['roadmap'],
                 'result': task_result(snapshot.values, settings.mode), 'errors': snapshot.values.get('errors', []),

@@ -44,13 +44,15 @@ async def calculate_ax_roi(process_id: int, solution_id: int) -> Any:
     return await call('POST', '/ax/roi', body={'processId': process_id, 'solutionId': solution_id})
 
 @mcp.tool
-async def optimize_ax_portfolio(company_id: int, candidates: list[dict[str, int]], max_items: int = 3) -> Any:
-    """회사 ID와 process_id, solution_id 후보로 예산·중복 업무·정책 제외·선행 과제 제약 안에서 AX점수 합 최대 max_items개 조합을 Spring에 요청한다."""
+async def optimize_ax_portfolio(company_id: int, candidates: list[dict[str, int]], max_items: int = 3, budget_krw: int | None = None) -> Any:
+    """회사 ID와 process_id, solution_id 후보로 중복 업무·정책 제외·선행 과제 제약 안에서 AX점수 합 최대 max_items개 조합을 Spring에 요청한다. budget_krw(원)를 주면 예산 제약도 적용하고, 없으면 예산 제약 없이 선정한다."""
     if not 1 <= max_items <= 10 or len(candidates) > 10:
         raise ToolError('max_items는 1~10, 후보는 최대 10개여야 합니다.')
     if any(set(c) != {'process_id', 'solution_id'} for c in candidates):
         raise ToolError('각 후보에 process_id와 solution_id가 필요합니다.')
-    return await call('POST', '/ax/portfolio', body={'companyId': company_id, 'candidates': [{'processId': c['process_id'], 'solutionId': c['solution_id']} for c in candidates], 'maxItems': max_items})
+    if budget_krw is not None and budget_krw <= 0:
+        raise ToolError('budget_krw는 양수여야 합니다.')
+    return await call('POST', '/ax/portfolio', body={'companyId': company_id, 'candidates': [{'processId': c['process_id'], 'solutionId': c['solution_id']} for c in candidates], 'maxItems': max_items, **({'budgetKrw': budget_krw} if budget_krw is not None else {})})
 
 @mcp.tool
 async def save_assessment(task_id: str, scores: dict[str, Any], criteria_version: str, evidence: list[dict[str, Any]]) -> Any:
@@ -60,6 +62,11 @@ async def save_assessment(task_id: str, scores: dict[str, Any], criteria_version
         'scores': {AREAS.get(k,k):v for k,v in scores.items()},
         'criteriaVersion': criteria_version, 'evidence': camel(evidence)})
     return storage_result(result)
+
+@mcp.tool
+async def save_extraction(task_id: str, document_ids: list[int], payload: dict[str, Any]) -> Any:
+    """업로드 문서에서 추출한 부서, 업무, 지표, 시스템 draft를 Spring에 저장한다. payload는 Spring 계약 그대로(camelCase)이며 사용자가 확정하기 전에는 기업 데이터에 반영되지 않는다."""
+    return storage_result(await call('POST', '/extractions', body={'taskId': task_id, 'documentIds': document_ids, 'payload': payload}))
 
 @mcp.tool(annotations={'destructiveHint': True})
 async def create_ax_roadmap(task_id: str, company_id: int, assessment_id: int | None, roadmap_name: str, items: list[dict[str, Any]]) -> Any:

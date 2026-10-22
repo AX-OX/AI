@@ -24,9 +24,18 @@ class MockGateway(Gateway):
             if hashlib.sha256((settings.data_dir/relative).read_bytes()).hexdigest()!=digest:
                 raise ValueError('v3 mock 정답이 오래되었습니다. scripts/build_demo_portfolios.py로 재생성하세요.')
         self.calls, self.saved = [], {}
+        # 업로드 문서 조각: company_id -> [chunk]. index_document 도구가 채운다 (v3 시드 회사 1 문서와 분리).
+        self.uploads = {}
 
     async def _spring(self, method, path, body):
         self.events.append({'method':method,'path':path,'body':copy.deepcopy(body)})
+
+    async def index_document(self, company_id, document_id, title, pages):
+        args = {'company_id': company_id, 'document_id': document_id, 'title': title, 'pages': pages}
+        self.calls.append(('index_document', copy.deepcopy(args)))
+        result = self._call('', 'index_document', args)
+        if not result['chunks']: raise ValueError('RAG_UPLOAD_EMPTY: PDF에서 텍스트를 추출하지 못했습니다.')
+        return result
 
     async def tool(self, task_id, node, name, args):
         self.calls.append((name,copy.deepcopy(args)))
@@ -44,6 +53,19 @@ class MockGateway(Gateway):
         if name=='get_system_inventory': return {'systems':self.tables['it_systems'],'process_systems':self.tables['process_systems']}
         if name=='get_project_budget': return {'ax_budget_krw':int(self.tables['companies'][0]['ax_budget_krw'])}
         if name=='get_solution_catalog': return self.tables['ai_solution_catalog']
+        if name=='index_document':
+            rows=[{'document_id':args['document_id'],'title':args['title'],'doc_type':'UPLOADED','section':f"p.{p['page']}",
+                   'page':p['page'],'chunk_index':i,'content':p['text']} for i,p in enumerate(args['pages']) if p['text'].strip()]
+            company=self.uploads.setdefault(args['company_id'],[])
+            company[:]=[r for r in company if r['document_id']!=args['document_id']]+rows
+            return {'document_id':args['document_id'],'chunks':len(rows)}
+        if name=='get_document_chunks':
+            return [dict(r) for r in self.uploads.get(args['company_id'],[]) if r['document_id'] in args['document_ids']]
+        if name=='save_extraction':
+            return {'draft_id':7001}
+        if args.get('company_id') in self.uploads and name in {'get_assessment_evidence','search_docs'}:
+            rows=[dict(r) for r in self.uploads[args['company_id']] if not args.get('doc_type') or r['doc_type']==args['doc_type']]
+            return rows if name=='get_assessment_evidence' else rows[:args.get('top_k',5)]
         if name=='get_assessment_evidence':
             return [{**r['metadata'],'content':r['document']} for r in self.chunks
                     if r['metadata']['doc_type'] in {'SYSTEM_SPEC','POLICY','AI_STATUS','DATA_QUALITY','PROJECT_REPORT'}]
@@ -69,7 +91,14 @@ class MockGateway(Gateway):
             if args['max_items']!=self.portfolio_fixtures['max_items'] or key not in self.portfolio_fixtures['portfolios']:
                 raise ValueError('mock에 기록되지 않은 후보 수·조합입니다.')
             # Lookup only: every subset result was generated offline, no optimization at runtime.
-            return copy.deepcopy(self.portfolio_fixtures['portfolios'][key])
+            result=copy.deepcopy(self.portfolio_fixtures['portfolios'][key])
+            budget=args.get('budget_krw')
+            if budget is None:
+                # 예산 없는 요청: Spring은 예산 값을 null로 준다. 조합은 3억 기준 fixture를 그대로 쓴다(계약 검증용).
+                result['budgetKrw']=result['remainingBudgetKrw']=None
+            elif budget!=result['budgetKrw']:
+                raise ValueError('mock 포트폴리오는 예산 3억 원 fixture만 제공합니다.')
+            return result
         key = task_id+name+json.dumps(args,sort_keys=True)
         if key not in self.saved:
             if name=='save_assessment':

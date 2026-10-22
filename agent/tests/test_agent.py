@@ -128,15 +128,19 @@ async def test_tampered_roi_never_reaches_approval_or_writes():
     assert not any(n.startswith('create_') for n, _ in gateway.calls)
 
 @pytest.mark.asyncio
-async def test_company_scope_rejects_before_tools():
+async def test_other_company_cannot_use_another_companys_data():
+    # 회사 범위는 Spring 응답의 company_id로 확인한다. 다른 회사 데이터가 오면 쓰기 없이 실패한다.
     cfg = settings()
     gateway = MockGateway(cfg)
     app = create_app(cfg, gateway=gateway)
+    key = str(uuid4())
     async with app.router.lifespan_context(app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test', headers={'X-Internal-Token': 'test-token'}) as client:
-            response = await client.post(f'/tasks/{uuid4()}/run', json={'companyId': 2, 'userId': 602, 'requestText': '추천'})
-            assert response.status_code == 403
-            assert not gateway.calls
+            response = await client.post(f'/tasks/{key}/run', json={'companyId': 2, 'userId': 602, 'requestText': '추천'})
+            assert response.status_code == 202
+            await wait_job(app, key)
+            assert (await client.get(f'/tasks/{key}')).json()['status'] == 'FAILED'
+            assert not any(n == 'save_assessment' or n.startswith('create_') for n, _ in gateway.calls)
 
 @pytest.mark.asyncio
 async def test_legacy_score_contract_rejected():

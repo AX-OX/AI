@@ -10,6 +10,7 @@ from .schemas import Narrative
 from .contexts import assessment_context, discovery_context, response_context, context_json
 from .assessment import evidence_catalog, draft_schema, resolve_draft, AssessmentReferenceError
 from .candidate_refs import candidate_catalog, discovery_schema, resolve_candidates
+from .extraction import chunk_catalog, draft_schema as extraction_schema, resolve_draft as resolve_extraction
 from .harness.limits import LoopGuard, LimitExceeded
 from .harness.tool_output import prepare_tool_output
 from .harness.recovery import is_retryable
@@ -98,6 +99,33 @@ class Reasoner:
             raise ValueError(f'필수 조회 도구 결과 부족: {sorted(READS - results.keys())}')
         return results
 
+    async def extract(self, state, chunks):
+        catalog = chunk_catalog(chunks, state['document_ids'])
+        schema = extraction_schema(catalog)
+        context = {'request': state['request'],
+                   'chunks': [{'chunk_id': key, 'document_id': row['document_id'], 'title': row['title'],
+                               'page': row['page'], 'content': row['content']} for key, row in catalog.items()]}
+        content = context_json(context, stage='extract', limit=60000)
+        self.observe(state['task_id'], 'extract', 'CONTEXT_BUILT', {'characters': len(content), 'chunkCount': len(catalog)})
+        messages = [SystemMessage(content=prompt('extract')), HumanMessage(content=content)]
+        for attempt in range(2):
+            async def generate(model):
+                return await model.with_structured_output(schema, method='function_calling', strict=True).ainvoke(messages)
+            draft = await self.invoke(generate, task_id=state['task_id'], stage='extract')
+            try:
+                payload = resolve_extraction(draft, catalog)
+                self.observe(state['task_id'], 'extract', 'EXTRACTION_VALIDATED',
+                             {key: len(payload[key]) for key in ('departments', 'processes', 'metrics', 'systems')} | {'repairAttempts': attempt})
+                return payload
+            except AssessmentReferenceError as exc:
+                self.observe(state['task_id'], 'extract', 'EXTRACTION_REFERENCE_ERROR', {'code': exc.code, **exc.details, 'attempt': attempt+1})
+                if attempt: raise
+                previous = draft.model_dump() if hasattr(draft, 'model_dump') else draft
+                messages.append(HumanMessage(content=context_json(
+                    {'previous': previous, 'validation_error': {'code': exc.code, **exc.details},
+                     'instruction': 'key 중복과 참조를 고치고 sourceId는 제공된 chunk_id만 쓰세요. 문서에 없는 값은 만들지 마세요.'},
+                    stage='extract_repair', limit=30000)))
+
     async def assess(self, state, criteria):
         registry = evidence_catalog(state)
         schema = draft_schema(registry)
@@ -178,6 +206,18 @@ class MockReasoner:
     async def collect(self, state, gateway):
         return {name: await gateway.tool(state['task_id'],'collect',name,{} if name=='get_solution_catalog' else {'company_id':state['company_id']}) for name in sorted(READS)}
 
+    async def extract(self, state, chunks):
+        # 문서 제목마다 업무 하나. 수치는 만들지 않으므로 metrics는 비운다 (사용자가 확정 화면에서 입력).
+        catalog = chunk_catalog(chunks, state['document_ids'])
+        first = {}
+        for key, row in catalog.items(): first.setdefault(row['document_id'], (key, row))
+        processes = [{'key': f'p{i+1}', 'departmentKey': 'd1', 'name': ('MOCK ' + row['title'])[:100], 'purpose': row['content'][:200],
+                      'steps': [], 'standardizationLevel': None, 'requiresApproval': False, 'exceptionRules': None, 'sourceId': key}
+                     for i, (key, row) in enumerate(list(first.values())[:3])]
+        draft = {'company': {'industry': None, 'employeeCount': None}, 'departments': [{'key': 'd1', 'name': '전사'}],
+                 'processes': processes, 'metrics': [], 'systems': []}
+        return resolve_extraction(draft, catalog)
+
     async def assess(self, state, criteria):
         import sqlite3
         with sqlite3.connect(f'file:{self.settings.data_dir}/ax_navigator_demo_approved.sqlite?mode=ro',uri=True) as db:
@@ -188,7 +228,7 @@ class MockReasoner:
         types={'data_score':'DATA_QUALITY','infra_score':'SYSTEM_SPEC','automation_score':'PROJECT_REPORT',
                'ai_capability_score':'AI_STATUS','governance_score':'POLICY'}
         for area,typ in types.items():
-            found=next((r for r in state['evidence'] if r['doc_type']==typ),None)
+            found=next((r for r in state['evidence'] if r['doc_type']==typ),None) or next((r for r in state['evidence'] if r['doc_type']=='UPLOADED'),None)
             if not found: missing.append(area);continue
             evidence.append({'area':area,'document_id':found['document_id'],'section':found['section'],
                              'summary':'MOCK 가상 전문가 영역 점수. '+found['content'][:200]})

@@ -8,6 +8,8 @@ from .nodes.approval import approval
 from ..models.state import AXState
 
 DEFAULT_NODES: dict[str, Callable] = {
+    "extract": stubs.extract,
+    "confirmation": stubs.confirmation,
     "collect": stubs.collect,
     "retrieve": stubs.retrieve,
     "assess": stubs.assess,
@@ -30,11 +32,13 @@ def build_graph(checkpointer=None, nodes: Mapping[str, Callable] | None = None):
     for name, fn in impl.items():
         g.add_node(name, fn)
 
-    g.add_edge(START, "collect")
+    g.add_conditional_edges(START, routing.at_start, ["extract", "collect"])
+    g.add_edge("extract", "confirmation")
+    g.add_edge("confirmation", "collect")
     g.add_conditional_edges("collect", routing.after_collect, ["retrieve", END])
     g.add_edge("retrieve", "assess")
     g.add_edge("assess", "discover")
-    g.add_edge("discover", "evaluate")
+    g.add_conditional_edges("discover", routing.after_discover, ["evaluate", END])
     g.add_conditional_edges("evaluate", routing.after_evaluate, ["discover", "roadmap"])
     g.add_edge("roadmap", "approval")
     g.add_conditional_edges("approval", routing.after_approval, ["register", END])

@@ -87,7 +87,8 @@ def display_result(body):
     result=body['result'];portfolio=result.get('portfolio') or {};roadmap=result.get('roadmap') or {}
     names=', '.join((result.get('scope') or {}).get('departmentNames',[]))
     print(f"분석 결과{f' · {names}' if names else ''}")
-    print(f"AX점수 합 {portfolio.get('totalAxScore','-')} | 총비용 {portfolio.get('totalFirstYearTcoKrw',0):,}원 | 잔여 예산 {portfolio.get('remainingBudgetKrw',0):,}원")
+    remaining=portfolio.get('remainingBudgetKrw')
+    print(f"AX점수 합 {portfolio.get('totalAxScore','-')} | 총비용 {portfolio.get('totalFirstYearTcoKrw',0):,}원 | 잔여 예산 {f'{remaining:,}원' if remaining is not None else '제약 없음'}")
     print('-'*78)
     sizes=(4,30,8,16,10)
     header=('순서','과제','AX점수','초년도 비용','사람 검토')

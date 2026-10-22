@@ -14,8 +14,10 @@ logger = logging.getLogger(__name__)
 
 READS = {'get_company_profile', 'get_business_processes', 'get_operational_metrics',
          'get_system_inventory', 'get_project_budget', 'get_solution_catalog'}
-WRITES = {'save_assessment', 'create_ax_roadmap', 'create_ax_project', 'update_project_status'}
-RAG_TOOLS = {'search_docs', 'get_assessment_evidence'}
+WRITES = {'save_assessment', 'save_extraction', 'create_ax_roadmap', 'create_ax_project', 'update_project_status'}
+RAG_TOOLS = {'search_docs', 'get_assessment_evidence', 'get_document_chunks', 'index_document'}
+# 배포 점검이 요구하는 최소 도구. 문서 업로드 도구는 업로드 기능을 쓸 때만 필요하다.
+RAG_PROBE_TOOLS = {'search_docs', 'get_assessment_evidence'}
 
 
 def mask(value):
@@ -47,6 +49,28 @@ class Gateway:
         fields = {aliases.get(k, k): v for k, v in values.items()}
         await self._spring('PATCH', f'/tasks/{task_id}', {'status': status, **mask(fields)})
 
+    async def index_document(self, company_id, document_id, title, pages):
+        """업로드 문서를 회사 RAG 색인에 저장한다. 작업(task)이 없으므로 진행 이벤트를 보내지 않는다."""
+        args = {'company_id': company_id, 'document_id': document_id, 'title': title, 'pages': pages}
+        try:
+            async with Client(StreamableHttpTransport(self.settings.rag_url,
+                              headers={'X-Internal-Token': self.settings.internal_token})) as client:
+                result = await client.call_tool('index_document', args)
+            if result.is_error: raise RuntimeError('MCP 도구 오류: index_document')
+            return decode_tool_result(result)
+        except Exception as exc:
+            code, message = safe_tool_failure(exc)
+            logger.error('MCP_CALL_FAILED tool=index_document document_id=%s code=%s error=%s', document_id, code, type(exc).__name__)
+            raise ValueError(message) from None
+
+    async def document_result(self, document_id, body):
+        await self._spring('PATCH', f'/documents/{document_id}', body)
+
+    async def task_budget(self, task_id, budget_krw):
+        """요청에서 추출한 예산을 작업에 저장한다. Spring 로드맵 저장이 이 값으로 재계산한다."""
+        self.observe(task_id, 'collect', 'TASK_BUDGET', {'budgetKrw': budget_krw})
+        await self._spring('PATCH', f'/tasks/{task_id}', {'budgetKrw': budget_krw})
+
     async def _spring(self, method, path, body):
         async with SpringClient(self.settings) as client:
             await client.request(method, path, body)
@@ -57,9 +81,9 @@ class Gateway:
             async with Client(StreamableHttpTransport(self.settings.rag_url,
                               headers={'X-Internal-Token': self.settings.internal_token})) as client:
                 names = {t.name for t in await client.list_tools()}
-                if not RAG_TOOLS <= names:
+                if not RAG_PROBE_TOOLS <= names:
                     return {'status': 'error', 'code': 'RAG_TOOL_MISSING',
-                            'missingTools': sorted(RAG_TOOLS - names)}
+                            'missingTools': sorted(RAG_PROBE_TOOLS - names)}
                 result = await client.call_tool('get_assessment_evidence', {})
                 if result.is_error: raise RuntimeError('RAG_INTERNAL_ERROR')
                 rows = decode_tool_result(result)
