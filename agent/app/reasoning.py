@@ -6,7 +6,10 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from .clients import READS, mask
-from .schemas import Discovery, Assessment, Narrative
+from .schemas import Narrative
+from .contexts import assessment_context, discovery_context, response_context, context_json
+from .assessment import evidence_catalog, draft_schema, resolve_draft, AssessmentReferenceError
+from .candidate_refs import candidate_catalog, discovery_schema, resolve_candidates
 from .harness.limits import LoopGuard, LimitExceeded
 from .harness.tool_output import prepare_tool_output
 from .harness.recovery import is_retryable
@@ -96,43 +99,75 @@ class Reasoner:
         return results
 
     async def assess(self, state, criteria):
-        context = {'criteria':criteria, 'evidence':state['evidence'],
-                   'processes':state['processes'], 'systems':state['systems'], 'metrics':state['metrics']}
-        async def generate(model):
-            return await model.with_structured_output(Assessment, method='function_calling', strict=False).ainvoke([
-                SystemMessage(content=prompt('assess')),HumanMessage(content=compact(context,28000))])
-        return (await self.invoke(generate, task_id=state['task_id'], stage='assess')).model_dump()
+        registry = evidence_catalog(state)
+        schema = draft_schema(registry)
+        context = assessment_context(state, criteria)
+        context['evidence'] = [
+            {'evidence_id':key, 'document_id':row['document_id'], 'title':row['title'],
+             'doc_type':row['doc_type'], 'section':row['section'], 'content':row['content']}
+            for key,row in registry.items()]
+        content = context_json(context, stage='assess', limit=28000)
+        self.observe(state['task_id'], 'assess', 'CONTEXT_BUILT',
+                     {'characters':len(content), 'evidenceCount':len(registry), 'truncated':False})
+        messages = [SystemMessage(content=prompt('assess')), HumanMessage(content=content)]
+        for attempt in range(2):
+            async def generate(model):
+                return await model.with_structured_output(schema, method='function_calling', strict=True).ainvoke(messages)
+            draft = await self.invoke(generate, task_id=state['task_id'], stage='assess')
+            try:
+                result = resolve_draft(draft, registry, criteria)
+                self.observe(state['task_id'],'assess','ASSESSMENT_VALIDATED',
+                             {'areas':sorted(result['scores']), 'evidenceCount':len(result['evidence']),
+                              'insufficientAreas':result['insufficient_data'], 'repairAttempts':attempt})
+                return result
+            except AssessmentReferenceError as exc:
+                self.observe(state['task_id'],'assess','ASSESSMENT_REFERENCE_ERROR',
+                             {'code':exc.code, **exc.details, 'attempt':attempt+1})
+                if attempt: raise
+                # Repair references/area coverage once. Never retry a genuine lack
+                # of information or synthesize a missing score to force success.
+                previous = draft.model_dump() if hasattr(draft,'model_dump') else draft
+                messages.append(HumanMessage(content=context_json(
+                    {'previous':previous, 'validation_error':{'code':exc.code,**exc.details},
+                     'instruction':'근거 ID와 영역 연결을 제공 목록으로 보정하세요. 정보가 부족하면 score=null과 missing_reason을 반환하세요.'},
+                    stage='assess_repair',limit=10000)))
 
     async def discover(self, state):
-        # 긴 절차·카탈로그가 실제 문서 근거를 컨텍스트 밖으로 밀어내지 않게 요약한다.
-        process_fields = ('process_id', 'department_id', 'process_name', 'purpose', 'standardization_level', 'requires_approval', 'exception_rules')
-        solution_fields = ('solution_id', 'target_process_id', 'depends_on_solution_id', 'solution_name', 'solution_type', 'description', 'min_standardization_level', 'requires_api')
-        context = {
-            'request': state['request'],
-            'evaluation_policy': state.get('evaluation_policy', {}),
-            'evidence': [{**{k: r.get(k) for k in ('document_id','title','section')}, 'content': r['content'][:400]} for r in state['evidence']],
-            'processes': [{k: str(p[k])[:350] if isinstance(p.get(k),str) else p.get(k) for k in process_fields} for p in state['processes'][:12]],
-            'solutions': [{k: str(s[k])[:250] if isinstance(s.get(k),str) else s.get(k) for k in solution_fields} for s in state['solutions'][:20]],
-            'scope': state.get('scope'),
-            'execution_mode': self.settings.mode, 'previous_portfolio': state.get('portfolio'),
-            'previous': state.get('candidates', []), 'retry': state.get('retry_count', 0)
-        }
-        async def generate(model):
-            return await model.with_structured_output(Discovery, method='function_calling', strict=False).ainvoke([
-                SystemMessage(content=prompt('discover')), HumanMessage(content=compact(context, 24000))])
-        candidates=[c.model_dump() for c in (await self.invoke(generate, task_id=state['task_id'], stage='discover')).candidates]
-        self.observe(state['task_id'],'discover','CANDIDATES_PROPOSED',{'candidates':candidates})
-        return candidates
+        choices,evidence = candidate_catalog(state)
+        schema = discovery_schema(choices,evidence)
+        context = discovery_context(state, self.settings.mode)
+        context['candidate_catalog'] = choices
+        context['business_evidence'] = [
+            {'evidence_id':key, 'document_id':row['document_id'], 'section':row['section'], 'content':row['content']}
+            for key,row in evidence.items()]
+        content = context_json(context, stage='discover', limit=24000)
+        self.observe(state['task_id'], 'discover', 'CONTEXT_BUILT',
+                     {'characters':len(content), 'evidenceCount':len(context['evidence']), 'truncated':False})
+        messages = [SystemMessage(content=prompt('discover')),HumanMessage(content=content)]
+        for attempt in range(2):
+            async def generate(model):
+                return await model.with_structured_output(schema,method='function_calling',strict=True).ainvoke(messages)
+            draft = await self.invoke(generate,task_id=state['task_id'],stage='discover')
+            try:
+                candidates = resolve_candidates(draft,choices,evidence)
+                self.observe(state['task_id'],'discover','CANDIDATES_PROPOSED',{'candidates':candidates})
+                return candidates
+            except AssessmentReferenceError as exc:
+                self.observe(state['task_id'],'discover','CANDIDATE_REFERENCE_ERROR',
+                             {'code':exc.code,**exc.details,'attempt':attempt+1})
+                if attempt:raise
+                previous=draft.model_dump() if hasattr(draft,'model_dump') else draft
+                messages.append(HumanMessage(content=context_json(
+                    {'previous':previous,'validation_error':{'code':exc.code,**exc.details},
+                     'instruction':'제공된 candidate_catalog를 각각 한 번씩 포함하고 각 후보의 허용된 근거 ID만 사용하세요.'},
+                    stage='discover_repair',limit=10000)))
 
     async def respond(self, state):
-        context = {'request':state['request'], 'mode':self.settings.mode,
-                   'portfolio':state['portfolio'], 'roadmap':state['roadmap'],
-                   'selected_processes':[{k:p[k] for k in ('process_id','process_name','purpose','requires_approval','exception_rules')}
-                                         for p in state['processes'] if int(p['process_id']) in {c['processId'] for c in state['portfolio']['selected']}],
-                   'evidence':[{'document_id':r['document_id'], 'section':r['section'], 'content':r['content'][:300]} for r in state['evidence']]}
+        context = {**response_context(state), 'mode':self.settings.mode}
+        content = context_json(context, stage='respond', limit=24000)
         async def generate(model):
             return await model.with_structured_output(Narrative, method='function_calling', strict=False).ainvoke([
-                SystemMessage(content=prompt('respond')), HumanMessage(content=compact(context, 24000))])
+                SystemMessage(content=prompt('respond')), HumanMessage(content=content)])
         return (await self.invoke(generate, task_id=state['task_id'], stage='respond')).model_dump()
 
 class MockReasoner:

@@ -2,15 +2,20 @@
 import asyncio
 import json
 import re
+import logging
 from datetime import datetime, timezone
 from ..trace import PublicTrace
 from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 from .spring import SpringClient
+from ..tool_errors import safe_tool_failure
+
+logger = logging.getLogger(__name__)
 
 READS = {'get_company_profile', 'get_business_processes', 'get_operational_metrics',
          'get_system_inventory', 'get_project_budget', 'get_solution_catalog'}
 WRITES = {'save_assessment', 'create_ax_roadmap', 'create_ax_project', 'update_project_status'}
+RAG_TOOLS = {'search_docs', 'get_assessment_evidence'}
 
 
 def mask(value):
@@ -46,11 +51,30 @@ class Gateway:
         async with SpringClient(self.settings) as client:
             await client.request(method, path, body)
 
+    async def check_rag(self):
+        """Authenticated, read-only deployment probe; no embeddings or callbacks."""
+        try:
+            async with Client(StreamableHttpTransport(self.settings.rag_url,
+                              headers={'X-Internal-Token': self.settings.internal_token})) as client:
+                names = {t.name for t in await client.list_tools()}
+                if not RAG_TOOLS <= names:
+                    return {'status': 'error', 'code': 'RAG_TOOL_MISSING',
+                            'missingTools': sorted(RAG_TOOLS - names)}
+                result = await client.call_tool('get_assessment_evidence', {})
+                if result.is_error: raise RuntimeError('RAG_INTERNAL_ERROR')
+                rows = decode_tool_result(result)
+                if not isinstance(rows, list): raise ValueError('Unexpected result')
+                return {'status': 'ok', 'evidenceCount': len(rows)}
+        except Exception as exc:
+            code, message = safe_tool_failure(exc)
+            logger.error('RAG_PROBE_FAILED code=%s error=%s', code, type(exc).__name__)
+            return {'status': 'error', 'code': code, 'message': message}
+
     async def tool(self, task_id, node, name, args):
         await self.event(task_id, 'TOOL_START', node, {'tool': name, 'label': name})
         self.observe(task_id, node, 'TOOL_CALL', {'tool': name, 'arguments': args})
         try:
-            url = self.settings.rag_url if name == 'search_docs' else self.settings.business_url
+            url = self.settings.rag_url if name in RAG_TOOLS else self.settings.business_url
             # 같은 쓰기 재실행은 같은 키를 사용한다. Spring이 키별 중복 저장을 차단해야 한다.
             headers = {'X-Internal-Token': self.settings.internal_token}
             if name in WRITES:
@@ -61,6 +85,10 @@ class Gateway:
             for attempt in range(attempts):
                 try:
                     async with Client(StreamableHttpTransport(url, headers=headers)) as client:
+                        if name == 'get_assessment_evidence':
+                            names = {t.name for t in await client.list_tools()}
+                            if name not in names:
+                                raise ValueError('RAG_TOOL_MISSING')
                         result = await client.call_tool(name, args)
                     if result.is_error: raise RuntimeError(f'MCP 도구 오류: {name}')
                     value = decode_tool_result(result)
@@ -71,9 +99,12 @@ class Gateway:
             await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': True})
             self.observe(task_id, node, 'TOOL_RESULT', {'tool': name, 'resultType': type(value).__name__})
             return mask(value)
-        except Exception:
+        except Exception as exc:
+            code, message = safe_tool_failure(exc)
+            logger.error('MCP_CALL_FAILED task_id=%s node=%s tool=%s code=%s error=%s',
+                         task_id, node, name, code, type(exc).__name__)
             await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': False})
-            raise
+            raise ValueError(message) from None
 
 
 def decode_tool_result(result):

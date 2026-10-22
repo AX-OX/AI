@@ -45,11 +45,13 @@ def test_atomic_replace_model_guard_and_filters():
     assert store.replace(rows,common.mapping())==34
 
 
+@pytest.mark.skipif(os.getenv("AX_TEST_OPENAI_EMBEDDINGS") != "1", reason="실제 OpenAI API 호출은 명시적 opt-in 필요")
 def test_real_embedding_semantic_search():
     store=pg.PgVectorStore(dsn=DSN)
     assert store.replace(records(),common.mapping())==34
     hits=store.search('코드 리뷰 보조는 기술 문서 구축과 개발자 승인이 필요한가?',doc_type='MANUAL',process_id=208,top_k=5)
-    assert hits and hits[0]['document_id']==403 and '208' in hits[0]['section']
+    assert hits and all(h['document_id']==403 for h in hits)
+    assert any(h['section'].startswith('208 ') for h in hits[:3])
     assert all(0<=h['score']<=2 for h in hits)
     with psycopg.connect(DSN) as conn:
         assert conn.execute('SELECT min(vector_dims(embedding)),max(vector_dims(embedding)),count(*) FROM rag_document_chunks').fetchone()==(384,384,34)

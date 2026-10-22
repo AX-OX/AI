@@ -54,13 +54,14 @@ GRANT INSERT, UPDATE, DELETE ON rag_indexes, rag_document_chunks TO ax_rag_index
 python -m pip install -r examples/requirements-pgvector.txt
 # RAG_INDEX_DATABASE_URL: 적재 계정으로 postgres:5432/ax 접속
 # RAG_DATABASE_URL: 검색 계정으로 postgres:5432/ax 접속
-# RAG_INDEX_VERSION=ax-v3-pgvector-v1
-# EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-# EMBEDDING_REVISION=e8f8c211226b894fcb81acc59f3b34ba3efd5f42
+# RAG_INDEX_VERSION=ax-v3-openai-small-384-v1
+# OPENAI_API_KEY=<환경에서 주입>
+# EMBEDDING_MODEL=text-embedding-3-small
+# EMBEDDING_REVISION=openai-dim384-v1
 python examples/pgvector_ingest.py
 ```
 
-모델 파일은 최초에 다운로드가 필요하며 캐시가 있으면 오프라인으로 실행할 수 있다. 실제 임베딩은 384차원이고 JSONL에는 벡터를 넣지 않는다. `PgVectorIndex.search()`는 검색 전용 계정으로 사용한다. `score`는 cosine 거리로 작을수록 유사하며 AX점수와 다르다. API는 업무와 원문 Resource를 분리한다. 검색은 company_id·index_version으로 제한하며 업무 필터는 related_process_ids와 공통 문서([])를 함께 검색한다. 원문 답변에는 개인정보 마스킹을 적용해야 한다.
+OPENAI_API_KEY를 환경에 설정한다. 모델 파일 다운로드는 없으며 문서·검색어를 OpenAI Embeddings API로 전송한다. dimensions=384를 지정하고 JSONL에는 벡터를 넣지 않는다. `PgVectorIndex.search()`는 검색 전용 계정으로 사용한다. `score`는 cosine 거리로 작을수록 유사하며 AX점수와 다르다. API는 업무와 원문 Resource를 분리한다. 검색은 company_id·index_version으로 제한하며 업무 필터는 related_process_ids와 공통 문서([])를 함께 검색한다. 원문 답변에는 개인정보 마스킹을 적용해야 한다.
 
 코퍼스 해시는 파일 이름 + NUL + 파일 바이트를 `pgvector_import.jsonl`, `doc_mapping.json` 순서로 SHA-256에 넣는다. 적재·검색 양쪽이 같은 규칙을 사용한다. 실제 적재는 회사·버전 단위 트랜잭션이며 실패 시 기존 색인을 보존한다. 모델·revision·코퍼스 해시가 달라지면 재색인해야 한다. 정확 검색을 사용하며 ANN 인덱스는 없다.
 

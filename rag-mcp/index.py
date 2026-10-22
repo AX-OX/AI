@@ -1,6 +1,7 @@
 """v3 section chunks -> transactional pgvector index replacement."""
 from common import mapping, chunks
 from pgvector_client import PgVectorStore
+from diagnostics import failure_code
 import argparse
 import json
 import sys
@@ -28,6 +29,6 @@ if __name__=='__main__':
     except Exception as exc:
         # Driver/model exceptions may contain credentials or connection strings.
         # Emit only safe categories, never the exception text, headers, or DSNs.
-        print(f'RAG_INDEX_FAILED error={type(exc).__name__} sqlstate={getattr(exc, "sqlstate", None) or "-"}; check DB access, source metadata, model and corpus settings.',
+        print(f'RAG_INDEX_FAILED code={failure_code(exc)} error={type(exc).__name__} sqlstate={getattr(exc, "sqlstate", None) or "-"}; check DB access, source metadata, model and corpus settings.',
               file=sys.stderr, flush=True)
         sys.exit(1)

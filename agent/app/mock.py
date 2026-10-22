@@ -44,6 +44,9 @@ class MockGateway(Gateway):
         if name=='get_system_inventory': return {'systems':self.tables['it_systems'],'process_systems':self.tables['process_systems']}
         if name=='get_project_budget': return {'ax_budget_krw':int(self.tables['companies'][0]['ax_budget_krw'])}
         if name=='get_solution_catalog': return self.tables['ai_solution_catalog']
+        if name=='get_assessment_evidence':
+            return [{**r['metadata'],'content':r['document']} for r in self.chunks
+                    if r['metadata']['doc_type'] in {'SYSTEM_SPEC','POLICY','AI_STATUS','DATA_QUALITY','PROJECT_REPORT'}]
         if name=='search_docs':
             rows = [r for r in self.chunks if (not args.get('doc_type') or r['metadata']['doc_type']==args['doc_type'])
                     and (not args.get('process_id') or not self.docs[r['metadata']['document_id']]['related_process_ids']

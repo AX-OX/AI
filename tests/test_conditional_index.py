@@ -66,7 +66,9 @@ def test_command_reuses_conditional_store(capsys):
 def test_cli_failure_exit_and_no_credentials_in_logs(writer):
     secret = 'local-test-password-must-not-be-logged'
     dsn = f'postgresql://local_user:{secret}@127.0.0.1:1/ax_rag_conditional_test?connect_timeout=1'
-    env = {'CORPUS_DIR': str(ROOT / 'AX_Navigator_AI_MVP_v3/rag'), 'RAG_DATABASE_URL': dsn}
+    # Isolate the missing-writer case from a developer's root .env.
+    env = {'CORPUS_DIR': str(ROOT / 'AX_Navigator_AI_MVP_v3/rag'), 'RAG_DATABASE_URL': dsn,
+           'RAG_INDEX_DATABASE_URL': ''}
     if writer:
         env['RAG_INDEX_DATABASE_URL'] = dsn
     result = subprocess.run([sys.executable, str(ROOT / 'rag-mcp/index.py'), '--if-needed'],
@@ -76,7 +78,7 @@ def test_cli_failure_exit_and_no_credentials_in_logs(writer):
     assert secret not in result.stdout + result.stderr and dsn not in result.stdout + result.stderr
     if not writer:
         # Reader credentials must never be used as a fallback for the indexer.
-        assert 'error=ValueError' in result.stderr
+        assert 'code=RAG_DB_URL_MISSING' in result.stderr
 
 
 def test_initial_index(context):
@@ -253,11 +255,31 @@ def test_search_docs_after_indexing(context):
     assert hits and {hit['document_id'] for hit in hits} == {401}
 
 
-@pytest.mark.skipif(importlib.util.find_spec('sentence_transformers') is None, reason='Real CPU embedding runtime required')
+@pytest.mark.skipif(os.getenv('AX_TEST_OPENAI_EMBEDDINGS') != '1', reason='Actual OpenAI API requires explicit opt-in')
 def test_real_model_semantic_search(context):
     _, rows, docs, _ = context
     store = pg.PgVectorStore(dsn=DSN)
     assert store.ensure_index(rows, docs)['status'] == 'indexed'
     hits = store.search('코드 리뷰 보조에 기술 문서와 개발자 승인이 필요한가?', doc_type='MANUAL', process_id=208)
-    assert hits and hits[0]['document_id'] == 403 and '208' in hits[0]['section']
+    assert hits and all(h['document_id'] == 403 for h in hits)
+    assert any(h['section'].startswith('208 ') for h in hits[:3])
     assert store.ensure_index(rows, docs)['status'] == 'skipped'
+
+
+def test_readiness_lookup_is_complete_and_never_embeds(context):
+    store,rows,docs,calls=context
+    store.ensure_index(rows,docs)
+    before=len(calls)
+    store.embedder=lambda _: (_ for _ in ()).throw(AssertionError('Readiness lookup must not embed'))
+    evidence=store.assessment_evidence()
+    assert len(evidence)==19 and len(calls)==before
+    assert {(r['document_id'],r['section']) for r in evidence} >= {
+        (404,'개인정보 처리'),(405,'업무 연결'),(407,'표준화 점검'),(408,'가상 사전 실험')}
+    assert all(r['doc_type']!='MANUAL' for r in evidence)
+
+
+def test_readiness_lookup_rejects_mismatched_index(context,monkeypatch):
+    store,rows,docs,_=context
+    store.ensure_index(rows,docs)
+    monkeypatch.setattr(pg,'REVISION','wrong-test-config')
+    with pytest.raises(ValueError,match='모델'):store.assessment_evidence()
