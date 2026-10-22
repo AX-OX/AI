@@ -78,7 +78,7 @@ def test_cli_failure_exit_and_no_credentials_in_logs(writer):
     assert secret not in result.stdout + result.stderr and dsn not in result.stdout + result.stderr
     if not writer:
         # Reader credentials must never be used as a fallback for the indexer.
-        assert 'error=ValueError' in result.stderr
+        assert 'code=RAG_DB_URL_MISSING' in result.stderr
 
 
 def test_initial_index(context):

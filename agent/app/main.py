@@ -46,6 +46,13 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
     async def health():
         return {'status': 'ok', 'mode': settings.mode, 'checkpoint': 'postgres' if settings.checkpoint_url else 'memory'}
 
+    @app.get('/diagnostics/rag', dependencies=[Depends(auth)])
+    async def rag_diagnostics():
+        # /health is liveness only. This endpoint checks actual RAG DB/index access.
+        if settings.mode != 'live':
+            return {'status': 'not_checked', 'mode': settings.mode}
+        return await app.state.gateway.check_rag()
+
     @app.post('/tasks/{task_id}/run', status_code=202, dependencies=[Depends(auth)])
     async def run(task_id: UUID, request: RunRequest):
         return await app.state.runner.start(task_id, request)

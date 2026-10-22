@@ -338,3 +338,26 @@ agent/.venv/bin/python -m pytest agent/tests tests -q
 이번 로컬 검증에서는 새 PostgreSQL 16 / pgvector 0.8.1 컨테이너와 CPU 모델 캐시를 사용했다.
 전체 85개 테스트 통과, 기존 외부 통합 설정이 없는 5개는 건너뛰었다. 이 중 새 조건부 인덱싱
 테스트 25개는 모두 통과했다. 운영 Cloud SQL·GCP 트리거는 사용하지 않았다.
+
+## RAG 배포 진단 (2026-10-22)
+
+`/health`는 프로세스 생존 여부이며 RAG DB·색인 준비 여부를 보장하지 않는다. 새 이미지 배포 후 내부 토큰 인증이 필요한 `GET /diagnostics/rag`를 호출하면 실제 MCP 도구 목록과 `get_assessment_evidence` 조회를 검사한다. 문서 본문·DSN·키는 반환하지 않으며, DB 쓰기나 임베딩 API 호출도 하지 않는다. Cloud Run IAM이 활성화됐다면 IAM 인증도 별도로 필요하다. 이 API는 Agent 포트로 호출한다.
+
+정상 응답 예: `{"status":"ok","evidenceCount":19}` (19는 현재 샘플 데이터의 수).
+
+| code | 점검·조치 |
+|---|---|
+| RAG_TOOL_MISSING | Agent가 연결한 RAG URL 및 서버 이미지 버전 확인 |
+| RAG_DB_URL_MISSING | 서비스의 RAG_DATABASE_URL Secret 연결 확인 |
+| RAG_DB_CONNECTION_FAILED / RAG_DB_AUTH_FAILED | Cloud SQL 연결·IAM·네트워크·DB 계정 점검 |
+| RAG_DB_PERMISSION_DENIED | 읽기 계정의 rag_indexes·rag_document_chunks 및 documents 관련 컬럼 SELECT 권한 확인 |
+| RAG_DB_TABLE_MISSING / RAG_DB_SCHEMA_MISMATCH | 올바른 DB 연결과 DB 스키마 적용 여부 확인 |
+| RAG_INDEX_MISSING | 같은 배포 이미지·환경으로 색인 Job 실행 |
+| RAG_INDEX_MODEL_MISMATCH / RAG_INDEX_REVISION_MISMATCH | 서비스와 Job의 모델·revision 환경변수 일치 확인 후 재색인 |
+| RAG_INDEX_CORPUS_MISMATCH | 서비스와 Job의 이미지·문서 일치 확인 후 새 버전 색인 |
+| RAG_EVIDENCE_EMPTY / RAG_EVIDENCE_LIMIT | 회사 범위·문서 유형·근거 수 확인 |
+| MCP_CALL_FAILED | MCP 전송·인증·프로토콜 점검. 이전 RAG 이미지의 일반 ToolError도 이 코드로 분류될 수 있음 |
+
+Cloud Run에 이미 지정한 환경변수는 Dockerfile의 새 기본값보다 우선한다. Agent 이미지 배포는 Cloud SQL 색인 변경을 수행하지 않는다. 서비스와 색인 Job을 동일 이미지 digest와 동일 `RAG_INDEX_VERSION`, `EMBEDDING_MODEL`, `EMBEDDING_REVISION`, `RAG_COMPANY_ID`로 맞춘다. 읽기 서비스에 쓰기 계정을 넣거나 자동 재색인으로 오류를 우회하지 않는다.
+
+실패 시 로그는 `RAG_TOOL_FAILED tool=... code=... error=... sqlstate=...`, Agent는 `MCP_CALL_FAILED task_id=... node=... tool=... code=... error=...`로 조회한다. 일반 예외 원문·DSN·프롬프트는 기록하지 않는다. 이 수정 전 실패 기록에 없던 상세 내용을 소급 복원할 수는 없다.

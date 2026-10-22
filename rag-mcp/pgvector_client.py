@@ -6,6 +6,7 @@ import psycopg
 from psycopg.rows import dict_row
 from common import MODEL, INDEX_VERSION, COMPANY_ID, REVISION, DIMENSIONS, corpus_hash
 from embeddings import embed
+from diagnostics import RagConfigurationError
 
 def vector_literal(values):
     values = [float(v) for v in values]
@@ -17,7 +18,7 @@ def vector_literal(values):
 class PgVectorStore:
     def __init__(self, *, dsn=None, embedder=None, write=False):
         self.dsn = dsn or os.getenv('RAG_INDEX_DATABASE_URL' if write else 'RAG_DATABASE_URL')
-        if not self.dsn: raise ValueError('RAG_DATABASE_URL 또는 RAG_INDEX_DATABASE_URL이 필요합니다.')
+        if not self.dsn: raise RagConfigurationError('RAG_DB_URL_MISSING')
         self.embedder = embedder or embed
 
     def replace(self, rows, docs):
@@ -117,8 +118,15 @@ class PgVectorStore:
     @staticmethod
     def _require_index(conn):
         index = conn.execute('SELECT * FROM rag_indexes WHERE company_id=%s AND index_version=%s', (COMPANY_ID, INDEX_VERSION)).fetchone()
-        if not index or (index['embedding_model'],index['embedding_revision'],index['corpus_hash']) != (MODEL,REVISION,corpus_hash()):
-            raise ValueError('색인이 없거나 모델·문서 버전이 다릅니다. index.py로 재색인하세요.')
+        if not index:
+            raise RagConfigurationError('RAG_INDEX_MISSING')
+        for field, expected, code in (
+            ('embedding_model', MODEL, 'RAG_INDEX_MODEL_MISMATCH'),
+            ('embedding_revision', REVISION, 'RAG_INDEX_REVISION_MISMATCH'),
+            ('corpus_hash', corpus_hash(), 'RAG_INDEX_CORPUS_MISMATCH'),
+        ):
+            if index[field] != expected:
+                raise RagConfigurationError(code)
 
     def assessment_evidence(self):
         """Read all readiness sections in the active company/index; no embedding call.
@@ -136,7 +144,9 @@ class PgVectorStore:
                                    ORDER BY c.document_id,c.chunk_index,c.chunk_id LIMIT 201''',
                                 (COMPANY_ID,INDEX_VERSION,['SYSTEM_SPEC','POLICY','AI_STATUS','DATA_QUALITY','PROJECT_REPORT'])).fetchall()
             if len(rows) > 200:
-                raise ValueError('성숙도 근거가 200개를 초과합니다. 범위를 나누어 평가하세요.')
+                raise RagConfigurationError('RAG_EVIDENCE_LIMIT')
+            if not rows:
+                raise RagConfigurationError('RAG_EVIDENCE_EMPTY')
             return rows
 
     def search(self, query, doc_type=None, process_id=None, top_k=5):
