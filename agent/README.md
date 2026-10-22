@@ -55,6 +55,6 @@ uv run --project agent python -m pytest agent/tests tests -q
 sh scripts/verify_pgvector.sh
 ```
 
-첫 명령은 독립 Agent·계약·팀원 그래프/Harness 검사다. 실제 DB 설정이 없는 검사는 skip된다. 두 번째는 기존 `.venv`의 RAG 임베딩 라이브러리까지 사용해 실제 pgvector·MCP·체크포인터를 검증한다. 이 통합 검사의 Spring·LLM은 fixture이며, 최신 실제 Spring 전체 흐름 검증과 구분한다. Agent 단독 uv 환경에는 RAG 서버의 `sentence-transformers`를 설치하지 않는다.
+첫 명령은 독립 Agent·계약·팀원 그래프/Harness 검사다. 실제 DB 설정이 없는 검사는 skip된다. 두 번째는 `.env`의 OpenAI API 키로 실제 문서 임베딩을 호출해 pgvector·MCP·체크포인터를 검증한다. 이 통합 검사의 Spring·LLM은 fixture이며, 최신 실제 Spring 전체 흐름 검증과 구분한다. 로컬 임베딩 라이브러리는 필요 없으며 RAG 서버는 OpenAI SDK를 사용한다.
 
 실제 최신 BE와 승인·거절·DB 저장까지 확인한 결과는 `../.local/reports/team_aligned_e2e.json`, FE 채팅 상태·SSE 모듈 검사는 `../.local/reports/team_aligned_fe_store.json`에 로컬 생성되며 Git에서 제외한다. 검증에서 LLM은 MockReasoner를 사용했고, 실제 OpenAI 응답 품질이나 브라우저 클릭까지 검증한 것은 아니다.

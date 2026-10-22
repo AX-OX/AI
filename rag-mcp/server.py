@@ -10,6 +10,15 @@ from pgvector_client import PgVectorStore
 mcp = FastMCP('rag')
 
 @mcp.tool
+async def get_assessment_evidence() -> list[dict]:
+    """활성 회사·색인 버전의 성숙도 공통 문서 5종 전체 섹션을 조회한다. 유사도 top_k나 임베딩 API 없이 정책·시스템·AI 현황·데이터 품질·프로젝트 보고서를 확보한다."""
+    try:
+        rows = await asyncio.to_thread(lambda: PgVectorStore().assessment_evidence())
+        return [{**r, 'content':mask(r['content'])} for r in rows]
+    except Exception as exc:
+        raise ToolError(f'성숙도 근거 조회 실패: {type(exc).__name__}. DB·활성 색인과 문서 범위를 확인하세요.') from exc
+
+@mcp.tool
 async def search_docs(query: str, doc_type: str | None = None, process_id: int | None = None, top_k: int = 5) -> list[dict]:
     """문장과 선택적인 문서 유형·업무 ID로 pgvector 근거 검색. score는 cosine 거리로 낮을수록 가깝다."""
     if not query.strip() or not 1 <= top_k <= 20: raise ToolError('검색어가 필요하며 top_k는 1~20이어야 합니다.')

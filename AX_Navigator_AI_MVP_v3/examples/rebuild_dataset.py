@@ -16,8 +16,8 @@ from compute_ax import compute, money
 ROOT=Path(__file__).resolve().parents[1]
 STAMP='2026-10-20 09:00:00'
 TASK='a3000000-0000-4000-8000-000000000001'
-MODEL='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-REVISION='e8f8c211226b894fcb81acc59f3b34ba3efd5f42'
+MODEL='text-embedding-3-small'
+REVISION='openai-dim384-v1'
 
 def dump(path,obj):
     path.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

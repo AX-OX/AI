@@ -1,5 +1,6 @@
 # AX 성숙도 평가 기준 (§6). 버전은 ax_assessments.criteria_version에 저장된다.
-# 가중합(total_score)은 코드(app/maturity.py)에서 계산한다. LLM은 영역별 점수와 근거만 낸다.
+# 운영 가중 총점은 Spring이 계산한다. app/maturity.py는 기준표 단위 검증용이다.
+# 이 자체 rubric은 운영 LLM 입력에 전달되며 외부 기관의 공식 배점이 아니다.
 version: "v1"
 
 areas:

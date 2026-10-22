@@ -52,11 +52,15 @@ uv run --project agent uvicorn agent.app.main:app --port 8000 --workers 1 --http
 
 `compose.yaml`은 PostgreSQL·MCP·Agent를 구성하며 팀원 Spring·FE는 포함하지 않습니다. 기존 DB 볼륨에 초기화 SQL을 다시 적용하거나 볼륨을 자동 삭제하지 않습니다.
 
+## OpenAI 문서 임베딩
+
+문서·검색어 모두 `text-embedding-3-small` API를 사용한다. pgvector는 기존 `vector(384)`를 유지하고 API에 `dimensions=384`를 지정한다. 로컬 모델 다운로드는 필요 없다. 기존 MiniLM 벡터는 재사용할 수 없으며 [전환·재색인 안내](docs/OPENAI_EMBEDDINGS.md)를 따른다.
+
 ## 검사
 
 ```sh
 uv run --project agent python -m pytest agent/tests tests -q
-# RAG 임베딩 라이브러리까지 설치된 기존 .venv에서 실제 DB·MCP 검사
+# 실제 OpenAI 임베딩 호출 포함 (.env의 OPENAI_API_KEY 필요)
 sh scripts/verify_pgvector.sh
 ```
 
@@ -69,6 +73,7 @@ sh scripts/verify_pgvector.sh
 - [최신 BE·FE 연동 점검](docs/LATEST_INTEGRATION_CHECK.md)
 - [실제 LLM 시연](docs/LLM_DEMO.md)
 - [pgvector 저장·검색](docs/PGVECTOR_AND_OPPORTUNITY.md)
+- [RAG 검색·근거 ID 개선 및 단계별 검증](docs/RAG_RETRIEVAL_IMPROVEMENT.md)
 - [데이터 재생성 요구사항](docs/DATA_REBUILD_PROMPT.md)
 - [GitHub 업로드 범위](docs/REPOSITORY_LAYOUT.md)
 

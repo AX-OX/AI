@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Destructive integration validation: DATABASE_URL MUST target a fresh disposable DB.
 Creates synthetic demo tables and two test roles; uses real pinned 384-d embeddings.
-Requires a setup superuser, psycopg and sentence-transformers. No production fallback.
+Requires a setup superuser, psycopg and the OpenAI SDK/API key. No production fallback.
 """
 import json
 import os

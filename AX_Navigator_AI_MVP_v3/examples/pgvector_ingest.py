@@ -7,11 +7,12 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-MODEL='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-REVISION='e8f8c211226b894fcb81acc59f3b34ba3efd5f42'
+MODEL='text-embedding-3-small'
+REVISION='openai-dim384-v1'
 DIMENSIONS=384
 REQUIRED={'document_id','title','doc_type','process_id','section','page','chunk_index','version','embedding_model','company_id','access_level'}
 
@@ -51,20 +52,30 @@ class PgVectorIndex:
     def __init__(self,root=ROOT,*,dsn=None,write=False,embedder=None,company_id=None,index_version=None):
         self.root=Path(root)
         self.company_id=company_id if company_id is not None else int(os.getenv('RAG_COMPANY_ID','1'))
-        self.version=index_version or os.getenv('RAG_INDEX_VERSION','ax-v3-pgvector-v1')
+        self.version=index_version or os.getenv('RAG_INDEX_VERSION','ax-v3-openai-small-384-v1')
         self.model=os.getenv('EMBEDDING_MODEL',MODEL)
         self.revision=os.getenv('EMBEDDING_REVISION',REVISION)
         self.dsn=dsn or os.getenv('RAG_INDEX_DATABASE_URL' if write else 'RAG_DATABASE_URL')
         if not self.dsn: raise ValueError('Set RAG_INDEX_DATABASE_URL for ingest or RAG_DATABASE_URL for search')
         self._embedder=embedder
-        self._encoder=None
 
     def embed(self,texts):
         if self._embedder: return self._embedder(texts)
-        if self._encoder is None:
-            from sentence_transformers import SentenceTransformer
-            self._encoder=SentenceTransformer(self.model,revision=self.revision,device='cpu')
-        return self._encoder.encode(texts,normalize_embeddings=True,show_progress_bar=False).tolist()
+        # Same provider and dimensions as rag-mcp; batches preserve input order.
+        from openai import OpenAI
+        vectors=[]
+        with OpenAI(timeout=45, max_retries=2) as client:
+            for start in range(0,len(texts),16):
+                batch=[re.sub(r"(?<!\d)0\d{1,2}[- ]?\d{3,4}[- ]?\d{4}(?!\d)", "[PHONE]",
+                              re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[EMAIL]", text))
+                       for text in texts[start:start+16]]
+                response=client.embeddings.create(model=self.model,input=batch,dimensions=DIMENSIONS,encoding_format='float')
+                rows=sorted(response.data,key=lambda item:item.index)
+                if [r.index for r in rows]!=list(range(len(batch))): raise ValueError('Embedding response indices mismatch')
+                for row in rows:
+                    vector_literal(row.embedding)
+                    vectors.append(row.embedding)
+        return vectors
 
     def replace(self):
         import psycopg

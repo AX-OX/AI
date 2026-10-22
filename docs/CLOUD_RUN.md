@@ -32,9 +32,9 @@ curl http://127.0.0.1:18000/health
 회귀 검사는 기존 `agent/.venv/bin/python -m pytest agent/tests tests -q`를 사용한다.
 
 Dockerfile은 기존 세 requirements 파일을 함께 설치하고 `pip check`를 실행한다.
-PyTorch는 기존 버전의 CPU wheel을 사용한다. 기존 384차원 임베딩 모델과 고정 revision은
-빌드 시 공개 모델 저장소에서 다운로드한다. 실행 시에는 이미지의 캐시를 오프라인으로 사용한다.
-모델을 바꾸려면 이미지 재빌드와 문서 메타데이터·색인 버전 검토가 필요하다.
+로컬 PyTorch·모델 다운로드·오프라인 캐시는 제거했다. 임베딩은 OpenAI
+`text-embedding-3-small` API의 `dimensions=384`를 사용한다. 검색 서비스와 색인 Job 모두
+`OPENAI_API_KEY` 및 OpenAI API로의 HTTPS 연결이 필요하다.
 `.dockerignore`와 명시적 COPY로 `.env`, 로컬 가상환경, Git 및 자격증명 파일을 제외한다.
 
 ## Cloud Run 콘솔 설정
@@ -68,14 +68,14 @@ MCP는 컨테이너의 `127.0.0.1`에만 바인딩한다. 별도 Cloud Run 서�
 | `RAG_MCP_URL` | `http://127.0.0.1:9102/mcp` (이미지 기본값) |
 | `SPRING_INTERNAL_URL` | `https://axox-853402721456.asia-northeast1.run.app/internal` (이미지 기본값) |
 | `AGENT_COMPANY_ID` / `RAG_COMPANY_ID` | 기본 `1`, 기존 시연 문서의 회사 범위 |
-| `RAG_INDEX_VERSION` | 기본 `ax-v3-pgvector-v1` |
+| `RAG_INDEX_VERSION` | 기본 `ax-v3-openai-small-384-v1` |
 
 Secret Manager의 **숫자 버전**을 환경변수로 참조한다. 실제 값은 이미지·Git·배포 문서에 기록하지 않는다.
 
 | 비밀 환경변수 | 내용 |
 |---|---|
 | `INTERNAL_TOKEN` | 기존 Spring과 같은 내부 토큰 |
-| `OPENAI_API_KEY` | LLM 호출 키 |
+| `OPENAI_API_KEY` | LLM 및 임베딩 호출 키 |
 | `RAG_DATABASE_URL` | `axox` DB 읽기 전용 DSN |
 | `AGENT_DATABASE_URL` | `agent` DB 전용 DSN |
 
@@ -200,8 +200,8 @@ FROM public.documents WHERE document_id BETWEEN 401 AND 408 ORDER BY document_id
 - 인수: `rag-mcp/index.py`
 - 태스크 수 1, 병렬성 1, 초기 자동 재시도 0, 제한 시간 600초
 - Cloud SQL 연결과 색인 전용 서비스 계정·Secret 접근 권한 설정
-- 환경: 이미지 기본 corpus·모델·revision·색인 버전 유지, `RAG_INDEX_DATABASE_URL`만 색인 계정 DSN으로 주입
-- Agent·Spring·OpenAI 비밀값은 Job에 불필요
+- 환경: 이미지 기본 corpus·모델·revision·색인 버전 유지, `RAG_INDEX_DATABASE_URL`과 `OPENAI_API_KEY`를 Secret으로 주입
+- Agent·Spring 내부 토큰은 Job에 불필요; OpenAI API 키는 필수
 
 이 작업은 해당 회사·색인 버전의 기존 청크를 트랜잭션으로 교체한다.
 서비스 배포마다 자동 실행하지 않는다. **명시적 승인 후 별도 실행할 데이터 쓰기 작업**이다.
@@ -234,7 +234,7 @@ FROM public.documents WHERE document_id BETWEEN 401 AND 408 ORDER BY document_id
 - 실제 localhost MCP ping·도구 목록·RAG 원문 `docs://401` 조회 성공.
 - 기존 Agent Gateway → Business MCP → 로컬 Spring fixture 호출 성공.
 - 기존 mock API로 202 → 승인 대기 → 승인 → DONE 및 가상 프로젝트 3개 확인.
-- 이미지의 실제 CPU 임베딩 모델로 청크 34개를 384차원으로 변환. DB 저장은 실행하지 않음.
+- 이전 CPU 모델 검증 기록이다. 현재 OpenAI 임베딩은 별도의 API·재색인 검증이 필요하다.
 - 세 서버를 각각 강제 종료했을 때 컨테이너 exit 1 확인.
 - `PORT=18080`의 정상 응답과 SIGTERM 후 exit 0 확인.
 - 기존 live 검증에서 내부 토큰·LLM 키/모델·체크포인터 DSN 누락 시 기동 거부 확인.
@@ -255,7 +255,7 @@ python rag-mcp/index.py --if-needed
 ```
 
 - `RAG_INDEX_DATABASE_URL`: 기존 `axox` DB의 색인 전용 계정 DSN. 이 명령은 읽기 계정으로 대체하지 않는다.
-- 회사·색인 버전: `RAG_COMPANY_ID`(기본 1), `RAG_INDEX_VERSION`(기본 `ax-v3-pgvector-v1`).
+- 회사·색인 버전: `RAG_COMPANY_ID`(기본 1), `RAG_INDEX_VERSION`(기본 `ax-v3-openai-small-384-v1`).
 - 이미지에 포함된 corpus·모델·revision 설정을 서비스와 동일하게 사용한다.
 - 모델명 변경 시 JSONL의 `metadata.embedding_model`도 맞추고 이미지를 다시 빌드한다.
   기존 모델·문서 메타데이터 일치 검사를 완화하지 않으며, 벡터는 계속 384차원이어야 한다.
@@ -288,7 +288,7 @@ Job은 서비스와 **같은 커밋의 이미지 digest**를 사용하고 다음
 | 태스크 수 / 병렬성 / 초기 재시도 | 1 / 1 / 0 |
 | 리소스 시작값 / 제한 시간 | CPU 2 / 메모리 4 GiB / 600초 |
 | 일반 환경 | 서비스와 동일한 회사·색인 버전·모델·corpus 설정 |
-| 비밀 환경 | `RAG_INDEX_DATABASE_URL`만 색인 계정 Secret 숫자 버전으로 주입 |
+| 비밀 환경 | `RAG_INDEX_DATABASE_URL` 및 `OPENAI_API_KEY`의 Secret 숫자 버전으로 주입 |
 | 불필요한 비밀 | Agent 체크포인터·Spring 내부 토큰·OpenAI 키 |
 | 연결 | 기존 Cloud SQL 인스턴스 연결 이름, 필요 시 기존 VPC 경로 |
 | 런타임 IAM | DB 프로젝트의 Cloud SQL Client, 색인 Secret의 Secret Accessor |

@@ -33,11 +33,10 @@ export AGENT_TEST_DATABASE_URL="postgresql:///agent?host=$TASK_DIR&port=55439"
 export RAG_DATABASE_URL="postgresql://ax_rag_reader@127.0.0.1:55439/ax"
 export RAG_INDEX_DATABASE_URL="postgresql://ax_rag_indexer@127.0.0.1:55439/ax"
 export CORPUS_DIR="$ROOT_DIR/AX_Navigator_AI_MVP_v3/rag"
-export RAG_INDEX_VERSION=ax-v3-pgvector-v1
-export HF_HOME=${HF_HOME:-/private/tmp/ax-huggingface}
-export HF_HUB_OFFLINE=${HF_HUB_OFFLINE:-1}
-export TRANSFORMERS_OFFLINE=${TRANSFORMERS_OFFLINE:-1}
-export TOKENIZERS_PARALLELISM=false
+export RAG_INDEX_VERSION=ax-v3-openai-small-384-v1
+export EMBEDDING_MODEL=text-embedding-3-small
+export EMBEDDING_REVISION=openai-dim384-v1
+export AX_TEST_OPENAI_EMBEDDINGS=1
 export TEST_SPRING_INTERNAL_URL=http://127.0.0.1:18081/internal
 export LIVE_BUSINESS_MCP_URL=http://127.0.0.1:19101/mcp
 export LIVE_RAG_MCP_URL=http://127.0.0.1:19102/mcp

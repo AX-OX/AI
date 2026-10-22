@@ -51,7 +51,7 @@ ID 체계와 수량은 기준 문서 §5 "시드 데이터 범위"를 따른다.
   rag/docs/{document_id}.md 원문을 새로 쓰고, 매뉴얼의 절차·승인 규칙이 DB의 process_steps·requires_approval·exception_rules와 일치하게 한다.
   rag/pgvector_import.jsonl은 섹션 단위로 chunk를 다시 만들고 각 행을 {id, document, metadata}로 저장하라. metadata는 기준 문서 §9의 목록(document_id, title, doc_type, process_id, section, page, chunk_index, version, embedding_model, company_id, access_level)을 따른다.
   rag/doc_mapping.json의 문서별 related_process_ids 배열로 업무 연결을 명시하라. 부서 매뉴얼은 관련 업무 3개를 모두 넣고 공통 문서는 []로 표시한다. process_id는 대표 업무 또는 공통 문서의 null이다.
-  임베딩은 indexer에서 실제 모델로 생성하고, JSONL에 가짜 벡터를 넣지 마라. 모델은 sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2, revision e8f8c211226b894fcb81acc59f3b34ba3efd5f42, vector(384)를 기준으로 한다.
+  임베딩은 indexer에서 실제 모델로 생성하고, JSONL에 가짜 벡터를 넣지 마라. 모델은 text-embedding-3-small, 구성 식별자 openai-dim384-v1, API dimensions=384 및 vector(384)를 기준으로 한다. OPENAI_API_KEY가 필요하며 모델 파일을 다운로드하지 않는다.
 
 # 3. 시연이 되도록 데이터에 반드시 들어가야 할 상황
 아래 조건을 모두 만족하도록 수치를 조정하라. 조정 과정은 스크립트로 확인하라.
@@ -113,7 +113,7 @@ ID 체계와 수량은 기준 문서 §5 "시드 데이터 범위"를 따른다.
 - §3의 8개 조건 각각 통과 여부.
 - compute_ax.py 결과 = eval 정답 = fixture 03 값 일치.
 - rag/docs 문서 ID·process_id가 DB documents와 일치, chunk 수.
-- pgvector 적재 성공 시 JSONL 수 = rag_indexes.chunk_count = 해당 회사·버전 rag_document_chunks 행 수인지 확인한다. 임베딩 차원·모델·revision·코퍼스 해시, 회사·문서 유형·업무 필터, cosine 거리 오름차순(score는 작을수록 유사), 동일 버전 재적재 시 중복 없음, 색인 불일치 오류를 검증한다. 모델 다운로드·DB 연결 등으로 실행하지 못한 항목은 사유와 함께 미검증으로 기록한다.
+- pgvector 적재 성공 시 JSONL 수 = rag_indexes.chunk_count = 해당 회사·버전 rag_document_chunks 행 수인지 확인한다. 임베딩 차원·모델·revision·코퍼스 해시, 회사·문서 유형·업무 필터, cosine 거리 오름차순(score는 작을수록 유사), 동일 버전 재적재 시 중복 없음, 색인 불일치 오류를 검증한다. OpenAI API 호출·DB 연결 등으로 실행하지 못한 항목은 사유와 함께 미검증으로 기록한다.
 
 # 8. 결과물
 AX_Navigator_AI_MVP_v3.zip

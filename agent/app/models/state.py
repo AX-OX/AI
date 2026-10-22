@@ -14,6 +14,8 @@ class AXState(TypedDict, total=False):
     budget: dict
     solutions: list[dict]
     evidence: list[dict]
+    assessment_evidence: list[dict]
+    business_evidence: list[dict]
     scope: dict
     excluded: list[dict]
     evaluation_policy: dict

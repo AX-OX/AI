@@ -4,6 +4,7 @@ COPY agent/requirements.lock.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY agent/app ./app
 COPY agent/prompts ./prompts
+COPY agent/config ./config
 COPY agent/fixtures ./fixtures
 COPY AX_Navigator_AI_MVP_v3 ./AX_Navigator_AI_MVP_v3
 ENV DATASET_DIR=/app/AX_Navigator_AI_MVP_v3
