@@ -25,7 +25,7 @@ async def test_real_reasoner_two_turn_tool_loop_and_answer_without_external_serv
     monkeypatch.setenv('OPENAI_API_KEY','test-placeholder')
     turns={'collect':0}
     reads=['get_company_profile','get_business_processes','get_operational_metrics',
-           'get_system_inventory','get_project_budget','get_solution_catalog']
+           'get_system_inventory','get_project_budget','get_solution_catalog','get_solution_candidates']
     class FakeProvider:
         def __init__(self,**kwargs):
             assert kwargs['use_responses_api'] is True
@@ -52,7 +52,7 @@ async def test_real_reasoner_two_turn_tool_loop_and_answer_without_external_serv
                 return self.schema(candidates=[{'candidate_id':key,'reason':'문서 기반 테스트 후보',
                     'evidence_ids':entry['evidence_ids']} for key,entry in context['candidate_catalog'].items()])
             assert self.schema is Narrative
-            return Narrative(summary='선정 결과와 선행 과제를 문서 기준으로 설명합니다.',recommendations=[{'solution_id':sid,'reason':'반복 업무와 사람 검토 조건을 고려했습니다.','document_ids':[403]} for sid in (507,508,509)])
+            return Narrative(summary='선정 결과와 선행 과제를 문서 기준으로 설명합니다.',recommendations=[{'process_id':sid-300,'solution_id':sid,'reason':'반복 업무와 사람 검토 조건을 고려했습니다.','document_ids':[403]} for sid in (507,508,509)])
     monkeypatch.setattr('agent.app.reasoning.ChatOpenAI',FakeProvider)
     cfg=Settings(mode='llm-demo',model='test-model',internal_token='test')
     app=create_app(cfg);key=str(uuid4())
@@ -64,7 +64,7 @@ async def test_real_reasoner_two_turn_tool_loop_and_answer_without_external_serv
             if job: await job
             body=(await client.get(f'/tasks/{key}')).json()
             assert body['status']=='WAITING_APPROVAL',body
-            assert turns['collect']==2
+            assert turns['collect']==3
             assert body['result']['answer'].startswith('선정 결과와')
             assert '295,000,000' in body['result']['answer']
             assert 'total_score' not in body['result']['assessment']  # LLM scores differ from fixture; do not attach a false weighted total

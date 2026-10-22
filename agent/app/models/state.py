@@ -17,6 +17,7 @@ class AXState(TypedDict, total=False):
     budget: dict
     budget_krw: int | None
     solutions: list[dict]
+    solution_candidates: list[dict]
     evidence: list[dict]
     assessment_evidence: list[dict]
     business_evidence: list[dict]

@@ -13,7 +13,7 @@ from ..tool_errors import safe_tool_failure
 logger = logging.getLogger(__name__)
 
 READS = {'get_company_profile', 'get_business_processes', 'get_operational_metrics',
-         'get_system_inventory', 'get_project_budget', 'get_solution_catalog'}
+         'get_system_inventory', 'get_project_budget', 'get_solution_catalog', 'get_solution_candidates'}
 WRITES = {'save_assessment', 'save_extraction', 'create_ax_roadmap', 'create_ax_project', 'update_project_status'}
 RAG_TOOLS = {'search_docs', 'get_assessment_evidence', 'get_document_chunks', 'index_document'}
 # 배포 점검이 요구하는 최소 도구. 문서 업로드 도구는 업로드 기능을 쓸 때만 필요하다.

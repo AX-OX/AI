@@ -29,6 +29,7 @@ class NewCompany(MockGateway):
             return [{'process_id': 900, 'department_id': 201, 'process_name': '규정 문의 응답', 'purpose': '반복 문의 응답',
                      'standardization_level': None, 'requires_approval': False, 'exception_rules': None}]
         if name == 'get_operational_metrics': return []
+        if name == 'get_solution_candidates': return []
         if name == 'get_system_inventory': return {'systems': [], 'process_systems': []}
         if name == 'get_project_budget': return {'ax_budget_krw': None}
         return super()._call(task_id, name, args)
@@ -110,7 +111,7 @@ async def test_confirmed_seed_company_still_waits_for_approval():
 def draft(**changes):
     value = {'company': {'industry': None, 'employeeCount': None},
              'departments': [{'key': 'd1', 'name': '인사팀'}],
-             'processes': [{'key': 'p1', 'departmentKey': 'd1', 'name': '규정 문의 응답', 'purpose': None, 'steps': [],
+             'processes': [{'key': 'p1', 'departmentKey': 'd1', 'name': '규정 문의 응답', 'workType': 'KNOWLEDGE_QA', 'purpose': None, 'steps': [],
                             'standardizationLevel': 0.833, 'requiresApproval': False, 'exceptionRules': None, 'sourceId': 'C001'}],
              'metrics': [{'processKey': 'p1', 'monthlyCount': 120, 'avgMinutes': 15.004, 'hourlyLaborCostKrw': 35000,
                           'errorRate': None, 'sourceId': 'C001'}],

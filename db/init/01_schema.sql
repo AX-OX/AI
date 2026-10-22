@@ -42,6 +42,7 @@ CREATE TABLE business_processes (
     standardization_level   NUMERIC(3,2),               -- 표준화 수준 0~1
     requires_approval       BOOLEAN         NOT NULL DEFAULT FALSE,  -- 승인 필요 여부
     exception_rules         TEXT,                       -- 자동화 제외 단계·제한사항
+    work_type               VARCHAR(30),                -- 업무 유형. 같은 유형의 솔루션 템플릿과 매칭. NULL·OTHER면 매칭 없음
     CONSTRAINT pk_business_processes PRIMARY KEY (process_id),
     CONSTRAINT fk_processes_department FOREIGN KEY (department_id) REFERENCES departments (department_id)
 );
@@ -118,8 +119,8 @@ CREATE TABLE document_pages (
 
 CREATE TABLE ai_solution_catalog (
     solution_id                 BIGINT GENERATED ALWAYS AS IDENTITY          NOT NULL,
-    target_process_id           BIGINT          NOT NULL,   -- 이 솔루션을 적용할 업무
-    depends_on_solution_id      BIGINT,                     -- 선행 과제 (같은 포트폴리오에 함께 선정돼야 함)
+    work_type                   VARCHAR(30)     NOT NULL,   -- 적용할 업무 유형 (business_processes.work_type)
+    depends_on_solution_id      BIGINT,                     -- 선행 템플릿 (같은 부서 업무에 붙여 같은 포트폴리오에 함께 선정돼야 함)
     solution_type               VARCHAR(30)     NOT NULL,   -- RAG / AI_AGENT / PREDICTION / CLASSIFICATION / RPA
     solution_name               VARCHAR(100)    NOT NULL,
     description                 TEXT,
@@ -135,7 +136,6 @@ CREATE TABLE ai_solution_catalog (
     requires_api                BOOLEAN         NOT NULL DEFAULT FALSE,  -- 시스템 API 필요 여부
     data_source                 VARCHAR(20)     NOT NULL DEFAULT 'ASSUMED',
     CONSTRAINT pk_ai_solution_catalog PRIMARY KEY (solution_id),
-    CONSTRAINT fk_catalog_process    FOREIGN KEY (target_process_id)      REFERENCES business_processes (process_id),
     CONSTRAINT fk_catalog_depends_on FOREIGN KEY (depends_on_solution_id) REFERENCES ai_solution_catalog (solution_id)
 );
 

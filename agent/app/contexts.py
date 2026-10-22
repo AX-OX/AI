@@ -34,11 +34,12 @@ def assessment_context(state, criteria):
 
 def discovery_context(state, mode):
     process_fields = ('process_id', 'department_id', 'process_name', 'purpose', 'standardization_level',
-                      'requires_approval', 'exception_rules')
-    solution_fields = ('solution_id', 'target_process_id', 'depends_on_solution_id', 'solution_name',
+                      'requires_approval', 'exception_rules', 'work_type')
+    solution_fields = ('solution_id', 'work_type', 'depends_on_solution_id', 'solution_name',
                        'solution_type', 'description', 'min_standardization_level', 'requires_api')
     return {
         'request': state['request'], 'evaluation_policy': state.get('evaluation_policy', {}),
+        'solution_candidates': state['solution_candidates'],
         'evidence': evidence_rows(state['evidence']),
         'processes': [pick(p, process_fields) for p in state['processes']],
         'solutions': [pick(s, solution_fields) for s in state['solutions']],
@@ -55,7 +56,7 @@ def response_context(state):
         {k: v for k, v in item.items() if k != 'evidence'} for item in state['roadmap']['items']]}
     return {
         'request': state['request'], 'portfolio': state['portfolio'], 'roadmap': roadmap,
-        'selected_processes': [pick(p, ('process_id', 'process_name', 'purpose', 'requires_approval', 'exception_rules'))
+        'selected_processes': [pick(p, ('process_id', 'process_name', 'purpose', 'requires_approval', 'exception_rules', 'work_type'))
                                for p in state['processes'] if int(p['process_id']) in selected],
         'evidence': evidence_rows([r for r in state['evidence'] if r['document_id'] in documents]),
     }

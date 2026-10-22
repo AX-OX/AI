@@ -14,17 +14,17 @@ async def get_company_profile(company_id: int) -> Any:
     return await call('GET', f'/companies/{company_id}')
 
 @mcp.tool
-async def get_business_processes(company_id: int, department_id: int | None = None) -> Any:
+async def get_business_processes(company_id: int, department_id: int | None = None) -> list[dict]:
     """회사 ID와 선택적 부서 ID로 업무 절차, 표준화 수준 및 승인 조건을 조회한다."""
     return await call('GET', f'/companies/{company_id}/processes', params={'departmentId': department_id} if department_id is not None else None)
 
 @mcp.tool
-async def get_operational_metrics(company_id: int, department_id: int | None = None) -> Any:
+async def get_operational_metrics(company_id: int, department_id: int | None = None) -> list[dict]:
     """회사와 선택적 부서의 최근 3개월 업무 지표를 조회한다. 시간은 분, 인건비는 원이다."""
     return await call('GET', f'/companies/{company_id}/metrics', params={'departmentId': department_id} if department_id is not None else None)
 
 @mcp.tool
-async def get_system_inventory(company_id: int) -> Any:
+async def get_system_inventory(company_id: int) -> list[dict]:
     """회사 ID로 IT 시스템, API 제공 여부와 업무 연결 정보를 조회한다."""
     return await call('GET', f'/companies/{company_id}/systems')
 
@@ -34,9 +34,14 @@ async def get_project_budget(company_id: int) -> Any:
     return await call('GET', f'/companies/{company_id}/budget')
 
 @mcp.tool
-async def get_solution_catalog() -> Any:
-    """솔루션 ID, target_process_id, depends_on_solution_id, 비용(원), 자동화율(0~1) 및 적용 조건을 조회한다."""
+async def get_solution_catalog() -> list[dict]:
+    """업무 유형 work_type별 솔루션 템플릿의 이름, 선행 템플릿 ID, 가정 비용·효과율과 적용 조건을 조회한다."""
     return await call('GET', '/solutions')
+
+@mcp.tool
+async def get_solution_candidates(company_id: int) -> list[dict]:
+    """Spring이 매칭한 회사 업무·템플릿 후보 쌍, 선행 쌍, 정책 제외 사유 및 지표 충족 여부를 조회한다. Agent는 매칭을 재계산하지 않는다."""
+    return await call('GET', f'/companies/{company_id}/solution-candidates')
 
 @mcp.tool
 async def calculate_ax_roi(process_id: int, solution_id: int) -> Any:

@@ -35,6 +35,7 @@ class AssessmentDraft(ContractModel):
 
 
 class Recommendation(ContractModel):
+    process_id: int
     solution_id: int
     reason: str = Field(min_length=1)
     document_ids: list[int] = Field(min_length=1)
@@ -42,7 +43,7 @@ class Recommendation(ContractModel):
 
 class Narrative(ContractModel):
     summary: str = Field(min_length=1)
-    recommendations: list[Recommendation] = Field(min_length=3, max_length=3)
+    recommendations: list[Recommendation] = Field(min_length=1, max_length=3)
 
 
 class RoiScenario(ContractModel):
@@ -62,6 +63,7 @@ class RoiResult(ContractModel):
     processId: int = Field(gt=0)
     solutionId: int = Field(gt=0)
     dependsOnSolutionId: Annotated[int, Field(gt=0)] | None
+    dependsOnProcessId: Annotated[int, Field(gt=0)] | None
     axScore: Score
     impactScore: Score
     feasibilityScore: Score
@@ -113,6 +115,20 @@ class DiscoveryDraft(ContractModel):
 
 SystemType = Literal["ERP", "CRM", "GROUPWARE", "HR", "ETC"]
 AccessLevel = Literal["OPEN", "RESTRICTED", "NONE"]
+WorkType = Literal["KNOWLEDGE_QA", "GUIDANCE", "DECISION_SUPPORT", "REPORT_AGGREGATION",
+                   "RESEARCH_REPORT", "MEETING_SUMMARY", "TICKET_TRIAGE", "CODE_REVIEW", "DOC_AUTHORING", "OTHER"]
+
+
+class CandidateRef(ContractModel):
+    process_id: int = Field(gt=0)
+    solution_id: int = Field(gt=0)
+
+
+class SolutionCandidate(CandidateRef):
+    work_type: WorkType
+    depends_on: CandidateRef | None
+    excluded_reason: str | None
+    metrics_sufficient: bool
 
 
 class CompanyExtract(ContractModel):
@@ -129,6 +145,7 @@ class ProcessExtract(ContractModel):
     key: str = Field(min_length=1, max_length=50)
     departmentKey: str = Field(min_length=1, max_length=50)
     name: str = Field(min_length=1, max_length=100)
+    workType: WorkType
     purpose: str | None
     steps: list[str]
     standardizationLevel: Annotated[float, Field(ge=0, le=1)] | None
