@@ -15,6 +15,7 @@ MESSAGES = {
     'RAG_INDEX_CORPUS_MISMATCH': '배포 이미지 문서와 DB 색인의 문서 해시가 다릅니다.',
     'RAG_EVIDENCE_LIMIT': '성숙도 근거가 200개를 초과합니다. 범위를 나누세요.',
     'RAG_EVIDENCE_EMPTY': '활성 색인에 성숙도 근거 문서가 없습니다.',
+    'RAG_UPLOAD_EMPTY': 'PDF에서 텍스트를 추출하지 못했습니다. 스캔본이면 텍스트가 있는 PDF로 다시 올리세요.',
     'RAG_INTERNAL_ERROR': 'RAG 내부 오류입니다. RAG_TOOL_FAILED 로그를 확인하세요.',
     'RAG_TOOL_MISSING': '연결된 RAG 서버에 필수 도구가 없습니다. RAG 배포 버전·URL을 확인하세요.',
     'MCP_CALL_FAILED': 'MCP 호출 실패. 서버 버전·연결·인증 상태를 확인하세요.',

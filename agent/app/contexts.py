@@ -2,7 +2,8 @@
 import json
 from .clients import mask
 
-ASSESSMENT_TYPES = frozenset({'SYSTEM_SPEC', 'POLICY', 'AI_STATUS', 'DATA_QUALITY', 'PROJECT_REPORT'})
+# UPLOADED: 고객사가 올린 PDF. 유형 분류가 없으므로 모든 성숙도 영역의 근거 후보가 된다.
+ASSESSMENT_TYPES = frozenset({'SYSTEM_SPEC', 'POLICY', 'AI_STATUS', 'DATA_QUALITY', 'PROJECT_REPORT', 'UPLOADED'})
 
 
 def pick(row, fields):

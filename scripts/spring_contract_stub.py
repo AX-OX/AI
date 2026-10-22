@@ -33,7 +33,7 @@ async def contract(path:str,request:Request):
     elif path=='ax/portfolio':
         if body['companyId']!=1: raise HTTPException(403)
         name='optimize_ax_portfolio'
-        args={'company_id':body['companyId'],'candidates':[{'process_id':p['processId'],'solution_id':p['solutionId']} for p in body['candidates']],'max_items':body['maxItems']}
+        args={'company_id':body['companyId'],'candidates':[{'process_id':p['processId'],'solution_id':p['solutionId']} for p in body['candidates']],'max_items':body['maxItems'],'budget_krw':body.get('budgetKrw')}
     elif path=='assessments':
         areas={'data':'data_score','infra':'infra_score','automation':'automation_score','aiCapability':'ai_capability_score','governance':'governance_score'}
         name='save_assessment';args={'task_id':body['taskId'],'scores':{areas.get(k,k):v for k,v in body['scores'].items()},'criteria_version':body['criteriaVersion'],'evidence':body['evidence']}

@@ -4,6 +4,7 @@ from decimal import Decimal
 from langgraph.types import interrupt
 from ...schemas import AXState, Assessment, RoiResult
 from ...scope import request_scope
+from ...budget import request_budget
 from ...contexts import ASSESSMENT_TYPES
 from ...assessment import load_policy, AssessmentReferenceError
 from ...contracts import normalize_read
@@ -45,6 +46,7 @@ def task_result(state, mode):
             'roadmap': display_roadmap(state.get('roadmap'), state), 'evaluationPolicy': state.get('evaluation_policy'),
             'insufficientData': state.get('insufficient_data', []), 'registration': state.get('registration'),
             'projects': projects_dto(state), 'answer': answer, 'mode': mode,
+            'extraction': {'draftId': state['extraction']['draft_id']} if state.get('extraction') else None,
             'priorityBasis': 'AX_SCORE',
             'notice': '가정 데이터 기반. 절감액은 인력 시간 환산 가치이며 확정 현금 절감이 아닙니다.'}
 
@@ -63,22 +65,46 @@ def build_nodes(gateway, reasoner, settings):
     async def tool(state, node, name, **args):
         return await gateway.tool(state['task_id'], node, name, args)
 
+    async def extract(state):
+        document_ids = state.get('document_ids') or []
+        if not document_ids:
+            raise ValueError('INSUFFICIENT_DATA: 기업 데이터를 추출할 색인 완료 문서가 없습니다. PDF를 먼저 업로드하세요.')
+        chunks = await tool(state,'extract','get_document_chunks',company_id=state['company_id'],document_ids=document_ids)
+        if not isinstance(chunks,list): raise ValueError('문서 조각 응답은 배열이어야 합니다.')
+        payload = await reasoner.extract(state, chunks)
+        saved = await tool(state,'extract','save_extraction',task_id=state['task_id'],document_ids=document_ids,payload=payload)
+        if type(saved.get('draft_id')) is not int or saved['draft_id'] <= 0: raise ValueError('Spring draft_id 응답 필요')
+        return {'extraction':{'draft_id':saved['draft_id'],'payload':payload},'status':'RUNNING'}
+
+    def confirmation(state):
+        # Spring이 사용자 확정 데이터를 저장한 뒤 confirm으로 재개한다. 확정 내용은 collect가 Spring에서 다시 읽는다.
+        decision = interrupt({'kind':'CONFIRMATION','taskId':state['task_id'],'draftId':state['extraction']['draft_id']})
+        if decision.get('kind')!='CONFIRMATION' or decision.get('userId')!=state['user_id']:
+            raise ValueError('요청자의 기업 데이터 확정만 재개할 수 있습니다.')
+        return {'company_data_confirmed':True}
+
     async def collect(state):
         raw = {name: normalize_read(name, value) for name, value in (await reasoner.collect(state, gateway)).items()}
         fields = {'get_company_profile':'company','get_business_processes':'processes',
                   'get_operational_metrics':'metrics','get_system_inventory':'systems',
                   'get_project_budget':'budget','get_solution_catalog':'solutions'}
         result = {fields[k]:raw[k] for k in fields}
-        for field in ('processes','metrics','solutions'):
-            if not isinstance(result[field],list) or not result[field]:
-                raise ValueError(f'INSUFFICIENT_DATA: Spring {field} 응답 필요')
+        if not isinstance(result['processes'],list) or not result['processes']:
+            raise ValueError('INSUFFICIENT_DATA: Spring processes 응답 필요')
+        # 새 회사는 지표가 일부 없거나 대상 솔루션이 없을 수 있다. 지표 없는 업무는 Spring 계산에서 빠진다.
+        for field in ('metrics','solutions'):
+            if not isinstance(result[field],list): raise ValueError(f'Spring {field} 응답은 배열이어야 합니다.')
         if int(result['company']['company_id']) != state['company_id']: raise ValueError('회사 응답 불일치')
         scope=request_scope(state['request'],result['company']['departments'],result['processes'])
         gateway.observe(state['task_id'],'collect','REQUEST_SCOPE',scope)
-        return {**result,'status':'RUNNING','evaluation_policy':policy,'scope':scope}
+        # 예산은 회사 고정값이 아니라 요청에 적힌 선택값이다. 없으면 예산 제약 없이 계산한다.
+        budget_krw=request_budget(state['request'])
+        gateway.observe(state['task_id'],'collect','REQUEST_BUDGET',{'budgetKrw':budget_krw})
+        if budget_krw is not None: await gateway.task_budget(state['task_id'],budget_krw)
+        return {**result,'status':'RUNNING','evaluation_policy':policy,'scope':scope,'budget_krw':budget_krw}
 
     async def retrieve(state):
-        common = await tool(state,'retrieve','get_assessment_evidence')
+        common = await tool(state,'retrieve','get_assessment_evidence',company_id=state['company_id'])
         if not isinstance(common,list): raise ValueError('성숙도 근거 응답은 배열이어야 합니다.')
         evidence = list(common)
         scope = state.get('scope') or {}
@@ -88,7 +114,7 @@ def build_nodes(gateway, reasoner, settings):
             pid = int(process['process_id'])
             if pid not in scoped: continue
             rows = await tool(state,'retrieve','search_docs',query=f"{pid} {process['process_name']} 목적 절차 승인 예외 규칙",
-                              doc_type='MANUAL',process_id=pid,top_k=5)
+                              company_id=state['company_id'],doc_type='MANUAL',process_id=pid,top_k=5)
             if not isinstance(rows,list): raise ValueError('업무 검색 응답은 배열이어야 합니다.')
             # In the v3 corpus a document covers several processes; prefer the
             # exact process section instead of borrowing a neighbouring workflow.
@@ -136,6 +162,10 @@ def build_nodes(gateway, reasoner, settings):
     async def discover(state):
         scope=state.get('scope') or request_scope(state['request'],state['company']['departments'],state['processes'])
         scoped_ids=set(scope['processIds'])
+        if not any(int(s['target_process_id']) in scoped_ids for s in state['solutions']):
+            # 카탈로그에 이 회사 업무용 솔루션이 없다: 과제 추천 없이 성숙도 진단으로 끝낸다.
+            gateway.observe(state['task_id'],'discover','NO_SOLUTION_CATALOG',{'processIds':sorted(scoped_ids)})
+            return {'candidates':[],'excluded':[],'status':'DONE','answer':assessment_answer(state)}
         discovery_state={**state,'processes':[p for p in state['processes'] if int(p['process_id']) in scoped_ids],
                          'solutions':[s for s in state['solutions'] if int(s['target_process_id']) in scoped_ids]}
         proposed = await reasoner.discover(discovery_state)
@@ -188,10 +218,11 @@ def build_nodes(gateway, reasoner, settings):
         roi = [validate_roi(await tool(state,'evaluate','calculate_ax_roi',process_id=c['process_id'],solution_id=c['solution_id']),c,state)
                for c in state['candidates']]
         portfolio = await tool(state,'evaluate','optimize_ax_portfolio',company_id=state['company_id'],
-                               candidates=[{'process_id':c['process_id'],'solution_id':c['solution_id']} for c in state['candidates']],max_items=3)
+                               candidates=[{'process_id':c['process_id'],'solution_id':c['solution_id']} for c in state['candidates']],max_items=3,
+                               budget_krw=state.get('budget_krw'))
         if not isinstance(portfolio.get('insufficient'),bool): raise ValueError('portfolio.insufficient 필수')
         if portfolio['insufficient']:
-            if state.get('retry_count',0)>=2: raise ValueError('예산 내 근거 있는 과제 3개를 찾지 못했습니다.')
+            if state.get('retry_count',0)>=2: raise ValueError('예산·선행 조건 안에서 근거 있는 과제 3개를 찾지 못했습니다.')
             return {'roi':roi,'portfolio':portfolio}
         selected = portfolio.get('selected')
         if not isinstance(selected,list) or len(selected)!=3: raise ValueError('포트폴리오에 세 과제가 필요합니다.')
@@ -204,8 +235,12 @@ def build_nodes(gateway, reasoner, settings):
         if portfolio.get('excluded') != state['excluded']: raise ValueError('Spring 정책 제외 목록 불일치')
         # Consistency checks only; scoring formulas and optimization remain entirely in Spring.
         total = sum(c['firstYearTcoKrw'] for c in selected)
-        budget = int(state['budget']['ax_budget_krw'])
-        if total>budget or portfolio.get('budgetKrw')!=budget or portfolio.get('totalFirstYearTcoKrw')!=total or portfolio.get('remainingBudgetKrw')!=budget-total:
+        budget = state.get('budget_krw')
+        if portfolio.get('totalFirstYearTcoKrw')!=total: raise ValueError('Spring 비용 합계 불일치')
+        if budget is None:
+            if portfolio.get('budgetKrw') is not None or portfolio.get('remainingBudgetKrw') is not None:
+                raise ValueError('예산 없는 요청에 Spring 예산 값이 있습니다.')
+        elif total>budget or portfolio.get('budgetKrw')!=budget or portfolio.get('remainingBudgetKrw')!=budget-total:
             raise ValueError('Spring 예산 합계 불일치 또는 예산 초과')
         score_sum = sum((Decimal(str(c['axScore'])) for c in selected),Decimal(0))
         if Decimal(str(portfolio.get('totalAxScore'))) != score_sum: raise ValueError('Spring AX점수 합계 불일치')
@@ -270,6 +305,15 @@ def build_nodes(gateway, reasoner, settings):
             projects.append({**args, **project, 'project_status': project.get('project_status', 'REGISTERED')})
         return {'registration':{'roadmap_id':saved['roadmap_id'],'projects':projects},'status':'DONE'}
 
+    def assessment_answer(state):
+        maturity = state['maturity']
+        labels = {k:v['label'] for k,v in maturity_policy['rubrics'].items()}
+        lines = ['AX 성숙도 진단을 완료했습니다.']
+        if maturity.get('total_score') is not None: lines.append(f"총점 {maturity['total_score']}점 (기준 {maturity['criteria_version']}).")
+        lines.extend(f"- {labels.get(area,area)}: {score}점" for area,score in maturity['scores'].items())
+        lines.extend(['','확정한 업무에 맞는 AI 솔루션 카탈로그가 아직 없어 과제 추천과 로드맵은 제공하지 않습니다.'])
+        return '\n'.join(lines)
+
     def render_answer(state, roadmap, raw):
         from ...schemas import Narrative
         narrative=Narrative.model_validate(raw)
@@ -286,7 +330,9 @@ def build_nodes(gateway, reasoner, settings):
             process=next(p for p in state['processes'] if int(p['process_id'])==item['process_id'])
             if process.get('exception_rules'): lines.append('  예외·제한: '+process['exception_rules'])
             if truth(process['requires_approval']): lines.append('  사람 최종 검토·승인 필요.')
-        lines.extend(['',f"총 AX점수 {state['portfolio']['totalAxScore']}, 총비용 {state['portfolio']['totalFirstYearTcoKrw']:,}원, 잔여 예산 {state['portfolio']['remainingBudgetKrw']:,}원.",
+        remaining=state['portfolio']['remainingBudgetKrw']
+        budget_note=f", 잔여 예산 {remaining:,}원." if remaining is not None else ". 요청에 예산이 없어 예산 제약 없이 선정했습니다."
+        lines.extend(['',f"총 AX점수 {state['portfolio']['totalAxScore']}, 총비용 {state['portfolio']['totalFirstYearTcoKrw']:,}원"+budget_note,
                       '가정 데이터 기반 인력 시간 환산 가치입니다. 실제 성과나 확정 현금 절감을 보장하지 않습니다.',
                       '요청자 승인 후 로드맵·프로젝트를 등록합니다.'])
         return '\n'.join(lines)
@@ -302,8 +348,8 @@ def build_nodes(gateway, reasoner, settings):
             raise
 
     nodes = {}
-    for name,node in [('collect',collect),('retrieve',retrieve),('assess',assess),('discover',discover),('evaluate',evaluate),('roadmap',roadmap),('approval',approval),('register',register)]:
-        if name == 'approval':
+    for name,node in [('extract',extract),('confirmation',confirmation),('collect',collect),('retrieve',retrieve),('assess',assess),('discover',discover),('evaluate',evaluate),('roadmap',roadmap),('approval',approval),('register',register)]:
+        if name in {'approval','confirmation'}:
             nodes[name] = node
         else:
             async def traced(state, _name=name, _node=node):
