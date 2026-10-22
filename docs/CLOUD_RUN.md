@@ -67,7 +67,7 @@ MCP는 컨테이너의 `127.0.0.1`에만 바인딩한다. 별도 Cloud Run 서�
 | `BUSINESS_MCP_URL` | `http://127.0.0.1:9101/mcp` (이미지 기본값) |
 | `RAG_MCP_URL` | `http://127.0.0.1:9102/mcp` (이미지 기본값) |
 | `SPRING_INTERNAL_URL` | `https://axox-853402721456.asia-northeast1.run.app/internal` (이미지 기본값) |
-| `AGENT_COMPANY_ID` / `RAG_COMPANY_ID` | 기본 `1`, 기존 시연 문서의 회사 범위 |
+| `RAG_COMPANY_ID` | 기본 `1`, v3 시드 문서를 가진 회사. 다른 회사는 업로드 색인만 검색한다 |
 | `RAG_INDEX_VERSION` | 기본 `ax-v3-openai-small-384-v1` |
 
 Secret Manager의 **숫자 버전**을 환경변수로 참조한다. 실제 값은 이미지·Git·배포 문서에 기록하지 않는다.
@@ -77,9 +77,10 @@ Secret Manager의 **숫자 버전**을 환경변수로 참조한다. 실제 값�
 | `INTERNAL_TOKEN` | 기존 Spring과 같은 내부 토큰 |
 | `OPENAI_API_KEY` | LLM 및 임베딩 호출 키 |
 | `RAG_DATABASE_URL` | `axox` DB 읽기 전용 DSN |
+| `RAG_INDEX_DATABASE_URL` | `axox` DB 색인 전용 계정(`ax_rag_indexer`) DSN. 고객사 업로드 문서 색인에 필요 |
 | `AGENT_DATABASE_URL` | `agent` DB 전용 DSN |
 
-`RAG_INDEX_DATABASE_URL`은 서비스에 설정하지 않고 별도 수동 색인 작업에만 주입한다.
+v3 시드 문서 색인은 여전히 별도 수동 색인 작업(`index.py`)으로 한다. 서비스의 `RAG_INDEX_DATABASE_URL`은 업로드 문서 색인(`index_document`)만 쓰며, 업로드 문서는 시드 색인과 다른 버전(`RAG_UPLOAD_INDEX_VERSION`, 기본 `<RAG_INDEX_VERSION>-uploads`)에 저장되어 시드 재색인이 지우지 않는다.
 `JWT_SECRET`, `SPRING_DATASOURCE_URL` 등 Spring 전용 설정은 필요하지 않다.
 Agent의 기존 시작 검증은 내부 토큰, 모드, LLM 모델·키, live 체크포인터 연결을 검사한다.
 MCP/DB 연결 실패는 해당 도구 실행 시 드러나므로 `/health` 성공만으로 연동 완료로 판단하지 않는다.
