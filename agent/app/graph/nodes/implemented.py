@@ -1,5 +1,7 @@
 """v3 orchestration. Spring owns scores and optimization; this module validates contracts."""
 import json
+from time import perf_counter
+from ...concurrency import ordered_map
 from decimal import Decimal
 from langgraph.types import interrupt
 from ...schemas import AXState, Assessment, RoiResult
@@ -113,17 +115,19 @@ def build_nodes(gateway, reasoner, settings):
         scope = state.get('scope') or {}
         scoped = set(scope.get('processIds', [int(p['process_id']) for p in state['processes']]))
         # Retrieve only requested business processes. Readiness remains company-wide.
-        for process in state['processes']:
+        async def search(process):
             pid = int(process['process_id'])
-            if pid not in scoped: continue
             rows = await tool(state,'retrieve','search_docs',query=f"{pid} {process['process_name']} 목적 절차 승인 예외 규칙",
                               company_id=state['company_id'],doc_type=document_type,process_id=pid,top_k=5)
             if not isinstance(rows,list): raise ValueError('업무 검색 응답은 배열이어야 합니다.')
-            # In the v3 corpus a document covers several processes; prefer the
-            # exact process section instead of borrowing a neighbouring workflow.
             own = [r for r in rows if r.get('section','').startswith(f'{pid} ')
                    or r.get('content','').startswith(f'process_id={pid}.')]
-            evidence.extend(own or rows)
+            return own or rows
+
+        processes = [p for p in state['processes'] if int(p['process_id']) in scoped]
+        batches = await ordered_map(search, processes, settings.read_concurrency)
+        for rows in batches:
+            evidence.extend(rows)
         seen, unique = set(), []
         for row in evidence:
             if not {'document_id','section','content'} <= row.keys(): raise ValueError('RAG 근거 필드 부족')
@@ -333,13 +337,14 @@ def build_nodes(gateway, reasoner, settings):
         return '\n'.join(lines)
 
     async def observed_node(name,node,state):
+        started = perf_counter()
         gateway.observe(state['task_id'],name,'NODE_START')
         try:
             value=await node(state)
-            gateway.observe(state['task_id'],name,'NODE_END',{'updatedFields':list(value)})
+            gateway.observe(state['task_id'],name,'NODE_END',{'updatedFields':list(value),'durationMs':round((perf_counter()-started)*1000,2)})
             return value
         except Exception as exc:
-            gateway.observe(state['task_id'],name,'NODE_ERROR',{'errorType':type(exc).__name__,'message':str(exc)[:400] if isinstance(exc,(ValueError,AssessmentReferenceError)) else '응답 형식 또는 서비스 호출 오류'})
+            gateway.observe(state['task_id'],name,'NODE_ERROR',{'durationMs':round((perf_counter()-started)*1000,2),'errorType':type(exc).__name__,'message':str(exc)[:400] if isinstance(exc,(ValueError,AssessmentReferenceError)) else '응답 형식 또는 서비스 호출 오류'})
             raise
 
     nodes = {}

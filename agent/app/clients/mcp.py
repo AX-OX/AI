@@ -3,6 +3,7 @@ import asyncio
 import json
 import re
 import logging
+from time import perf_counter
 from datetime import datetime, timezone
 from ..trace import PublicTrace
 from fastmcp import Client
@@ -95,6 +96,7 @@ class Gateway:
             return {'status': 'error', 'code': code, 'message': message}
 
     async def tool(self, task_id, node, name, args):
+        started = perf_counter()
         await self.event(task_id, 'TOOL_START', node, {'tool': name, 'label': name})
         self.observe(task_id, node, 'TOOL_CALL', {'tool': name, 'arguments': args})
         try:
@@ -120,14 +122,14 @@ class Gateway:
                 except Exception:
                     if attempt == attempts - 1: raise
                     await asyncio.sleep(0.3 * 2**attempt)
-            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': True})
+            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': True, 'durationMs': round((perf_counter()-started)*1000,2)})
             self.observe(task_id, node, 'TOOL_RESULT', {'tool': name, 'resultType': type(value).__name__})
             return mask(value)
         except Exception as exc:
             code, message = safe_tool_failure(exc)
             logger.error('MCP_CALL_FAILED task_id=%s node=%s tool=%s code=%s error=%s',
                          task_id, node, name, code, type(exc).__name__)
-            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': False})
+            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': False, 'durationMs': round((perf_counter()-started)*1000,2)})
             raise ValueError(message) from None
 
 

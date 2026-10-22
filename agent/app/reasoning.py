@@ -6,6 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from .clients import READS, mask
+from .concurrency import ordered_map
 from .schemas import Narrative
 from .contexts import assessment_context, discovery_context, response_context, context_json
 from .assessment import evidence_catalog, draft_schema, resolve_draft, AssessmentReferenceError
@@ -74,6 +75,9 @@ class Reasoner:
                 args = {} if _name == 'get_solution_catalog' else {'company_id': state['company_id']}
                 if _name in {'get_business_processes', 'get_operational_metrics'} and department_id is not None:
                     args['department_id'] = department_id
+                if _name in results:
+                    self.observe(state['task_id'],'collect','TOOL_CACHE_HIT',{'tool':_name})
+                    return prepare_tool_output(compact(results[_name], 100000), self.settings)
                 try:
                     value = await gateway.tool(state['task_id'], 'collect', _name, args)
                     results[_name] = value
@@ -97,11 +101,24 @@ class Reasoner:
                 if not missing: break
                 messages.append(HumanMessage(content='필수 조회가 아직 누락됐습니다. 다음 도구를 호출하세요: '+', '.join(missing)))
                 continue
+            # Reuse identical calls only within this LLM batch/task. Errors are
+            # not cached across batches, so the existing bounded retry can repair them.
+            calls = {}
             for call in response.tool_calls:
+                key = (call['name'], json.dumps(call['args'], sort_keys=True))
+                calls.setdefault(key, call)
+
+            async def run_call(call):
                 self.observe(state['task_id'],'collect','LLM_TOOL_CALL',{'tool':call['name'],'arguments':call['args']})
                 tool = by_name.get(call['name'])
-                result = await tool.ainvoke(call['args']) if tool else '허용되지 않은 도구'
-                messages.append(ToolMessage(content=str(result), tool_call_id=call['id']))
+                return await tool.ainvoke(call['args']) if tool else '허용되지 않은 도구'
+
+            values = await ordered_map(run_call, list(calls.values()), self.settings.read_concurrency)
+            by_call = dict(zip(calls, values))
+            # Preserve the LLM's tool-call ordering regardless of completion order.
+            for call in response.tool_calls:
+                key = (call['name'], json.dumps(call['args'], sort_keys=True))
+                messages.append(ToolMessage(content=str(by_call[key]), tool_call_id=call['id']))
             if READS <= results.keys(): break
         if not READS <= results.keys():
             raise ValueError(f'필수 조회 도구 결과 부족: {sorted(READS - results.keys())}')
@@ -212,7 +229,10 @@ class MockReasoner:
         self.settings = settings or Settings(mode='mock')
 
     async def collect(self, state, gateway):
-        return {name: await gateway.tool(state['task_id'],'collect',name,{} if name=='get_solution_catalog' else {'company_id':state['company_id']}) for name in sorted(READS)}
+        names = sorted(READS)
+        async def read(name):
+            return await gateway.tool(state['task_id'],'collect',name,{} if name=='get_solution_catalog' else {'company_id':state['company_id']})
+        return dict(zip(names, await ordered_map(read, names, self.settings.read_concurrency)))
 
     async def extract(self, state, chunks):
         # 문서 제목마다 업무 하나. 수치는 만들지 않으므로 metrics는 비운다 (사용자가 확정 화면에서 입력).
