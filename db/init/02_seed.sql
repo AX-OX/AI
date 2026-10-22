@@ -69,15 +69,15 @@ INSERT INTO process_systems (process_id, system_id, usage_purpose) VALUES
 (208, 305, '코드 리뷰 보조의 허용 자료 조회'),
 (209, 304, '기술·API 문서 작성의 허용 자료 조회'),
 (209, 305, '기술·API 문서 작성의 허용 자료 조회');
-INSERT INTO documents (document_id, company_id, process_id, title, doc_type, file_uri, access_level, version, created_at) OVERRIDING SYSTEM VALUE VALUES
-(401, 1, 201, '인사 업무 매뉴얼', 'MANUAL', 'docs://401', 'CONFIDENTIAL', 'v3', '2026-10-20 09:00:00'),
-(402, 1, 204, '기획 업무 매뉴얼', 'MANUAL', 'docs://402', 'INTERNAL', 'v3', '2026-10-20 09:00:00'),
-(403, 1, 207, '개발 업무 매뉴얼', 'MANUAL', 'docs://403', 'INTERNAL', 'v3', '2026-10-20 09:00:00'),
-(404, 1, NULL, '보안·데이터 처리 정책', 'POLICY', 'docs://404', 'INTERNAL', 'v3', '2026-10-20 09:00:00'),
-(405, 1, NULL, 'IT 시스템 명세', 'SYSTEM_SPEC', 'docs://405', 'INTERNAL', 'v3', '2026-10-20 09:00:00'),
-(406, 1, NULL, 'AI 활용 현황', 'AI_STATUS', 'docs://406', 'INTERNAL', 'v3', '2026-10-20 09:00:00'),
-(407, 1, NULL, '데이터 품질 점검표', 'DATA_QUALITY', 'docs://407', 'INTERNAL', 'v3', '2026-10-20 09:00:00'),
-(408, 1, NULL, '과거 프로젝트 보고서', 'PROJECT_REPORT', 'docs://408', 'INTERNAL', 'v3', '2026-10-20 09:00:00');
+INSERT INTO documents (document_id, company_id, process_id, title, doc_type, file_uri, access_level, version, status, created_at) OVERRIDING SYSTEM VALUE VALUES
+(401, 1, 201, '인사 업무 매뉴얼', 'MANUAL', 'docs://401', 'CONFIDENTIAL', 'v3', 'INDEXED', '2026-10-20 09:00:00'),
+(402, 1, 204, '기획 업무 매뉴얼', 'MANUAL', 'docs://402', 'INTERNAL', 'v3', 'INDEXED', '2026-10-20 09:00:00'),
+(403, 1, 207, '개발 업무 매뉴얼', 'MANUAL', 'docs://403', 'INTERNAL', 'v3', 'INDEXED', '2026-10-20 09:00:00'),
+(404, 1, NULL, '보안·데이터 처리 정책', 'POLICY', 'docs://404', 'INTERNAL', 'v3', 'INDEXED', '2026-10-20 09:00:00'),
+(405, 1, NULL, 'IT 시스템 명세', 'SYSTEM_SPEC', 'docs://405', 'INTERNAL', 'v3', 'INDEXED', '2026-10-20 09:00:00'),
+(406, 1, NULL, 'AI 활용 현황', 'AI_STATUS', 'docs://406', 'INTERNAL', 'v3', 'INDEXED', '2026-10-20 09:00:00'),
+(407, 1, NULL, '데이터 품질 점검표', 'DATA_QUALITY', 'docs://407', 'INTERNAL', 'v3', 'INDEXED', '2026-10-20 09:00:00'),
+(408, 1, NULL, '과거 프로젝트 보고서', 'PROJECT_REPORT', 'docs://408', 'INTERNAL', 'v3', 'INDEXED', '2026-10-20 09:00:00');
 INSERT INTO ai_solution_catalog (solution_id, target_process_id, depends_on_solution_id, solution_type, solution_name, description, base_build_cost_krw, monthly_run_cost_krw, automation_rate_low, automation_rate_base, automation_rate_high, time_reduction_rate_low, time_reduction_rate_base, time_reduction_rate_high, min_standardization_level, requires_api, data_source) OVERRIDING SYSTEM VALUE VALUES
 (501, 201, NULL, 'RAG', '규정 근거 검색 도우미', '가상 합성 시연용 가정. 효과는 실제 측정이 아닌 업무 시간 환산 잠재치이며 도입 후 재측정한다.', 36000000, 750000, 0.65, 0.8, 0.9, 0.6, 0.75, 0.85, 0.65, FALSE, 'ASSUMED'),
 (502, 202, NULL, 'AI_AGENT', '온보딩 안내 도우미', '가상 합성 시연용 가정. 효과는 실제 측정이 아닌 업무 시간 환산 잠재치이며 도입 후 재측정한다.', 38000000, 1000000, 0.6, 0.75, 0.85, 0.52, 0.67, 0.77, 0.65, TRUE, 'ASSUMED'),

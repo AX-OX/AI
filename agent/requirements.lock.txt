@@ -268,6 +268,8 @@ pygments==2.21.0
     #   rich-rst
 pyjwt==2.15.1
     # via mcp
+pypdf==6.21.2
+    # via ax-agent
 pyperclip==1.11.0
     # via fastmcp
 python-dotenv==1.2.4
@@ -278,7 +280,9 @@ python-dotenv==1.2.4
 python-json-logger==4.2.0
     # via pydocket
 python-multipart==0.0.32
-    # via mcp
+    # via
+    #   ax-agent
+    #   mcp
 pywin32==312 ; sys_platform == 'win32'
     # via mcp
 pywin32-ctypes==0.2.3 ; sys_platform == 'win32'

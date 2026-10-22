@@ -18,6 +18,8 @@ dependencies = [
     "langgraph-checkpoint-postgres",
     "psycopg[binary,pool]",
     "langsmith",
+    "pypdf>=5",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]
