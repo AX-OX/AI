@@ -11,6 +11,7 @@ from .spring import SpringClient
 READS = {'get_company_profile', 'get_business_processes', 'get_operational_metrics',
          'get_system_inventory', 'get_project_budget', 'get_solution_catalog'}
 WRITES = {'save_assessment', 'create_ax_roadmap', 'create_ax_project', 'update_project_status'}
+RAG_TOOLS = {'search_docs', 'get_assessment_evidence'}
 
 
 def mask(value):
@@ -50,7 +51,7 @@ class Gateway:
         await self.event(task_id, 'TOOL_START', node, {'tool': name, 'label': name})
         self.observe(task_id, node, 'TOOL_CALL', {'tool': name, 'arguments': args})
         try:
-            url = self.settings.rag_url if name == 'search_docs' else self.settings.business_url
+            url = self.settings.rag_url if name in RAG_TOOLS else self.settings.business_url
             # 같은 쓰기 재실행은 같은 키를 사용한다. Spring이 키별 중복 저장을 차단해야 한다.
             headers = {'X-Internal-Token': self.settings.internal_token}
             if name in WRITES:

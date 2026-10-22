@@ -114,3 +114,22 @@ async def test_rag_real_mcp_list_output_and_company_filter():
             result = await gateway.tool('task', 'retrieve', 'search_docs', {'query': '인사', 'process_id': 202})
     assert result[0]['content'] == '담당자 [EMAIL] [PHONE]'
     assert seen == [('인사', None, 202, 5)]
+
+
+@pytest.mark.asyncio
+async def test_readiness_batch_routes_to_rag_and_masks_content():
+    sys.path.insert(0,str(ROOT/'rag-mcp'))
+    spec=importlib.util.spec_from_file_location('readiness_rag_integration',ROOT/'rag-mcp/server.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    class Store:
+        def assessment_evidence(self):
+            return [{'document_id':404,'title':'정책','section':'개인정보 처리','doc_type':'POLICY',
+                     'content':'a@example.com 010-1234-5678'}]
+    cfg=Settings(mode='mock',internal_token='test',rag_url='http://rag-only/mcp',business_url='http://business-only/mcp')
+    gateway=Gateway(cfg)
+    async def no_callback(*args,**kwargs):pass
+    gateway._spring=no_callback
+    with patch.object(module,'PgVectorStore',Store),patch('agent.app.clients.mcp.StreamableHttpTransport',return_value=module.mcp) as transport:
+        result=await gateway.tool('test','retrieve','get_assessment_evidence',{})
+    assert result[0]['content']=='[EMAIL] [PHONE]'
+    assert transport.call_args.args[0]==cfg.rag_url

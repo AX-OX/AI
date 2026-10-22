@@ -22,6 +22,18 @@ class Assessment(ContractModel):
     insufficient_data: list[str] = Field(default_factory=list)
 
 
+class AssessmentAreaDraft(ContractModel):
+    area: Literal["data_score", "infra_score", "automation_score", "ai_capability_score", "governance_score"]
+    score: Score | None
+    evidence_ids: list[str]
+    summary: str = Field(min_length=1)
+    missing_reason: str | None
+
+
+class AssessmentDraft(ContractModel):
+    areas: list[AssessmentAreaDraft] = Field(min_length=5, max_length=5)
+
+
 class Recommendation(ContractModel):
     solution_id: int
     reason: str = Field(min_length=1)
@@ -82,5 +94,13 @@ class Candidate(BaseModel):
 
 class Discovery(BaseModel):
     candidates: list[Candidate] = Field(max_length=10)
+
+class CandidateDraft(ContractModel):
+    candidate_id: str
+    reason: str = Field(min_length=1)
+    evidence_ids: list[str]
+
+class DiscoveryDraft(ContractModel):
+    candidates: list[CandidateDraft] = Field(min_length=1,max_length=10)
 
 from .models.state import AXState

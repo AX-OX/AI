@@ -8,7 +8,7 @@ from langchain_core.messages import AIMessage
 from agent.app.config import Settings
 from agent.app.main import create_app
 from agent.app.reasoning import Reasoner
-from agent.app.schemas import Assessment, Discovery, Narrative
+from agent.app.schemas import Assessment, AssessmentDraft, Discovery, DiscoveryDraft, Narrative
 from agent.app.trace import PublicTrace
 
 
@@ -40,12 +40,17 @@ async def test_real_reasoner_two_turn_tool_loop_and_answer_without_external_serv
             if self.schema is None:
                 start=turns['collect']*3;turns['collect']+=1
                 return AIMessage(content='',tool_calls=[{'name':name,'args':{} if name=='get_solution_catalog' else {'company_id':1},'id':name,'type':'tool_call'} for name in reads[start:start+3]])
-            if self.schema is Assessment:
+            if isinstance(self.schema,type) and issubclass(self.schema,AssessmentDraft):
                 scores={'data_score':61.,'infra_score':62.,'automation_score':43.,'ai_capability_score':34.,'governance_score':46.}
                 docs=[407,405,408,406,404]
-                return Assessment(scores=scores,evidence=[{'area':area,'document_id':doc,'section':'문서 범위','summary':'테스트 근거'} for area,doc in zip(scores,docs)],insufficient_data=[])
-            if self.schema is Discovery:
-                return Discovery(candidates=[{'process_id':p,'solution_id':p+300,'reason':'문서 기반 테스트 후보','document_ids':[401+(p-201)//3]} for p in range(201,210) if p!=203])
+                context=json.loads(messages[1].content)
+                return self.schema(areas=[{'area':area,'score':scores[area],
+                    'evidence_ids':[next(r['evidence_id'] for r in context['evidence'] if r['document_id']==doc)],
+                    'summary':'테스트 근거','missing_reason':None} for area,doc in zip(scores,docs)])
+            if isinstance(self.schema,type) and issubclass(self.schema,DiscoveryDraft):
+                context=json.loads(messages[1].content)
+                return self.schema(candidates=[{'candidate_id':key,'reason':'문서 기반 테스트 후보',
+                    'evidence_ids':entry['evidence_ids']} for key,entry in context['candidate_catalog'].items()])
             assert self.schema is Narrative
             return Narrative(summary='선정 결과와 선행 과제를 문서 기준으로 설명합니다.',recommendations=[{'solution_id':sid,'reason':'반복 업무와 사람 검토 조건을 고려했습니다.','document_ids':[403]} for sid in (507,508,509)])
     monkeypatch.setattr('agent.app.reasoning.ChatOpenAI',FakeProvider)

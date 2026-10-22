@@ -4,11 +4,15 @@ import json
 import os
 import re
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
 CORPUS = Path(os.getenv('CORPUS_DIR', str(Path(__file__).resolve().parents[1]/'AX_Navigator_AI_MVP_v3/rag')))
-INDEX_VERSION = os.getenv('RAG_INDEX_VERSION','ax-v3-pgvector-v1')
-REVISION = os.getenv('EMBEDDING_REVISION','e8f8c211226b894fcb81acc59f3b34ba3efd5f42')
-MODEL = os.getenv('EMBEDDING_MODEL','sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+INDEX_VERSION = os.getenv('RAG_INDEX_VERSION','ax-v3-openai-small-384-v1')
+REVISION = os.getenv('EMBEDDING_REVISION','openai-dim384-v1')
+MODEL = os.getenv('EMBEDDING_MODEL','text-embedding-3-small')
+DIMENSIONS = 384
 COMPANY_ID = int(os.getenv('RAG_COMPANY_ID','1'))
 REQUIRED = {'document_id','title','doc_type','process_id','section','page','chunk_index','version','embedding_model','company_id','access_level'}
 

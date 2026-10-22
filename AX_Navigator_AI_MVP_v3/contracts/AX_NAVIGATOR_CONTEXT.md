@@ -636,12 +636,15 @@ three_year_net_s = 3 × annual_saving_s − base_build_cost_krw − 36 × monthl
 | 종류 | 이름 | 설명 |
 |---|---|---|
 | Tool | `search_docs(query: str, doc_type: str \| None, process_id: int \| None, top_k: int = 5)` | pgvector cosine 거리 검색. 반환: `[{document_id, title, doc_type, section, page, content, score}]` |
+| Tool | `get_assessment_evidence()` | 활성 회사·색인 버전의 정책·시스템·AI 현황·데이터 품질·프로젝트 보고서 전체 섹션 조회. 임베딩 호출 없음. 200개 초과 시 부분 반환 없이 오류 |
 | Resource | `docs://{document_id}` | 문서 원문 (근거 패널용) — **Capstone 필수 조건** |
+
+Agent는 성숙도 평가용 공통 근거와 업무별 의미 검색 결과를 분리한다. 성숙도는 제공된 근거 ID를 선택하고 코드가 원본 문서·절로 복원한다. 후보 역시 카탈로그 ID로 선택하고 업무·솔루션 ID는 코드에서 복원한다. Spring 저장 DTO와 정량 계산 책임은 유지한다. LLM 입력은 완전한 JSON으로 구성하며 초과 시 필요한 근거를 몰래 자르지 않고 명시적으로 실패한다.
 
 pgvector 청크 metadata(JSONB): `document_id, title, doc_type, process_id, section, page, chunk_index, version, embedding_model, company_id, access_level`.
 
 - 적재 원본: `rag/pgvector_import.jsonl`. 각 행은 `{id, document, metadata}`이며, 벡터는 파일에 가짜 값으로 넣지 않고 indexer가 원문에서 생성한다. `rag/doc_mapping.json`의 각 문서에 `related_process_ids` 배열을 둔다. 부서 매뉴얼처럼 여러 업무를 다루면 모두 넣고, 공통 문서는 빈 배열로 표시한다. `documents.process_id`·metadata의 `process_id`는 대표 업무 또는 공통 문서의 `null`이며, 검색 필터는 `related_process_ids`를 사용한다.
-- 모델 기본값: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, revision `e8f8c211226b894fcb81acc59f3b34ba3efd5f42`, 차원 **384**. 적재와 질의에 같은 모델·revision·정규화를 사용한다. 모델/차원을 바꾸면 벡터 컬럼과 색인을 함께 재생성한다.
+- 모델 기본값: `text-embedding-3-small`, revision `openai-dim384-v1`, 차원 **384**. OpenAI Embeddings API에 dimensions=384를 지정하며 적재와 질의에 같은 모델·차원을 사용한다. revision은 OpenAI 모델의 고정 스냅샷이 아니라 내부 구성 식별자다. 모델 변경 시 재색인이 필요하고, 차원 변경 시 벡터 컬럼도 변경한다.
 - `rag_document_chunks.embedding <=> query_vector`로 정확 검색한다. `score`는 **cosine 거리(작을수록 유사)**이며 유사도나 AX점수가 아니다. `company_id`·`index_version`을 반드시 제한하고 `doc_type`·`related_process_ids` 필터를 적용한다. 공통 문서(빈 배열)는 업무 필터에서도 검색한다. MVP에서는 ANN 인덱스를 만들지 않는다.
 - indexer는 `documents`의 문서 ID·회사 소속과 파일 metadata를 검증하고, 동일 회사·버전의 색인을 **단일 트랜잭션으로 교체**한다. `rag_indexes`에 모델·revision·코퍼스 해시·chunk 수를 기록한다. rag-mcp는 활성 버전·모델·revision·코퍼스 해시가 다르거나 색인이 없으면 재색인이 필요하다는 오류를 반환한다.
 - rag-mcp는 검색 전용 DB 계정, indexer는 색인 쓰기 전용 DB 계정을 사용한다. 두 계정은 업무 테이블을 변경하지 않는다. 문서 소속 확인에는 `documents`의 필요한 컬럼만 조회한다. `access_level`은 기존 계약대로 민감도 표시용이며 개인정보 마스킹은 유지한다.
@@ -742,11 +745,11 @@ ax-navigator/
 OPENAI_API_KEY=
 LLM_MODEL=
 LLM_FALLBACK_MODEL=
-EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-EMBEDDING_REVISION=e8f8c211226b894fcb81acc59f3b34ba3efd5f42
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_REVISION=openai-dim384-v1
 RAG_DATABASE_URL=postgresql://<검색계정>:<비밀번호>@postgres:5432/ax
 RAG_INDEX_DATABASE_URL=postgresql://<색인계정>:<비밀번호>@postgres:5432/ax
-RAG_INDEX_VERSION=ax-v3-pgvector-v1
+RAG_INDEX_VERSION=ax-v3-openai-small-384-v1
 RAG_COMPANY_ID=1
 CORPUS_DIR=/data/rag
 LANGSMITH_API_KEY=

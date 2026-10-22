@@ -10,14 +10,18 @@ PostgreSQL 한 인스턴스의 ax DB에 업무 14개 테이블·FK 24개와 RAG 
 - `rag_document_chunks`: 문서 섹션, metadata JSONB, related_process_ids BIGINT[], embedding vector(384).
 - 입력: `AX_Navigator_AI_MVP_v3/rag/pgvector_import.jsonl`, `{id,document,metadata}` 34행.
 - 업무 매핑: 같은 rag/doc_mapping.json의 related_process_ids. 별도 document_processes.json은 더 이상 읽거나 Docker에 복사하지 않는다.
-- 모델: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2, revision e8f8c211226b894fcb81acc59f3b34ba3efd5f42.
-- 새 활성 버전: ax-v3-pgvector-v1. 코퍼스 해시는 파일명+NUL+바이트를 pgvector_import.jsonl, doc_mapping.json 순서로 SHA-256에 넣는다. 패키지 indexer와 서비스가 동일한 규칙을 쓴다.
+- 모델: text-embedding-3-small, revision openai-dim384-v1.
+- 새 활성 버전: ax-v3-openai-small-384-v1. 코퍼스 해시는 파일명+NUL+바이트를 pgvector_import.jsonl, doc_mapping.json 순서로 SHA-256에 넣는다. 패키지 indexer와 서비스가 동일한 규칙을 쓴다.
 
 적재 전 문서 metadata·회사 소속·비영 384차원 유한 벡터를 확인한다. 회사·색인 버전별 advisory lock과 단일 트랜잭션으로 교체한다. 실패 시 이전 색인이 유지된다. 검색 전 모델·revision·코퍼스 해시를 검사하고 다르면 재색인을 요구한다.
 
 검색은 회사·버전 필수 제한, 문서 유형·업무 필터, embedding <=> query_vector 오름차순이다. score는 cosine 거리로 낮을수록 가깝다. 공통 문서는 related_process_ids=[]이며 업무 검색에도 포함한다. MVP는 정확 검색이며 ANN 인덱스는 없다.
 
 검색 계정은 RAG SELECT와 문서 소속 확인용 documents 컬럼 SELECT만, 적재 계정은 추가로 RAG INSERT/UPDATE/DELETE를 받는다. 업무 테이블 쓰기는 허용하지 않는다. 새 DB 계정 설정은 db/init/04_rag_roles.sh다. 검색 컨테이너에 적재 DSN을 제공하지 않는다.
+
+## 성숙도·업무 검색 분리
+
+`get_assessment_evidence`는 성숙도 공통 문서 5종을 회사·활성 색인 범위에서 일괄 조회한다. 유사도 순위와 검색어 임베딩 없이 현재 코퍼스의 전체 19개 섹션을 확보한다. 업무는 요청 범위 내에서 `search_docs(top_k=5)`로 조회하고 해당 업무 섹션을 우선 사용한다. [단계별 검증](RAG_RETRIEVAL_IMPROVEMENT.md)을 참고한다.
 
 ## 계산과 책임
 

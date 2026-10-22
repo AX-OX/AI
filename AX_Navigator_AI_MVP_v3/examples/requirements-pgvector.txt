@@ -1,2 +1,2 @@
 psycopg[binary]==3.3.6
-sentence-transformers==5.7.0
+openai==3.35.1

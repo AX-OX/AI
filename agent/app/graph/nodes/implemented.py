@@ -4,6 +4,8 @@ from decimal import Decimal
 from langgraph.types import interrupt
 from ...schemas import AXState, Assessment, RoiResult
 from ...scope import request_scope
+from ...contexts import ASSESSMENT_TYPES
+from ...assessment import load_policy, AssessmentReferenceError
 from ...contracts import normalize_read
 from ...presentation import candidates_dto, evidence_dto, maturity_dto, names_for, projects_dto
 
@@ -56,7 +58,7 @@ def approval_payload(state):
 
 def build_nodes(gateway, reasoner, settings):
     policy = json.loads(settings.policy_file.read_text(encoding='utf-8'))
-    maturity_policy = json.loads((settings.data_dir/'config/assessment_criteria_v1.json').read_text())
+    maturity_policy = load_policy(settings)
 
     async def tool(state, node, name, **args):
         return await gateway.tool(state['task_id'], node, name, args)
@@ -76,17 +78,23 @@ def build_nodes(gateway, reasoner, settings):
         return {**result,'status':'RUNNING','evaluation_policy':policy,'scope':scope}
 
     async def retrieve(state):
-        evidence = []
-        for doc_type in ('MANUAL','SYSTEM_SPEC','POLICY','AI_STATUS','DATA_QUALITY','PROJECT_REPORT'):
-            rows = await tool(state,'retrieve','search_docs',query=f"{state['request']} {doc_type}",doc_type=doc_type,top_k=3)
-            if not isinstance(rows,list): raise ValueError('RAG 응답은 배열이어야 합니다.')
-            evidence.extend(rows)
-        if not evidence:
-            evidence = await tool(state,'retrieve','search_docs',query='업무 절차 데이터 품질 AI 활용 정책',top_k=5)
-        # Process-specific evidence prevents one department's manual crowding out other departments.
+        common = await tool(state,'retrieve','get_assessment_evidence')
+        if not isinstance(common,list): raise ValueError('성숙도 근거 응답은 배열이어야 합니다.')
+        evidence = list(common)
+        scope = state.get('scope') or {}
+        scoped = set(scope.get('processIds', [int(p['process_id']) for p in state['processes']]))
+        # Retrieve only requested business processes. Readiness remains company-wide.
         for process in state['processes']:
-            evidence.extend(await tool(state,'retrieve','search_docs',query=f"{process['process_id']} {process['process_name']}",
-                                       doc_type='MANUAL',process_id=int(process['process_id']),top_k=3))
+            pid = int(process['process_id'])
+            if pid not in scoped: continue
+            rows = await tool(state,'retrieve','search_docs',query=f"{pid} {process['process_name']} 목적 절차 승인 예외 규칙",
+                              doc_type='MANUAL',process_id=pid,top_k=5)
+            if not isinstance(rows,list): raise ValueError('업무 검색 응답은 배열이어야 합니다.')
+            # In the v3 corpus a document covers several processes; prefer the
+            # exact process section instead of borrowing a neighbouring workflow.
+            own = [r for r in rows if r.get('section','').startswith(f'{pid} ')
+                   or r.get('content','').startswith(f'process_id={pid}.')]
+            evidence.extend(own or rows)
         seen, unique = set(), []
         for row in evidence:
             if not {'document_id','section','content'} <= row.keys(): raise ValueError('RAG 근거 필드 부족')
@@ -96,18 +104,25 @@ def build_nodes(gateway, reasoner, settings):
         # Keep each process's own section ahead of generic chunks when limiting context.
         prefixes = tuple(str(p['process_id']) + ' ' for p in state['processes'])
         unique.sort(key=lambda row: not row['section'].startswith(prefixes))
-        return {'evidence':unique[:30]}
+        gateway.observe(state['task_id'],'retrieve','RETRIEVAL_COUNTS',
+                        {'raw':len(evidence),'unique':len(unique),'retained':len(unique)})
+        return {'evidence':unique,
+                'assessment_evidence':[r for r in unique if r.get('doc_type') in ASSESSMENT_TYPES],
+                'business_evidence':[r for r in unique if r.get('doc_type') == 'MANUAL']}
 
     async def assess(state):
         assessment = Assessment.model_validate(await reasoner.assess(state,maturity_policy))
         required = set(maturity_policy['weights'])
         if assessment.insufficient_data or set(assessment.scores) != required:
             raise ValueError('INSUFFICIENT_DATA: 성숙도 영역 근거가 부족합니다. 없는 점수를 만들지 않습니다.')
-        valid = {(r['document_id'],r['section']) for r in state['evidence']}
+        valid = {(r['document_id'],r['section']) for r in state.get('assessment_evidence',state['evidence'])}
         for area in required:
             evidence = [e for e in assessment.evidence if e.area == area]
-            if not evidence or any((e.document_id,e.section) not in valid for e in evidence):
-                raise ValueError('성숙도 문서·절 근거가 부족합니다.')
+            if not evidence:
+                raise AssessmentReferenceError('ASSESSMENT_EVIDENCE_MISSING', area=area)
+            invalid=[{'documentId':e.document_id,'section':e.section} for e in evidence if (e.document_id,e.section) not in valid]
+            if invalid:
+                raise AssessmentReferenceError('ASSESSMENT_EVIDENCE_INVALID_REFERENCE', area=area, references=invalid)
         payload = assessment.model_dump()
         saved = await tool(state,'assess','save_assessment',task_id=state['task_id'],scores=payload['scores'],
                            criteria_version=maturity_policy['criteria_version'],evidence=payload['evidence'])
@@ -283,7 +298,7 @@ def build_nodes(gateway, reasoner, settings):
             gateway.observe(state['task_id'],name,'NODE_END',{'updatedFields':list(value)})
             return value
         except Exception as exc:
-            gateway.observe(state['task_id'],name,'NODE_ERROR',{'errorType':type(exc).__name__,'message':str(exc)[:400] if type(exc) is ValueError else '응답 형식 또는 서비스 호출 오류'})
+            gateway.observe(state['task_id'],name,'NODE_ERROR',{'errorType':type(exc).__name__,'message':str(exc)[:400] if isinstance(exc,(ValueError,AssessmentReferenceError)) else '응답 형식 또는 서비스 호출 오류'})
             raise
 
     nodes = {}

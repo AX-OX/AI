@@ -2,29 +2,16 @@
 import json
 import math
 import os
-from functools import lru_cache
 import psycopg
 from psycopg.rows import dict_row
-from common import MODEL, INDEX_VERSION, COMPANY_ID, REVISION, corpus_hash
-
-DIMENSIONS = 384
-
+from common import MODEL, INDEX_VERSION, COMPANY_ID, REVISION, DIMENSIONS, corpus_hash
+from embeddings import embed
 
 def vector_literal(values):
     values = [float(v) for v in values]
     if len(values) != DIMENSIONS or not all(math.isfinite(v) for v in values) or sum(v*v for v in values) == 0:
         raise ValueError('임베딩은 384차원의 유한한 비영벡터여야 합니다.')
     return '[' + ','.join(repr(v) for v in values) + ']'
-
-
-@lru_cache(maxsize=1)
-def encoder():
-    from sentence_transformers import SentenceTransformer
-    return SentenceTransformer(MODEL, revision=REVISION or None)
-
-
-def embed(texts):
-    return encoder().encode(texts, normalize_embeddings=True, show_progress_bar=False).tolist()
 
 
 class PgVectorStore:
@@ -127,12 +114,35 @@ class PgVectorStore:
                                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::vector)''',
                          (COMPANY_ID,INDEX_VERSION,row['id'],meta['document_id'],meta['title'],meta['doc_type'],meta['section'],meta['page'],meta['chunk_index'],doc['related_process_ids'],row['document'],json.dumps(meta,ensure_ascii=False),vector))
 
+    @staticmethod
+    def _require_index(conn):
+        index = conn.execute('SELECT * FROM rag_indexes WHERE company_id=%s AND index_version=%s', (COMPANY_ID, INDEX_VERSION)).fetchone()
+        if not index or (index['embedding_model'],index['embedding_revision'],index['corpus_hash']) != (MODEL,REVISION,corpus_hash()):
+            raise ValueError('색인이 없거나 모델·문서 버전이 다릅니다. index.py로 재색인하세요.')
+
+    def assessment_evidence(self):
+        """Read all readiness sections in the active company/index; no embedding call.
+
+        Never silently truncate required sections. Large corpora need a separately
+        paginated assessment contract rather than a partial readiness diagnosis.
+        """
+        with psycopg.connect(self.dsn, row_factory=dict_row) as conn:
+            self._require_index(conn)
+            rows = conn.execute('''SELECT c.chunk_id,c.document_id,c.title,c.doc_type,c.section,c.page,c.content
+                                   FROM rag_document_chunks c JOIN documents d
+                                     ON d.document_id=c.document_id AND d.company_id=c.company_id
+                                   WHERE c.company_id=%s AND c.index_version=%s
+                                     AND c.doc_type=ANY(%s)
+                                   ORDER BY c.document_id,c.chunk_index,c.chunk_id LIMIT 201''',
+                                (COMPANY_ID,INDEX_VERSION,['SYSTEM_SPEC','POLICY','AI_STATUS','DATA_QUALITY','PROJECT_REPORT'])).fetchall()
+            if len(rows) > 200:
+                raise ValueError('성숙도 근거가 200개를 초과합니다. 범위를 나누어 평가하세요.')
+            return rows
+
     def search(self, query, doc_type=None, process_id=None, top_k=5):
         if not query.strip() or not 1 <= top_k <= 20: raise ValueError('검색어와 top_k 1~20이 필요합니다.')
         with psycopg.connect(self.dsn, row_factory=dict_row) as conn:
-            index = conn.execute('SELECT * FROM rag_indexes WHERE company_id=%s AND index_version=%s', (COMPANY_ID, INDEX_VERSION)).fetchone()
-            if not index or (index['embedding_model'],index['embedding_revision'],index['corpus_hash']) != (MODEL,REVISION,corpus_hash()):
-                raise ValueError('색인이 없거나 모델·문서 버전이 다릅니다. index.py로 재색인하세요.')
+            self._require_index(conn)
             vector = vector_literal(self.embedder([query])[0])
             return conn.execute('''SELECT c.document_id,c.title,c.doc_type,c.section,c.page,c.content,
                                           (c.embedding <=> %s::vector)::float8 AS score
