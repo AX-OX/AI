@@ -40,7 +40,8 @@ def discovery_context(state, mode):
     return {
         'request': state['request'], 'evaluation_policy': state.get('evaluation_policy', {}),
         'solution_candidates': state['solution_candidates'],
-        'evidence': evidence_rows(state['evidence']),
+        # Grounded business_evidence is attached once by Reasoner.discover.
+        # Do not also send the complete retrieval evidence with the same text.
         'processes': [pick(p, process_fields) for p in state['processes']],
         'solutions': [pick(s, solution_fields) for s in state['solutions']],
         'scope': state.get('scope'), 'execution_mode': mode,

@@ -193,9 +193,9 @@ class Reasoner:
         context['business_evidence'] = [
             {'evidence_id':key, 'document_id':row['document_id'], 'section':row['section'], 'content':row['content']}
             for key,row in evidence.items()]
-        content = context_json(context, stage='discover', limit=24000)
+        content = context_json(context, stage='discover', limit=28000)
         self.observe(state['task_id'], 'discover', 'CONTEXT_BUILT',
-                     {'characters':len(content), 'evidenceCount':len(context['evidence']), 'truncated':False})
+                     {'characters':len(content), 'evidenceCount':len(evidence), 'truncated':False})
         messages = [SystemMessage(content=prompt('discover')),HumanMessage(content=content)]
         for attempt in range(2):
             async def generate(model):
