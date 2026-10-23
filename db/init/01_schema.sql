@@ -1,6 +1,6 @@
 -- ============================================================
 -- AX Navigator AI — MVP Schema (PostgreSQL 16)
--- 14 tables · 업무 DB(ax)
+-- 16 tables · 업무 DB(ax)
 -- * 문서 chunk·임베딩은 같은 ax DB의 pgvector에 저장 (아래 RAG 확장 DDL에 별도 정의)
 -- * LangGraph checkpointer는 별도 DB(agent)에 자동 생성
 -- * ERD 도구 호환을 위해 PK는 BIGINT로 선언.
@@ -15,9 +15,9 @@
 CREATE TABLE companies (
     company_id          BIGINT GENERATED ALWAYS AS IDENTITY          NOT NULL,
     company_name        VARCHAR(100)    NOT NULL,   -- 기업명
-    industry            VARCHAR(50)     NOT NULL,   -- 업종
-    employee_count      INTEGER         NOT NULL,   -- 직원 수
-    ax_budget_krw       BIGINT          NOT NULL,   -- 연간 AX 투자 예산(원)
+    industry            VARCHAR(50),                -- 업종 (가입 후 문서 추출 확정 시 입력)
+    employee_count      INTEGER,                    -- 직원 수 (가입 후 문서 추출 확정 시 입력)
+    ax_budget_krw       BIGINT,                     -- 연간 AX 투자 예산(원). 계산에는 작업 예산(ai_tasks.budget_krw)을 쓴다
     created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_companies PRIMARY KEY (company_id)
 );
@@ -42,6 +42,7 @@ CREATE TABLE business_processes (
     standardization_level   NUMERIC(3,2),               -- 표준화 수준 0~1
     requires_approval       BOOLEAN         NOT NULL DEFAULT FALSE,  -- 승인 필요 여부
     exception_rules         TEXT,                       -- 자동화 제외 단계·제한사항
+    work_type               VARCHAR(30),                -- 업무 유형. 같은 유형의 솔루션 템플릿과 매칭. NULL·OTHER면 매칭 없음
     CONSTRAINT pk_business_processes PRIMARY KEY (process_id),
     CONSTRAINT fk_processes_department FOREIGN KEY (department_id) REFERENCES departments (department_id)
 );
@@ -86,14 +87,29 @@ CREATE TABLE documents (
     company_id          BIGINT          NOT NULL,
     process_id          BIGINT,                     -- 공통 문서면 NULL
     title               VARCHAR(200)    NOT NULL,   -- 문서명
-    doc_type            VARCHAR(30)     NOT NULL,   -- MANUAL / POLICY / SYSTEM_SPEC / AI_STATUS / DATA_QUALITY / PROJECT_REPORT
+    doc_type            VARCHAR(30)     NOT NULL,   -- MANUAL / POLICY / SYSTEM_SPEC / AI_STATUS / DATA_QUALITY / PROJECT_REPORT / UPLOADED
     file_uri            VARCHAR(500)    NOT NULL,   -- 원본 경로 (Resource docs://{document_id})
     access_level        VARCHAR(20)     NOT NULL,   -- PUBLIC / INTERNAL / CONFIDENTIAL (민감도 표시용, 검색 권한과 무관)
     version             VARCHAR(20)     NOT NULL DEFAULT 'v1',
+    status              VARCHAR(20)     NOT NULL,   -- UPLOADED / INDEXED / FAILED
+    content_type        VARCHAR(100),               -- 업로드 파일 MIME 타입
+    file_size           BIGINT,                     -- 업로드 파일 크기(바이트)
+    sha256              VARCHAR(64),                -- 업로드 파일 해시 (중복 업로드 확인)
+    page_count          INTEGER,                    -- PDF 페이지 수
     created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_documents PRIMARY KEY (document_id),
     CONSTRAINT fk_documents_company FOREIGN KEY (company_id) REFERENCES companies (company_id),
     CONSTRAINT fk_documents_process FOREIGN KEY (process_id) REFERENCES business_processes (process_id)
+);
+
+CREATE TABLE document_pages (
+    page_id             BIGINT GENERATED ALWAYS AS IDENTITY          NOT NULL,
+    document_id         BIGINT          NOT NULL,
+    page_no             INTEGER         NOT NULL,   -- 1부터 시작
+    content             TEXT            NOT NULL,   -- AI가 추출한 페이지 텍스트 (마스킹 전 원문)
+    CONSTRAINT pk_document_pages PRIMARY KEY (page_id),
+    CONSTRAINT uq_document_pages UNIQUE (document_id, page_no),
+    CONSTRAINT fk_pages_document FOREIGN KEY (document_id) REFERENCES documents (document_id)
 );
 
 
@@ -103,8 +119,8 @@ CREATE TABLE documents (
 
 CREATE TABLE ai_solution_catalog (
     solution_id                 BIGINT GENERATED ALWAYS AS IDENTITY          NOT NULL,
-    target_process_id           BIGINT          NOT NULL,   -- 이 솔루션을 적용할 업무
-    depends_on_solution_id      BIGINT,                     -- 선행 과제 (같은 포트폴리오에 함께 선정돼야 함)
+    work_type                   VARCHAR(30)     NOT NULL,   -- 적용할 업무 유형 (business_processes.work_type)
+    depends_on_solution_id      BIGINT,                     -- 선행 템플릿 (같은 부서 업무에 붙여 같은 포트폴리오에 함께 선정돼야 함)
     solution_type               VARCHAR(30)     NOT NULL,   -- RAG / AI_AGENT / PREDICTION / CLASSIFICATION / RPA
     solution_name               VARCHAR(100)    NOT NULL,
     description                 TEXT,
@@ -120,7 +136,6 @@ CREATE TABLE ai_solution_catalog (
     requires_api                BOOLEAN         NOT NULL DEFAULT FALSE,  -- 시스템 API 필요 여부
     data_source                 VARCHAR(20)     NOT NULL DEFAULT 'ASSUMED',
     CONSTRAINT pk_ai_solution_catalog PRIMARY KEY (solution_id),
-    CONSTRAINT fk_catalog_process    FOREIGN KEY (target_process_id)      REFERENCES business_processes (process_id),
     CONSTRAINT fk_catalog_depends_on FOREIGN KEY (depends_on_solution_id) REFERENCES ai_solution_catalog (solution_id)
 );
 
@@ -146,6 +161,7 @@ CREATE TABLE ai_tasks (
     user_id             BIGINT          NOT NULL,
     company_id          BIGINT          NOT NULL,
     request_text        TEXT            NOT NULL,   -- 사용자 요청
+    budget_krw          BIGINT,                     -- 요청에서 추출한 예산(원). NULL이면 예산 제약 없이 계산
     status              VARCHAR(30)     NOT NULL,   -- QUEUED / RUNNING / WAITING_APPROVAL / DONE / FAILED / REJECTED
     result              JSONB,                      -- 성숙도·후보 과제·ROI 시나리오 스냅샷
     error_message       TEXT,
@@ -156,6 +172,20 @@ CREATE TABLE ai_tasks (
     CONSTRAINT pk_ai_tasks PRIMARY KEY (task_id),
     CONSTRAINT fk_tasks_user    FOREIGN KEY (user_id)    REFERENCES users (user_id),
     CONSTRAINT fk_tasks_company FOREIGN KEY (company_id) REFERENCES companies (company_id)
+);
+
+CREATE TABLE extraction_drafts (
+    draft_id            BIGINT GENERATED ALWAYS AS IDENTITY          NOT NULL,
+    company_id          BIGINT          NOT NULL,
+    task_id             VARCHAR(36)     NOT NULL,
+    document_ids        JSONB           NOT NULL,   -- 추출에 사용한 문서 ID 배열
+    payload             JSONB           NOT NULL,   -- 부서·업무·지표·시스템 추출 결과 (항목별 출처 포함)
+    status              VARCHAR(20)     NOT NULL,   -- DRAFT / CONFIRMED
+    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    confirmed_at        TIMESTAMP,
+    CONSTRAINT pk_extraction_drafts PRIMARY KEY (draft_id),
+    CONSTRAINT fk_drafts_company FOREIGN KEY (company_id) REFERENCES companies (company_id),
+    CONSTRAINT fk_drafts_task    FOREIGN KEY (task_id)    REFERENCES ai_tasks (task_id)
 );
 
 
@@ -187,7 +217,7 @@ CREATE TABLE ax_roadmaps (
     task_id             VARCHAR(36)     NOT NULL,
     assessment_id       BIGINT,
     roadmap_name        VARCHAR(200)    NOT NULL,
-    budget_limit_krw    BIGINT          NOT NULL,   -- 생성 시점 예산 스냅샷
+    budget_limit_krw    BIGINT,                     -- 작업 예산 스냅샷. NULL이면 예산 제약 없음
     total_allocated_krw BIGINT          NOT NULL,   -- 배정 합계
     approval_status     VARCHAR(20)     NOT NULL,   -- PENDING / APPROVED / REJECTED
     approved_by         BIGINT,                     -- 승인·거절한 사용자 = ai_tasks.user_id (요청자 본인)

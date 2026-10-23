@@ -25,13 +25,38 @@ import pgvector_client as pg
     ('corpus_hash', 'RAG_INDEX_CORPUS_MISMATCH'),
 ])
 def test_index_mismatch_has_specific_code(field, code):
-    row = {'embedding_model': pg.MODEL, 'embedding_revision': pg.REVISION,
+    row = {'index_version': pg.INDEX_VERSION, 'embedding_model': pg.MODEL, 'embedding_revision': pg.REVISION,
            'corpus_hash': pg.corpus_hash()}
     if field: row[field] = 'old-value'
     conn = Mock()
-    conn.execute.return_value.fetchone.return_value = row if field else None
+    conn.execute.return_value.fetchall.return_value = [row] if field else []
     with pytest.raises(RagConfigurationError, match=code):
         pg.PgVectorStore._require_index(conn)
+
+
+def test_upload_index_needs_no_seed_corpus_and_seed_company_needs_seed_index():
+    upload = {'index_version': pg.UPLOAD_INDEX_VERSION, 'embedding_model': pg.MODEL,
+              'embedding_revision': pg.REVISION, 'corpus_hash': pg.UPLOAD_CORPUS}
+    conn = Mock()
+    conn.execute.return_value.fetchall.return_value = [upload]
+    assert pg.PgVectorStore._require_index(conn, 2) == [pg.UPLOAD_INDEX_VERSION]
+    with pytest.raises(RagConfigurationError, match='RAG_INDEX_MISSING'):
+        pg.PgVectorStore._require_index(conn, pg.COMPANY_ID)
+    conn.execute.return_value.fetchall.return_value = [{**upload, 'embedding_model': 'old-model'}]
+    with pytest.raises(RagConfigurationError, match='RAG_INDEX_MODEL_MISMATCH'):
+        pg.PgVectorStore._require_index(conn, 2)
+
+
+def test_upload_chunks_split_pages_and_skip_blank_pages():
+    long = '가' * 1300
+    rows = pg.upload_chunks(2, 9001, '회사 소개.pdf', [
+        {'page': 1, 'text': '첫 문단\n\n둘째 문단'}, {'page': 2, 'text': '   '}, {'page': 3, 'text': long}])
+    assert [(r['page'], r['section']) for r in rows] == [(1, 'p.1'), (3, 'p.3'), (3, 'p.3')]
+    assert rows[0]['content'] == '첫 문단\n\n둘째 문단'
+    assert max(len(r['content']) for r in rows) <= pg.CHUNK_CHARS
+    assert len({r['chunk_id'] for r in rows}) == 3 and [r['chunk_index'] for r in rows] == [0, 1, 2]
+    assert all(r['doc_type'] == 'UPLOADED' for r in rows)
+    assert pg.upload_chunks(2, 9001, 'scan.pdf', [{'page': 1, 'text': ''}]) == []
 
 
 @pytest.mark.parametrize('exc,code', [

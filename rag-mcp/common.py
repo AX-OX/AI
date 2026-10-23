@@ -13,7 +13,11 @@ INDEX_VERSION = os.getenv('RAG_INDEX_VERSION','ax-v3-openai-small-384-v1')
 REVISION = os.getenv('EMBEDDING_REVISION','openai-dim384-v1')
 MODEL = os.getenv('EMBEDDING_MODEL','text-embedding-3-small')
 DIMENSIONS = 384
+# v3 시드 문서를 가진 회사. 시드 색인은 index.py가 jsonl 전체를 교체한다.
 COMPANY_ID = int(os.getenv('RAG_COMPANY_ID','1'))
+# 고객사 업로드 문서는 시드 색인과 분리된 버전에 문서 단위로 증분 색인한다 (시드 재색인이 지우지 않도록).
+UPLOAD_INDEX_VERSION = os.getenv('RAG_UPLOAD_INDEX_VERSION', INDEX_VERSION + '-uploads')
+UPLOAD_CORPUS = 'uploaded-documents'
 REQUIRED = {'document_id','title','doc_type','process_id','section','page','chunk_index','version','embedding_model','company_id','access_level'}
 
 

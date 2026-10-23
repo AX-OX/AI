@@ -10,6 +10,20 @@ from .graph import task_result, approval_payload
 
 logger = logging.getLogger(__name__)
 
+def pending_kind(snapshot):
+    """현재 멈춘 interrupt 종류. 기업 데이터 확정 대기면 CONFIRMATION, 로드맵 승인 대기면 APPROVAL."""
+    for task in snapshot.tasks:
+        for item in task.interrupts:
+            return 'CONFIRMATION' if isinstance(item.value, dict) and item.value.get('kind') == 'CONFIRMATION' else 'APPROVAL'
+    return None
+
+
+def interrupt_kind(result):
+    items = result.get('__interrupt__') or []
+    value = items[0].value if items else None
+    return 'CONFIRMATION' if isinstance(value, dict) and value.get('kind') == 'CONFIRMATION' else 'APPROVAL'
+
+
 class TaskRunner:
     def __init__(self, graph, gateway, settings):
         self.graph, self.gateway, self.settings = graph, gateway, settings
@@ -41,7 +55,10 @@ class TaskRunner:
                 result = await graph.ainvoke(payload, config=cfg)
             if result.get('errors'):
                 raise ValueError('; '.join(result['errors']))
-            if result.get('__interrupt__'):
+            if result.get('__interrupt__') and interrupt_kind(result) == 'CONFIRMATION':
+                # Spring은 draft가 저장된 작업만 WAITING_CONFIRMATION으로 바꾼다. 상태 전환은 이벤트로 한다.
+                await client.event(task_id, 'CONFIRMATION_REQUIRED', 'confirmation', {'draftId': result['extraction']['draft_id']})
+            elif result.get('__interrupt__'):
                 await client.status(task_id, 'WAITING_APPROVAL', result=task_result(result, self.settings.mode))
                 # Existing FE renders natural language only from TOKEN events.
                 # Send the verified complete answer once; do not expose raw LLM output.
@@ -75,29 +92,42 @@ class TaskRunner:
 
     async def start(self, task_id, request):
         key = str(task_id)
-        if request.companyId != self.settings.company_id: raise HTTPException(403, '지원하는 회사 범위를 벗어났습니다.')
         async with self.guard:
             snapshot = await self.graph.aget_state(self._cfg(key))
             if key in self.jobs or snapshot.values: raise HTTPException(409, '이미 존재하는 작업입니다.')
             if len(self.jobs) >= 8: raise HTTPException(503, '동시 실행 한도 초과')
             initial = {'task_id': key, 'company_id': request.companyId, 'user_id': request.userId,
-                       'request': request.requestText, 'messages': [], 'retry_count': 0, 'errors': [], 'status': 'QUEUED'}
+                       'request': request.requestText, 'messages': [], 'retry_count': 0, 'errors': [], 'status': 'QUEUED',
+                       'company_data_confirmed': request.companyDataConfirmed, 'document_ids': request.documentIds}
             # 첫 노드 실행 전에도 중복 작업/소유권을 조회할 수 있게 저장한다.
             await self.graph.aupdate_state(self._cfg(key), initial, as_node='__start__')
             self.jobs[key] = asyncio.create_task(self.execute(key, None))
         return {'taskId': key, 'status': 'QUEUED', 'mode': self.settings.mode}
 
     async def resume(self, task_id, request):
+        return await self._continue(task_id, request.userId, 'APPROVAL', request.model_dump())
+
+    async def confirm(self, task_id, request):
+        return await self._continue(task_id, request.userId, 'CONFIRMATION', {'kind': 'CONFIRMATION', 'userId': request.userId})
+
+    async def _continue(self, task_id, user_id, kind, value):
         key = str(task_id)
         async with self.guard:
             snapshot = await self.graph.aget_state(self._cfg(key))
             if not snapshot.values: raise HTTPException(404, '작업이 없습니다.')
-            if snapshot.values['user_id'] != request.userId: raise HTTPException(403, '작업 요청자만 재개할 수 있습니다.')
-            interrupted = any(t.interrupts for t in snapshot.tasks)
-            if key in self.jobs or not interrupted or snapshot.values.get('status') in {'FAILED', 'DONE', 'REJECTED'}:
-                raise HTTPException(409, '승인 대기 중인 작업만 재개할 수 있습니다.')
+            if snapshot.values['user_id'] != user_id: raise HTTPException(403, '작업 요청자만 재개할 수 있습니다.')
+            # Spring can resume immediately after observing WAITING while the
+            # previous turn is still sending its final notification. Finish that
+            # turn before starting a new one; never cancel it or skip the interrupt.
+            previous = self.jobs.get(key)
+            if previous and pending_kind(snapshot) == kind:
+                await asyncio.wait({previous}, timeout=5)
+                snapshot = await self.graph.aget_state(self._cfg(key))
+            waiting = '기업 데이터 확정' if kind == 'CONFIRMATION' else '승인'
+            if key in self.jobs or pending_kind(snapshot) != kind or snapshot.values.get('status') in {'FAILED', 'DONE', 'REJECTED'}:
+                raise HTTPException(409, f'{waiting} 대기 중인 작업만 재개할 수 있습니다.')
             if len(self.jobs) >= 8: raise HTTPException(503, '동시 실행 한도 초과')
-            self.jobs[key] = asyncio.create_task(self.execute(key, Command(resume=request.model_dump())))
+            self.jobs[key] = asyncio.create_task(self.execute(key, Command(resume=value)))
         return {'taskId': key, 'status': 'RUNNING'}
 
     async def close(self):

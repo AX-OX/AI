@@ -10,7 +10,7 @@ NODE_LABELS={
 }
 TOOL_LABELS={'get_company_profile':'기업 정보','get_business_processes':'업무 목록',
              'get_operational_metrics':'업무 지표','get_system_inventory':'IT 시스템',
-             'get_project_budget':'예산','get_solution_catalog':'솔루션 목록'}
+             'get_project_budget':'예산','get_solution_catalog':'솔루션 템플릿','get_solution_candidates':'업무별 솔루션 후보'}
 QUIT_WORDS={'/exit','exit','/quit','quit','종료'}
 
 
@@ -87,7 +87,8 @@ def display_result(body):
     result=body['result'];portfolio=result.get('portfolio') or {};roadmap=result.get('roadmap') or {}
     names=', '.join((result.get('scope') or {}).get('departmentNames',[]))
     print(f"분석 결과{f' · {names}' if names else ''}")
-    print(f"AX점수 합 {portfolio.get('totalAxScore','-')} | 총비용 {portfolio.get('totalFirstYearTcoKrw',0):,}원 | 잔여 예산 {portfolio.get('remainingBudgetKrw',0):,}원")
+    remaining=portfolio.get('remainingBudgetKrw')
+    print(f"AX점수 합 {portfolio.get('totalAxScore','-')} | 총비용 {portfolio.get('totalFirstYearTcoKrw',0):,}원 | 잔여 예산 {f'{remaining:,}원' if remaining is not None else '제약 없음'}")
     print('-'*78)
     sizes=(4,30,8,16,10)
     header=('순서','과제','AX점수','초년도 비용','사람 검토')

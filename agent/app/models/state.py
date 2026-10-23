@@ -6,13 +6,18 @@ class AXState(TypedDict, total=False):
     company_id: int
     user_id: int
     request: str
+    company_data_confirmed: bool
+    document_ids: list[int]
+    extraction: dict
     messages: Annotated[list, add_messages]
     company: dict
     processes: list[dict]
     metrics: list[dict]
     systems: dict
     budget: dict
+    budget_krw: int | None
     solutions: list[dict]
+    solution_candidates: list[dict]
     evidence: list[dict]
     assessment_evidence: list[dict]
     business_evidence: list[dict]

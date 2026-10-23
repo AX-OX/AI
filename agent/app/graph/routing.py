@@ -10,6 +10,16 @@ MAX_DISCOVER_RETRIES = 2
 # 재탐색으로 돌아온 discover가 +1 한다 (evaluate가 올리지 않는다).
 
 
+def at_start(state: AXState) -> Literal["extract", "collect"]:
+    # 기업 데이터가 확정되지 않은 회사는 업로드 문서에서 먼저 추출하고 사용자 확정을 기다린다.
+    return "collect" if state.get("company_data_confirmed", True) else "extract"
+
+
+def after_discover(state: AXState) -> Literal["evaluate", "__end__"]:
+    # 대상 솔루션이 없어 discover가 성숙도 진단으로 작업을 끝낸 경우(status=DONE)만 종료한다.
+    return "__end__" if state.get("status") == "DONE" else "evaluate"
+
+
 def after_collect(state: AXState) -> Literal["retrieve", "__end__"]:
     # 회사 ID 오류 등 복구 불가 오류 → FAILED
     return "__end__" if state.get("errors") else "retrieve"

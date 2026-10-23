@@ -58,7 +58,7 @@ async def test_real_business_mcp_forwards_spring_body():
     assert {'create_ax_roadmap', 'create_ax_project', 'update_project_status'} <= writes
 
 @pytest.mark.asyncio
-async def test_collect_llm_tool_loop_uses_all_six_tools():
+async def test_collect_llm_tool_loop_uses_all_seven_tools():
     from agent.app.clients import READS
     cfg = Settings(mode='mock', internal_token='test', data_dir=ROOT / 'AX_Navigator_AI_MVP_v3')
     reasoner = Reasoner(cfg)
@@ -102,8 +102,8 @@ async def test_rag_real_mcp_list_output_and_company_filter():
     common = sys.modules['common']
     seen = []
     class FakeStore:
-        def search(self, query, doc_type, process_id, top_k):
-            seen.append((query,doc_type,process_id,top_k))
+        def search(self, query, doc_type, process_id, top_k, company_id):
+            seen.append((query,doc_type,process_id,top_k,company_id))
             return [{'document_id':401, 'title':'인사', 'doc_type':'MANUAL', 'section':'업무', 'page':0,
                      'content':'담당자 a@example.com 010-1234-5678', 'score':.1}]
     with patch.object(common, 'CORPUS', ROOT / 'AX_Navigator_AI_MVP_v3/rag'), patch.object(module, 'PgVectorStore', FakeStore):
@@ -112,8 +112,10 @@ async def test_rag_real_mcp_list_output_and_company_filter():
         gateway._spring = no_callback
         with patch('agent.app.clients.mcp.StreamableHttpTransport', return_value=module.mcp):
             result = await gateway.tool('task', 'retrieve', 'search_docs', {'query': '인사', 'process_id': 202})
+            await gateway.tool('task', 'retrieve', 'search_docs', {'query': '인사', 'company_id': 7})
     assert result[0]['content'] == '담당자 [EMAIL] [PHONE]'
-    assert seen == [('인사', None, 202, 5)]
+    # company_id를 생략하면 시드 회사, 주면 그 회사 범위로 검색한다.
+    assert seen == [('인사', None, 202, 5, common.COMPANY_ID), ('인사', None, None, 5, 7)]
 
 
 @pytest.mark.asyncio
@@ -122,7 +124,8 @@ async def test_readiness_batch_routes_to_rag_and_masks_content():
     spec=importlib.util.spec_from_file_location('readiness_rag_integration',ROOT/'rag-mcp/server.py')
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     class Store:
-        def assessment_evidence(self):
+        def assessment_evidence(self,company_id):
+            assert company_id==7
             return [{'document_id':404,'title':'정책','section':'개인정보 처리','doc_type':'POLICY',
                      'content':'a@example.com 010-1234-5678'}]
     cfg=Settings(mode='mock',internal_token='test',rag_url='http://rag-only/mcp',business_url='http://business-only/mcp')
@@ -130,6 +133,6 @@ async def test_readiness_batch_routes_to_rag_and_masks_content():
     async def no_callback(*args,**kwargs):pass
     gateway._spring=no_callback
     with patch.object(module,'PgVectorStore',Store),patch('agent.app.clients.mcp.StreamableHttpTransport',return_value=module.mcp) as transport:
-        result=await gateway.tool('test','retrieve','get_assessment_evidence',{})
+        result=await gateway.tool('test','retrieve','get_assessment_evidence',{'company_id':7})
     assert result[0]['content']=='[EMAIL] [PHONE]'
     assert transport.call_args.args[0]==cfg.rag_url

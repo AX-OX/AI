@@ -67,7 +67,7 @@ def resolve_draft(value, registry, criteria):
         if not area.evidence_ids:
             raise AssessmentReferenceError('ASSESSMENT_EVIDENCE_MISSING', area=area.area)
         allowed = criteria.get('rubrics',{}).get(area.area,{}).get('evidence_sources')
-        if allowed and not any(registry[key]['doc_type'] in allowed for key in area.evidence_ids):
+        if allowed and not any(registry[key]['doc_type'] in allowed or registry[key]['doc_type'] == 'UPLOADED' for key in area.evidence_ids):
             raise AssessmentReferenceError('ASSESSMENT_EVIDENCE_WRONG_AREA', area=area.area, evidenceIds=area.evidence_ids)
         scores[area.area] = area.score
         for key in dict.fromkeys(area.evidence_ids):

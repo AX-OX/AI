@@ -26,14 +26,14 @@ async def contract(path:str,request:Request):
         if int(pieces[1])!=1: raise HTTPException(403)
         suffix=pieces[2] if len(pieces)>2 else 'profile'
         names={'profile':'get_company_profile','processes':'get_business_processes','metrics':'get_operational_metrics',
-               'systems':'get_system_inventory','budget':'get_project_budget'}
+               'systems':'get_system_inventory','budget':'get_project_budget','solution-candidates':'get_solution_candidates'}
         name=names.get(suffix);args={'company_id':1}
     elif path=='solutions' and request.method=='GET': name='get_solution_catalog'
     elif path=='ax/roi': name='calculate_ax_roi';args={'process_id':body['processId'],'solution_id':body['solutionId']}
     elif path=='ax/portfolio':
         if body['companyId']!=1: raise HTTPException(403)
         name='optimize_ax_portfolio'
-        args={'company_id':body['companyId'],'candidates':[{'process_id':p['processId'],'solution_id':p['solutionId']} for p in body['candidates']],'max_items':body['maxItems']}
+        args={'company_id':body['companyId'],'candidates':[{'process_id':p['processId'],'solution_id':p['solutionId']} for p in body['candidates']],'max_items':body['maxItems'],'budget_krw':body.get('budgetKrw')}
     elif path=='assessments':
         areas={'data':'data_score','infra':'infra_score','automation':'automation_score','aiCapability':'ai_capability_score','governance':'governance_score'}
         name='save_assessment';args={'task_id':body['taskId'],'scores':{areas.get(k,k):v for k,v in body['scores'].items()},'criteria_version':body['criteriaVersion'],'evidence':body['evidence']}

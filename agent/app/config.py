@@ -17,12 +17,17 @@ class Settings:
     fallback_model: str = ''
     timeout: float = 300
     company_id: int = 1
+    read_concurrency: int = 3
     max_agent_turns: int = 8
     max_same_tool_calls: int = 3
     tool_result_max_chars: int = 2000
     task_timeout_seconds: float | None = None
     policy_file: Path = Path(__file__).resolve().parents[2] / 'AX_Navigator_AI_MVP_v3/config/ax_score_policy_v1.json'
     data_dir: Path = Path(__file__).resolve().parents[2] / 'AX_Navigator_AI_MVP_v3'
+
+    def __post_init__(self):
+        if not 1 <= self.read_concurrency <= 8:
+            raise ValueError('AGENT_READ_CONCURRENCY must be between 1 and 8')
 
     @property
     def checkpointer_dsn(self):
@@ -57,6 +62,7 @@ class Settings:
                    rag_url=os.getenv('RAG_MCP_URL', cls.rag_url), spring_url=os.getenv('SPRING_INTERNAL_URL', cls.spring_url),
                    model=os.getenv('LLM_MODEL', ''), fallback_model=os.getenv('LLM_FALLBACK_MODEL', ''),
                    timeout=float(os.getenv('AGENT_TIMEOUT_SECONDS', os.getenv('TASK_TIMEOUT_SECONDS', '300'))), company_id=int(os.getenv('AGENT_COMPANY_ID', '1')),
+                   read_concurrency=int(os.getenv('AGENT_READ_CONCURRENCY', '3')),
                    max_agent_turns=int(os.getenv('MAX_AGENT_TURNS', '8')),
                    max_same_tool_calls=int(os.getenv('MAX_SAME_TOOL_CALLS', '3')),
                    tool_result_max_chars=int(os.getenv('TOOL_RESULT_MAX_CHARS', '2000')),

@@ -30,6 +30,8 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY for embeddings}
       RAG_COMPANY_ID: 1
       RAG_DATABASE_URL: ${RAG_DATABASE_URL:?Set reader connection RAG_DATABASE_URL}
+      # 업로드 문서 색인(index_document)용 쓰기 계정. 비우면 업로드 문서가 RAG_DB_URL_MISSING으로 FAILED가 된다.
+      RAG_INDEX_DATABASE_URL: ${RAG_INDEX_DATABASE_URL:-}
     volumes: &rag_volumes
       - ./AX_Navigator_AI_MVP_v3/rag:/data/rag:ro
     depends_on:

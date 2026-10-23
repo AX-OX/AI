@@ -3,22 +3,22 @@ from typing import Literal
 from pydantic import Field,create_model
 from .assessment import AssessmentReferenceError
 from .schemas import DiscoveryDraft, CandidateDraft
+from .candidates import eligible_candidates
 
 
 def candidate_catalog(state):
-    scope=set((state.get('scope') or {}).get('processIds',[int(p['process_id']) for p in state['processes']]))
-    excluded={int(e['process_id']) for e in state.get('evaluation_policy',{}).get('exclusions',[])}
-    rows=state.get('business_evidence',[r for r in state['evidence'] if r.get('doc_type')=='MANUAL'])
+    rows=state.get('business_evidence',[r for r in state['evidence'] if r.get('doc_type') in {'MANUAL','UPLOADED'}])
     evidence={f'B{i+1:03d}':row for i,row in enumerate(sorted(rows,key=lambda r:(r['document_id'],r['section'],r['content'])))}
     choices={}
-    for solution in state['solutions']:
-        pid,sid=int(solution['target_process_id']),int(solution['solution_id'])
-        if pid not in scope or pid in excluded:continue
-        own=[key for key,row in evidence.items() if row['section'].startswith(f'{pid} ')
-             or row['content'].startswith(f'process_id={pid}.')]
+    for candidate in eligible_candidates(state):
+        pid,sid=candidate['process_id'],candidate['solution_id']
+        own=[key for key,row in evidence.items() if
+             (row.get('doc_type')=='UPLOADED' or row['section'].startswith(f'{pid} ')
+              or row['content'].startswith(f'process_id={pid}.'))]
         if not own:
             raise ValueError(f'INSUFFICIENT_DATA: 후보 업무 문서 근거 부족 process_id={pid}')
-        choices[f'S{sid}']={'process_id':pid,'solution_id':sid,'evidence_ids':own}
+        choices[f'S{sid}P{pid}']={'process_id':pid,'solution_id':sid,'evidence_ids':own,
+                                'depends_on':candidate['depends_on']}
     if not choices or len(choices)>10:
         raise ValueError('후보 카탈로그는 근거 있는 업무 1~10개여야 합니다. 요청 범위를 나누세요.')
     return choices,evidence
@@ -45,5 +45,6 @@ def resolve_candidates(value,choices,evidence):
         if not row.evidence_ids or not set(row.evidence_ids)<=set(choice['evidence_ids']):
             raise AssessmentReferenceError('CANDIDATE_EVIDENCE_INVALID_REFERENCE',candidateId=row.candidate_id)
         result.append({'process_id':choice['process_id'],'solution_id':choice['solution_id'],
+                       'evidence_refs':[evidence[key] for key in dict.fromkeys(row.evidence_ids)],
                        'reason':row.reason,'document_ids':list(dict.fromkeys(evidence[key]['document_id'] for key in row.evidence_ids))})
     return result

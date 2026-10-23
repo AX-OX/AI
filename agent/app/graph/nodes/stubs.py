@@ -7,6 +7,15 @@
 from ...models.state import AXState
 
 
+# 🔴 rag-mcp 문서 조각 + LLM + Spring draft 저장 필요
+async def extract(state: AXState) -> dict:
+    return {}
+
+
+async def confirmation(state: AXState) -> dict:
+    return {}
+
+
 # 🔴 실제 구현에는 business-mcp 조회 도구(MCP 연결 + 업무 데이터)가 필요
 async def collect(state: AXState) -> dict:
     return {}

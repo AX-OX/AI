@@ -65,7 +65,7 @@ async def test_fe_snapshot_events_approval_and_registered_projects():
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test',
                                      headers={'X-Internal-Token': cfg.internal_token}) as client:
             assert (await client.post(f'/tasks/{key}/run', json={
-                'companyId': 1, 'userId': 602, 'requestText': '개발부 AX 과제 선정'})).status_code == 202
+                'companyId': 1, 'userId': 602, 'requestText': '개발부 AX 과제 선정, 예산 3억 원 내에서'})).status_code == 202
             await app.state.jobs[key]
             pending = (await client.get(f'/tasks/{key}')).json()
             result = pending['result']

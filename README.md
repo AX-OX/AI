@@ -52,6 +52,14 @@ uv run --project agent uvicorn agent.app.main:app --port 8000 --workers 1 --http
 
 `compose.yaml`은 PostgreSQL·MCP·Agent를 구성하며 팀원 Spring·FE는 포함하지 않습니다. 기존 DB 볼륨에 초기화 SQL을 다시 적용하거나 볼륨을 자동 삭제하지 않습니다.
 
+## 고객사 PDF와 예산 (BE #21~#26 계약)
+
+- **예산**: 질문에 적힌 금액(예: "예산 3억 원 내에서")만 예산으로 쓴다. collect가 추출해 `PATCH /internal/tasks/{id}` `budgetKrw`로 저장하고 `optimize_ax_portfolio`에 `budget_krw`로 넘긴다. 없으면 예산 제약 없이 선정하고 응답의 `budgetKrw`, `remainingBudgetKrw`는 null이다. 회사 `ax_budget_krw`는 계산에 쓰지 않는다.
+- **PDF 색인**: Spring이 `POST /documents/{id}/ingest`(multipart `companyId`, `fileName`, `contentType`, `file`)로 PDF를 보낸다. Agent가 페이지 텍스트를 뽑아(최대 100페이지) rag-mcp `index_document`로 회사 업로드 색인에 저장하고, `PATCH /internal/documents/{id}`로 `INDEXED`(pages 포함) 또는 `FAILED`를 돌려준다. 원본 PDF는 저장하지 않는다.
+- **기업 데이터 추출과 확정**: run 요청의 `companyDataConfirmed`가 false면 extract 노드가 `documentIds` 문서에서 부서, 업무, 지표, 시스템을 추출해 `save_extraction`(`POST /internal/extractions`)으로 저장하고 `CONFIRMATION_REQUIRED` 이벤트를 보낸 뒤 멈춘다. 사용자가 Spring에서 확정하면 Spring이 `POST /tasks/{id}/confirm` `{userId}`로 재개하고 collect부터 진행한다. 지표는 문서에 숫자로 적힌 것만 추출한다.
+- **성숙도만으로 종료**: 확정한 업무를 대상으로 하는 솔루션이 카탈로그에 없으면 discover에서 성숙도 진단 결과로 DONE을 보낸다(로드맵 없음).
+- **RAG 회사 범위**: `search_docs`, `get_assessment_evidence`, `get_document_chunks`는 `company_id`로 검색한다. 업로드 문서는 `RAG_UPLOAD_INDEX_VERSION`(기본 `<RAG_INDEX_VERSION>-uploads`)에 저장되어 시드 재색인이 지우지 않는다. rag-mcp 서비스에 `RAG_INDEX_DATABASE_URL`(색인 계정)이 있어야 업로드 색인이 된다.
+
 ## OpenAI 문서 임베딩
 
 문서·검색어 모두 `text-embedding-3-small` API를 사용한다. pgvector는 기존 `vector(384)`를 유지하고 API에 `dimensions=384`를 지정한다. 로컬 모델 다운로드는 필요 없다. 기존 MiniLM 벡터는 재사용할 수 없으며 [전환·재색인 안내](docs/OPENAI_EMBEDDINGS.md)를 따른다.
@@ -78,3 +86,12 @@ sh scripts/verify_pgvector.sh
 - [GitHub 업로드 범위](docs/REPOSITORY_LAYOUT.md)
 
 이전 패키지·참고 코드·중복 산출물은 `.local/archive/`, 실행 보고서는 `.local/reports/`에 로컬 보관하며 업로드하지 않습니다. 현재 v3 패키지의 SQLite 파일은 mock 실행이 읽는 시연 입력이므로 유지합니다.
+
+### 업무 유형 템플릿 카탈로그
+
+업무 유형 `workType` 추출과 Spring 후보 API를 사용한다. 후보·선행·설명은 `(processId, solutionId)` 쌍으로 구분하며, 템플릿 조회는 이름·조건 설명용으로 유지한다. 새 회사는 확정한 지표가 있는 유효 후보 1~3개를 추천하고, 유효 후보가 없으면 성숙도 진단만 완료한다. 계산·최적화는 Spring이 수행한다.
+
+- [작업 계약](docs/CATALOG_TEMPLATE_TASK.md)
+- [구현·실제 BE/FE 연동 검증과 남은 범위](docs/CATALOG_TEMPLATE_IMPLEMENTATION.md)
+
+새 후보 API를 제공하는 BE 버전과 함께 배포해야 한다. 현재 FE에 업로드·추출 확정 화면이 없으므로 새 회사 전체 경로는 API로 검증했다.
