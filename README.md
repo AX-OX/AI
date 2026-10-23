@@ -86,3 +86,12 @@ sh scripts/verify_pgvector.sh
 - [GitHub 업로드 범위](docs/REPOSITORY_LAYOUT.md)
 
 이전 패키지·참고 코드·중복 산출물은 `.local/archive/`, 실행 보고서는 `.local/reports/`에 로컬 보관하며 업로드하지 않습니다. 현재 v3 패키지의 SQLite 파일은 mock 실행이 읽는 시연 입력이므로 유지합니다.
+
+### 업무 유형 템플릿 카탈로그
+
+업무 유형 `workType` 추출과 Spring 후보 API를 사용한다. 후보·선행·설명은 `(processId, solutionId)` 쌍으로 구분하며, 템플릿 조회는 이름·조건 설명용으로 유지한다. 새 회사는 확정한 지표가 있는 유효 후보 1~3개를 추천하고, 유효 후보가 없으면 성숙도 진단만 완료한다. 계산·최적화는 Spring이 수행한다.
+
+- [작업 계약](docs/CATALOG_TEMPLATE_TASK.md)
+- [구현·실제 BE/FE 연동 검증과 남은 범위](docs/CATALOG_TEMPLATE_IMPLEMENTATION.md)
+
+새 후보 API를 제공하는 BE 버전과 함께 배포해야 한다. 현재 FE에 업로드·추출 확정 화면이 없으므로 새 회사 전체 경로는 API로 검증했다.

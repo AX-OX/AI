@@ -3,6 +3,7 @@ import asyncio
 import json
 import re
 import logging
+from time import perf_counter
 from datetime import datetime, timezone
 from ..trace import PublicTrace
 from fastmcp import Client
@@ -13,7 +14,7 @@ from ..tool_errors import safe_tool_failure
 logger = logging.getLogger(__name__)
 
 READS = {'get_company_profile', 'get_business_processes', 'get_operational_metrics',
-         'get_system_inventory', 'get_project_budget', 'get_solution_catalog'}
+         'get_system_inventory', 'get_project_budget', 'get_solution_catalog', 'get_solution_candidates'}
 WRITES = {'save_assessment', 'save_extraction', 'create_ax_roadmap', 'create_ax_project', 'update_project_status'}
 RAG_TOOLS = {'search_docs', 'get_assessment_evidence', 'get_document_chunks', 'index_document'}
 # 배포 점검이 요구하는 최소 도구. 문서 업로드 도구는 업로드 기능을 쓸 때만 필요하다.
@@ -95,6 +96,7 @@ class Gateway:
             return {'status': 'error', 'code': code, 'message': message}
 
     async def tool(self, task_id, node, name, args):
+        started = perf_counter()
         await self.event(task_id, 'TOOL_START', node, {'tool': name, 'label': name})
         self.observe(task_id, node, 'TOOL_CALL', {'tool': name, 'arguments': args})
         try:
@@ -120,14 +122,14 @@ class Gateway:
                 except Exception:
                     if attempt == attempts - 1: raise
                     await asyncio.sleep(0.3 * 2**attempt)
-            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': True})
+            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': True, 'durationMs': round((perf_counter()-started)*1000,2)})
             self.observe(task_id, node, 'TOOL_RESULT', {'tool': name, 'resultType': type(value).__name__})
             return mask(value)
         except Exception as exc:
             code, message = safe_tool_failure(exc)
             logger.error('MCP_CALL_FAILED task_id=%s node=%s tool=%s code=%s error=%s',
                          task_id, node, name, code, type(exc).__name__)
-            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': False})
+            await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': False, 'durationMs': round((perf_counter()-started)*1000,2)})
             raise ValueError(message) from None
 
 

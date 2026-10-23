@@ -116,6 +116,13 @@ class TaskRunner:
             snapshot = await self.graph.aget_state(self._cfg(key))
             if not snapshot.values: raise HTTPException(404, '작업이 없습니다.')
             if snapshot.values['user_id'] != user_id: raise HTTPException(403, '작업 요청자만 재개할 수 있습니다.')
+            # Spring can resume immediately after observing WAITING while the
+            # previous turn is still sending its final notification. Finish that
+            # turn before starting a new one; never cancel it or skip the interrupt.
+            previous = self.jobs.get(key)
+            if previous and pending_kind(snapshot) == kind:
+                await asyncio.wait({previous}, timeout=5)
+                snapshot = await self.graph.aget_state(self._cfg(key))
             waiting = '기업 데이터 확정' if kind == 'CONFIRMATION' else '승인'
             if key in self.jobs or pending_kind(snapshot) != kind or snapshot.values.get('status') in {'FAILED', 'DONE', 'REJECTED'}:
                 raise HTTPException(409, f'{waiting} 대기 중인 작업만 재개할 수 있습니다.')

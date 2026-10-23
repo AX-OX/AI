@@ -6,6 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from .clients import READS, mask
+from .concurrency import ordered_map
 from .schemas import Narrative
 from .contexts import assessment_context, discovery_context, response_context, context_json
 from .assessment import evidence_catalog, draft_schema, resolve_draft, AssessmentReferenceError
@@ -48,7 +49,11 @@ class Reasoner:
                     return result
                 except Exception as exc:
                     last = exc
-                    self.observe(task_id, stage, 'LLM_ERROR', {'model':name, 'errorType':type(exc).__name__, 'httpStatus':getattr(exc, 'status_code', None)})
+                    info={'model':name,'errorType':type(exc).__name__,'httpStatus':getattr(exc,'status_code',None)}
+                    from pydantic import ValidationError
+                    if isinstance(exc,ValidationError):
+                        info['validationErrors']=[{'field':list(e['loc']),'type':e['type']} for e in exc.errors(include_input=False,include_url=False)]
+                    self.observe(task_id, stage, 'LLM_ERROR', info)
                     if not is_retryable(exc):
                         raise RuntimeError('LLM 호출 실패') from exc
                     await asyncio.sleep(0.5 * 2**attempt)
@@ -70,6 +75,9 @@ class Reasoner:
                 args = {} if _name == 'get_solution_catalog' else {'company_id': state['company_id']}
                 if _name in {'get_business_processes', 'get_operational_metrics'} and department_id is not None:
                     args['department_id'] = department_id
+                if _name in results:
+                    self.observe(state['task_id'],'collect','TOOL_CACHE_HIT',{'tool':_name})
+                    return prepare_tool_output(compact(results[_name], 100000), self.settings)
                 try:
                     value = await gateway.tool(state['task_id'], 'collect', _name, args)
                     results[_name] = value
@@ -81,19 +89,36 @@ class Reasoner:
                 description=f'{name}: 회사 업무 정보를 조회한다. company_id는 작업 컨텍스트에서 얻는다.',
                 args_schema={'type':'object', 'properties':{} if name=='get_solution_catalog' else {'company_id':{'type':'integer'}},
                              'required':[] if name=='get_solution_catalog' else ['company_id'], 'additionalProperties':False}))
-        messages = [SystemMessage(content=prompt('collect')), HumanMessage(content=compact({'company_id': state['company_id'], 'request': state['request']}))]
+        messages = [SystemMessage(content=prompt('collect')+'\n필수 조회 도구: '+', '.join(sorted(READS))), HumanMessage(content=compact({'company_id': state['company_id'], 'request': state['request']}))]
         by_name = {t.name: t for t in tools}
         for _ in range(self.settings.max_agent_turns):
             guard.next_turn()
             async def choose(model): return await model.bind_tools(tools, strict=True).ainvoke(messages)
             response = await self.invoke(choose, task_id=state['task_id'], stage='collect')
             messages.append(response)
-            if not response.tool_calls: break
+            if not response.tool_calls:
+                missing=sorted(READS-results.keys())
+                if not missing: break
+                messages.append(HumanMessage(content='필수 조회가 아직 누락됐습니다. 다음 도구를 호출하세요: '+', '.join(missing)))
+                continue
+            # Reuse identical calls only within this LLM batch/task. Errors are
+            # not cached across batches, so the existing bounded retry can repair them.
+            calls = {}
             for call in response.tool_calls:
+                key = (call['name'], json.dumps(call['args'], sort_keys=True))
+                calls.setdefault(key, call)
+
+            async def run_call(call):
                 self.observe(state['task_id'],'collect','LLM_TOOL_CALL',{'tool':call['name'],'arguments':call['args']})
                 tool = by_name.get(call['name'])
-                result = await tool.ainvoke(call['args']) if tool else '허용되지 않은 도구'
-                messages.append(ToolMessage(content=str(result), tool_call_id=call['id']))
+                return await tool.ainvoke(call['args']) if tool else '허용되지 않은 도구'
+
+            values = await ordered_map(run_call, list(calls.values()), self.settings.read_concurrency)
+            by_call = dict(zip(calls, values))
+            # Preserve the LLM's tool-call ordering regardless of completion order.
+            for call in response.tool_calls:
+                key = (call['name'], json.dumps(call['args'], sort_keys=True))
+                messages.append(ToolMessage(content=str(by_call[key]), tool_call_id=call['id']))
             if READS <= results.keys(): break
         if not READS <= results.keys():
             raise ValueError(f'필수 조회 도구 결과 부족: {sorted(READS - results.keys())}')
@@ -194,7 +219,7 @@ class Reasoner:
         context = {**response_context(state), 'mode':self.settings.mode}
         content = context_json(context, stage='respond', limit=24000)
         async def generate(model):
-            return await model.with_structured_output(Narrative, method='function_calling', strict=False).ainvoke([
+            return await model.with_structured_output(Narrative, method='function_calling', strict=True).ainvoke([
                 SystemMessage(content=prompt('respond')), HumanMessage(content=content)])
         return (await self.invoke(generate, task_id=state['task_id'], stage='respond')).model_dump()
 
@@ -204,7 +229,10 @@ class MockReasoner:
         self.settings = settings or Settings(mode='mock')
 
     async def collect(self, state, gateway):
-        return {name: await gateway.tool(state['task_id'],'collect',name,{} if name=='get_solution_catalog' else {'company_id':state['company_id']}) for name in sorted(READS)}
+        names = sorted(READS)
+        async def read(name):
+            return await gateway.tool(state['task_id'],'collect',name,{} if name=='get_solution_catalog' else {'company_id':state['company_id']})
+        return dict(zip(names, await ordered_map(read, names, self.settings.read_concurrency)))
 
     async def extract(self, state, chunks):
         # 문서 제목마다 업무 하나. 수치는 만들지 않으므로 metrics는 비운다 (사용자가 확정 화면에서 입력).
@@ -212,7 +240,7 @@ class MockReasoner:
         first = {}
         for key, row in catalog.items(): first.setdefault(row['document_id'], (key, row))
         processes = [{'key': f'p{i+1}', 'departmentKey': 'd1', 'name': ('MOCK ' + row['title'])[:100], 'purpose': row['content'][:200],
-                      'steps': [], 'standardizationLevel': None, 'requiresApproval': False, 'exceptionRules': None, 'sourceId': key}
+                      'workType': 'OTHER', 'steps': [], 'standardizationLevel': None, 'requiresApproval': False, 'exceptionRules': None, 'sourceId': key}
                      for i, (key, row) in enumerate(list(first.values())[:3])]
         draft = {'company': {'industry': None, 'employeeCount': None}, 'departments': [{'key': 'd1', 'name': '전사'}],
                  'processes': processes, 'metrics': [], 'systems': []}
@@ -235,19 +263,14 @@ class MockReasoner:
         return {'scores':{k:row[k] for k in criteria['weights'] if k not in missing},'evidence':evidence,'insufficient_data':missing}
 
     async def discover(self, state):
-        excluded={e['process_id'] for e in state['evaluation_policy']['exclusions']}
-        candidates=[]
-        for solution in state['solutions']:
-            pid,sid=int(solution['target_process_id']),int(solution['solution_id'])
-            if pid in excluded: continue
-            docs=[r['document_id'] for r in state['evidence'] if str(pid) in r['section']]
-            if not docs: continue
-            candidates.append({'process_id':pid,'solution_id':sid,'reason':'MOCK: v3 카탈로그·문서 연결 검증용 후보. 실제 추천이 아님.',
-                               'document_ids':list(dict.fromkeys(docs))})
-        return candidates
+        choices,evidence = candidate_catalog(state)
+        return [{'process_id':c['process_id'],'solution_id':c['solution_id'],
+                 'reason':'MOCK: Spring 후보·문서 연결 검증용. 실제 LLM 추천이 아님.',
+                 'document_ids':list(dict.fromkeys(evidence[k]['document_id'] for k in c['evidence_ids']))}
+                for c in choices.values()]
 
     async def respond(self, state):
         return {'summary':'MOCK: 가정 데이터의 AX점수와 예산·선행 조건에 맞춘 로드맵 초안입니다.',
-                'recommendations':[{'solution_id':item['solution_id'], 'reason':item['rationale'],
+                'recommendations':[{'process_id':item['process_id'],'solution_id':item['solution_id'], 'reason':item['rationale'],
                                     'document_ids':list(dict.fromkeys(e['document_id'] for e in item['evidence']))}
                                    for item in state['roadmap']['items']]}

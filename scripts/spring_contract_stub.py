@@ -26,7 +26,7 @@ async def contract(path:str,request:Request):
         if int(pieces[1])!=1: raise HTTPException(403)
         suffix=pieces[2] if len(pieces)>2 else 'profile'
         names={'profile':'get_company_profile','processes':'get_business_processes','metrics':'get_operational_metrics',
-               'systems':'get_system_inventory','budget':'get_project_budget'}
+               'systems':'get_system_inventory','budget':'get_project_budget','solution-candidates':'get_solution_candidates'}
         name=names.get(suffix);args={'company_id':1}
     elif path=='solutions' and request.method=='GET': name='get_solution_catalog'
     elif path=='ax/roi': name='calculate_ax_roi';args={'process_id':body['processId'],'solution_id':body['solutionId']}

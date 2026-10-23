@@ -10,7 +10,7 @@ NODE_LABELS={
 }
 TOOL_LABELS={'get_company_profile':'기업 정보','get_business_processes':'업무 목록',
              'get_operational_metrics':'업무 지표','get_system_inventory':'IT 시스템',
-             'get_project_budget':'예산','get_solution_catalog':'솔루션 목록'}
+             'get_project_budget':'예산','get_solution_catalog':'솔루션 템플릿','get_solution_candidates':'업무별 솔루션 후보'}
 QUIT_WORDS={'/exit','exit','/quit','quit','종료'}
 
 

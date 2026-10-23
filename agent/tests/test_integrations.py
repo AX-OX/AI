@@ -58,7 +58,7 @@ async def test_real_business_mcp_forwards_spring_body():
     assert {'create_ax_roadmap', 'create_ax_project', 'update_project_status'} <= writes
 
 @pytest.mark.asyncio
-async def test_collect_llm_tool_loop_uses_all_six_tools():
+async def test_collect_llm_tool_loop_uses_all_seven_tools():
     from agent.app.clients import READS
     cfg = Settings(mode='mock', internal_token='test', data_dir=ROOT / 'AX_Navigator_AI_MVP_v3')
     reasoner = Reasoner(cfg)

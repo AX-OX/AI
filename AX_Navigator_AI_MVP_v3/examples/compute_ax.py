@@ -37,7 +37,13 @@ def compute(root=ROOT, as_of=date(2026, 10, 1)):
     company_id = company['company_id']
     dept_ids = {d['department_id'] for d in load_table(root, 'departments') if d['company_id'] == company_id}
     processes = {p['process_id']: p for p in load_table(root, 'business_processes') if p['department_id'] in dept_ids}
-    solutions = [s for s in load_table(root, 'ai_solution_catalog') if s['target_process_id'] in processes]
+    # Seed-only offline oracle: the seed has exactly one process per template type.
+    # Runtime matching and calculations remain in Spring.
+    solutions = []
+    for template in load_table(root, 'ai_solution_catalog'):
+        matching = [pid for pid,p in processes.items() if p['work_type'] == template['work_type']]
+        if len(matching) != 1: raise ValueError('Offline seed oracle requires one process per template type')
+        solutions.append({**template, 'target_process_id': matching[0]})
     systems = {s['system_id']: s for s in load_table(root, 'it_systems') if s['company_id'] == company_id}
     links = load_table(root, 'process_systems')
     metrics = load_table(root, 'process_metrics')
@@ -94,6 +100,7 @@ def compute(root=ROOT, as_of=date(2026, 10, 1)):
                 threeYearNetKrw=money(3*saving-build-3*annual_run))
         candidates.append(dict(processId=int(p['process_id']),solutionId=int(s['solution_id']),
             dependsOnSolutionId=int(s['depends_on_solution_id']) if s['depends_on_solution_id'] else None,
+            dependsOnProcessId=next(int(t['target_process_id']) for t in solutions if t['solution_id']==s['depends_on_solution_id']) if s['depends_on_solution_id'] else None,
             axScore=rounded(score,policy['rounding']),impactScore=rounded(impact),feasibilityScore=rounded(feasibility),
             savedHoursBase=rounded(d['saved'],2),apiOk=api_ok,humanReviewRequired=truth(p['requires_approval']),
             dataConfidence=d['data_confidence'],warnings=['LOW_STANDARDIZATION'] if D(p['standardization_level']) < D(s['min_standardization_level']) else [],

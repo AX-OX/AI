@@ -218,17 +218,18 @@ async def test_catalog_pair_mismatch_and_excluded_candidate():
             result[0]['solution_id']=507
             return result
     graph=build_graph(MockGateway(cfg),WrongPair(cfg),InMemorySaver(),cfg)
-    with pytest.raises(ValueError,match='target_process_id'):
+    with pytest.raises(ValueError,match='Spring 후보 쌍'):
         await graph.ainvoke({'task_id':str(uuid4()),'company_id':1,'user_id':602,'request':'추천'}, {'configurable':{'thread_id':str(uuid4())}})
     class WithExcluded(MockReasoner):
         async def discover(self,state):
             result=await super().discover(state)
             return result+[{'process_id':203,'solution_id':503,'reason':'사람 최종 평가 자동화 요청','document_ids':[401]}]
     gateway=MockGateway(cfg)
-    result=await build_graph(gateway,WithExcluded(cfg),InMemorySaver(),cfg).ainvoke(
-        {'task_id':str(uuid4()),'company_id':1,'user_id':602,'request':'추천'}, {'configurable':{'thread_id':str(uuid4())}})
-    assert result.get('__interrupt__')
-    assert not any(name=='calculate_ax_roi' and args['process_id']==203 for name,args in gateway.calls)
+    with pytest.raises(ValueError,match='Spring 후보 쌍'):
+        await build_graph(gateway,WithExcluded(cfg),InMemorySaver(),cfg).ainvoke(
+            {'task_id':str(uuid4()),'company_id':1,'user_id':602,'request':'추천'}, {'configurable':{'thread_id':str(uuid4())}})
+    assert not any(name=='calculate_ax_roi' for name,args in gateway.calls)
+
 
 
 @pytest.mark.asyncio
@@ -303,4 +304,4 @@ async def test_validation_failure_explains_which_candidate_failed():
             result=(await client.get(f'/tasks/{key}')).json()
             assert result['status']=='FAILED'
             assert 'process_id=207, solution_id=501' in result['errors'][0]
-            assert 'target_process_id' in next(e['data']['message'] for e in result['trace'] if e['type']=='NODE_ERROR')
+            assert 'Spring 후보 쌍' in next(e['data']['message'] for e in result['trace'] if e['type']=='NODE_ERROR')
