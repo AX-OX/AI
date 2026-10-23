@@ -95,3 +95,7 @@ sh scripts/verify_pgvector.sh
 - [구현·실제 BE/FE 연동 검증과 남은 범위](docs/CATALOG_TEMPLATE_IMPLEMENTATION.md)
 
 새 후보 API를 제공하는 BE 버전과 함께 배포해야 한다. 현재 FE에 업로드·추출 확정 화면이 없으므로 새 회사 전체 경로는 API로 검증했다.
+
+### 선택 기능: Tavily 외부 참고 자료
+
+`TAVILY_API_KEY`를 설정하면 live 모드에서 선정 과제의 외부 참고 자료를 Tavily MCP로 검색해 기존 답변 끝에 표시합니다. 키가 없거나 검색이 실패해도 기본 분석을 유지하며 AX점수·ROI에는 반영하지 않습니다. [설정·제약·검증](docs/TAVILY_MCP.md)을 참고하세요.

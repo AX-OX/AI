@@ -36,4 +36,5 @@ class AXState(TypedDict, total=False):
     errors: list[str]
     status: str
     registration: dict
+    external_research: dict
     answer: str
