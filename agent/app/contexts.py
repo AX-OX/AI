@@ -56,7 +56,10 @@ def response_context(state):
     roadmap = {**state['roadmap'], 'items': [
         {k: v for k, v in item.items() if k != 'evidence'} for item in state['roadmap']['items']]}
     return {
-        'request': state['request'], 'portfolio': state['portfolio'], 'roadmap': roadmap,
+        'request': state['request'],
+        # Final descriptions do not need runner-up/greedy alternatives.
+        'portfolio': pick(state['portfolio'], ('selected','totalAxScore','totalFirstYearTcoKrw','budgetKrw','remainingBudgetKrw')),
+        'roadmap': roadmap,
         'selected_processes': [pick(p, ('process_id', 'process_name', 'purpose', 'requires_approval', 'exception_rules', 'work_type'))
                                for p in state['processes'] if int(p['process_id']) in selected],
         'evidence': evidence_rows([r for r in state['evidence'] if r['document_id'] in documents]),
