@@ -1,12 +1,16 @@
 """Teammate TaskRunner layout with real nodes, checkpoint guards and Spring callbacks."""
 import asyncio
+import json
 import logging
 import os
+import re
+import traceback
 from uuid import uuid4
 import httpx
 from fastapi import HTTPException
 from langgraph.types import Command
 from .graph import task_result, approval_payload
+from .tool_errors import MESSAGES
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +79,22 @@ class TaskRunner:
             # 프로세스 종료 시 마지막 완료 노드 체크포인트는 보존한다.
             raise
         except Exception as exc:
-            logger.error('Agent task failed task_id=%s error=%s', task_id, type(exc).__name__)
             failures=[e for e in client.public_trace.get(task_id) if e['type']=='NODE_ERROR']
             detail=failures[-1]['data'].get('message','') if failures else ''
+            # Cloud Logging은 JSON severity를 인식한다. 원문 예외·프롬프트·자격증명은 남기지 않는다.
+            codes = re.findall(r'\b[A-Z][A-Z_]+\b', detail)
+            code = next((c for c in codes if c in MESSAGES or c == 'INSUFFICIENT_DATA'), 'TASK_FAILED')
+            if isinstance(exc, TimeoutError): code = 'TASK_TIMEOUT'
+            if isinstance(exc, httpx.HTTPStatusError): code = 'SPRING_HTTP_ERROR'
+            record = {'severity': 'ERROR', 'message': 'Agent task failed', 'task_id': task_id,
+                      'node': failures[-1]['node'] if failures else None,
+                      'code': code, 'error': type(exc).__name__}
+            frames = traceback.extract_tb(exc.__traceback__)
+            if frames:
+                frame = frames[-1]
+                record['location'] = {'file': os.path.basename(frame.filename),
+                                      'function': frame.name, 'line': frame.lineno}
+            logger.error(json.dumps(record, ensure_ascii=False))
             if isinstance(exc, httpx.HTTPStatusError):
                 detail = f'Spring HTTP {exc.response.status_code}: {exc.request.method} {exc.request.url.path}'
             message = f'작업 실패: {type(exc).__name__}. {detail or "내부 로그와 연동 상태를 확인하세요."}'
