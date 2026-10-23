@@ -2,6 +2,7 @@
 import json
 from time import perf_counter
 from ...concurrency import ordered_map
+from ...external_research import research_selected, render_research
 from decimal import Decimal
 from langgraph.types import interrupt
 from ...schemas import AXState, Assessment, RoiResult
@@ -275,8 +276,11 @@ def build_nodes(gateway, reasoner, settings):
                 'scheduleBasis':'3개월 단위 MVP 일정 초안. 실제 일정과 PoC 성공 기준은 담당자 검토 필요.',
                 'pocSuccessCriteria':['표본 업무 전후 처리 시간을 측정하고 사람 검토 시간을 포함한다.',
                                       '담당자가 품질·오류율 기준과 자동화 중단 조건을 확정한다.']}
+        external = await research_selected(settings, state, gateway.observe)
+        # External text stays out of business reasoning prompts and numeric contracts.
         narrative = await reasoner.respond({**state,'roadmap':roadmap})
-        return {'roadmap':roadmap,'answer':render_answer(state,roadmap,narrative)}
+        return {'roadmap':roadmap,'external_research':external,
+                'answer':render_answer(state,roadmap,narrative)+render_research(external)}
 
     def approval(state):
         decision = interrupt({'taskId':state['task_id'],**approval_payload(state)})
@@ -321,18 +325,30 @@ def build_nodes(gateway, reasoner, settings):
         valid_docs={r['document_id'] for r in state['evidence']}
         notes={(r.process_id,r.solution_id):r for r in narrative.recommendations}
         lines=[narrative.summary,'']
-        if len(selected)<3: lines.append(f'추천 가능한 과제가 {len(selected)}개뿐이므로 해당 과제로 구성했습니다.')
-        for item in roadmap['items']:
+        if len(selected)<3: lines.extend([f'추천 가능한 과제가 {len(selected)}개뿐이므로 해당 과제로 구성했습니다.',''])
+        for index,item in enumerate(roadmap['items'],1):
             note=notes[pair(item)]
             if not set(note.document_ids)<=valid_docs: raise ValueError('응답 설명의 문서 근거 불일치')
-            lines.append(f"- {item['item_name']}: AX점수 {item['ax_score']}, 초년도 비용 {item['allocated_budget_krw']:,}원. {note.reason} (문서 {', '.join(map(str,note.document_ids))})")
+            lines.extend([f"### {index}. {item['item_name']}", '',
+                          f"**AX점수 {item['ax_score']}** · **1년 차 비용 {item['allocated_budget_krw']:,}원**", '',
+                          note.reason, ''])
+            dep=roi_dependency(selected[pair(item)])
+            if dep:
+                prerequisite=next(p['process_name'] for p in state['processes'] if int(p['process_id'])==dep[0])
+                lines.append(f'- **선행 과제:** {prerequisite} 완료 후 시작')
             process=next(p for p in state['processes'] if int(p['process_id'])==item['process_id'])
-            if process.get('exception_rules'): lines.append('  예외·제한: '+process['exception_rules'])
-            if truth(process['requires_approval']): lines.append('  사람 최종 검토·승인 필요.')
+            if truth(process['requires_approval']): lines.append('- **검토·승인:** 사람의 최종 검토·승인 필요')
+            if process.get('exception_rules'): lines.append('- **예외·제한:** '+process['exception_rules'])
+            lines.extend(['- **내부 근거:** 문서 '+', '.join(map(str,note.document_ids)), ''])
         remaining=state['portfolio']['remainingBudgetKrw']
-        budget_note=f", 잔여 예산 {remaining:,}원." if remaining is not None else ". 요청에 예산이 없어 예산 제약 없이 선정했습니다."
-        lines.extend(['',f"총 AX점수 {state['portfolio']['totalAxScore']}, 총비용 {state['portfolio']['totalFirstYearTcoKrw']:,}원"+budget_note,
-                      '가정 데이터 기반 인력 시간 환산 가치입니다. 실제 성과나 확정 현금 절감을 보장하지 않습니다.',
+        lines.extend(['### 투자 요약', '', '| 항목 | 내용 |', '| --- | ---: |',
+                      f"| 선정 과제 | {len(selected)}개 |",
+                      f"| 총 AX점수 | {state['portfolio']['totalAxScore']} |",
+                      f"| 총비용 | {state['portfolio']['totalFirstYearTcoKrw']:,}원 |"])
+        if remaining is not None: lines.append(f'| 잔여 예산 | {remaining:,}원 |')
+        else: lines.extend(['','요청에 예산이 없어 예산 제약 없이 선정했습니다.'])
+        lines.extend(['', '선정 기준은 AX점수 합이며, ROI는 보조 지표입니다.', '',
+                      '가정 데이터 기반 인력 시간 환산 가치입니다. 실제 성과나 확정 현금 절감을 보장하지 않습니다.', '',
                       '요청자 승인 후 로드맵·프로젝트를 등록합니다.'])
         return '\n'.join(lines)
 

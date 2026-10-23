@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 from pathlib import Path
 from functools import lru_cache
@@ -13,6 +13,9 @@ class Settings:
     business_url: str = 'http://business-mcp:9101/mcp'
     rag_url: str = 'http://rag-mcp:9102/mcp'
     spring_url: str = 'http://backend:8080/internal'
+    tavily_api_key: str = field(default='', repr=False)
+    tavily_enabled: bool = True
+    tavily_timeout_seconds: float = 12
     model: str = ''
     fallback_model: str = ''
     timeout: float = 300
@@ -26,6 +29,8 @@ class Settings:
     data_dir: Path = Path(__file__).resolve().parents[2] / 'AX_Navigator_AI_MVP_v3'
 
     def __post_init__(self):
+        if not 0 < self.tavily_timeout_seconds <= 60:
+            raise ValueError('TAVILY_TIMEOUT_SECONDS must be > 0 and <= 60')
         if not 1 <= self.read_concurrency <= 8:
             raise ValueError('AGENT_READ_CONCURRENCY must be between 1 and 8')
 
@@ -60,6 +65,9 @@ class Settings:
         return cls(mode=os.getenv('AGENT_MODE', 'live'), internal_token=os.getenv('INTERNAL_TOKEN', ''),
                    checkpoint_url=checkpoint_url, business_url=os.getenv('BUSINESS_MCP_URL', cls.business_url),
                    rag_url=os.getenv('RAG_MCP_URL', cls.rag_url), spring_url=os.getenv('SPRING_INTERNAL_URL', cls.spring_url),
+                   tavily_api_key=os.getenv('TAVILY_API_KEY', ''),
+                   tavily_enabled=os.getenv('TAVILY_ENABLED', 'true').lower() in {'true','1','yes'},
+                   tavily_timeout_seconds=float(os.getenv('TAVILY_TIMEOUT_SECONDS', '12')),
                    model=os.getenv('LLM_MODEL', ''), fallback_model=os.getenv('LLM_FALLBACK_MODEL', ''),
                    timeout=float(os.getenv('AGENT_TIMEOUT_SECONDS', os.getenv('TASK_TIMEOUT_SECONDS', '300'))), company_id=int(os.getenv('AGENT_COMPANY_ID', '1')),
                    read_concurrency=int(os.getenv('AGENT_READ_CONCURRENCY', '3')),
