@@ -1,5 +1,6 @@
 """Unconfirmed company: extract from uploaded chunks -> Spring draft -> wait -> confirm -> assessment-only DONE."""
 from uuid import uuid4
+import json
 
 import httpx
 import pytest
@@ -77,7 +78,7 @@ async def test_extract_wait_confirm_then_assessment_only_done():
 
 
 @pytest.mark.asyncio
-async def test_unconfirmed_company_without_documents_fails_without_writes():
+async def test_unconfirmed_company_without_documents_fails_without_writes(caplog):
     cfg = settings()
     gateway = NewCompany(cfg)
     app = create_app(cfg, gateway=gateway)
@@ -91,6 +92,13 @@ async def test_unconfirmed_company_without_documents_fails_without_writes():
             failed = next(e['body'] for e in gateway.events if e['body'].get('type') == 'FAILED')
             assert 'PDF를 먼저 업로드' in failed['data']['message']
             assert not any(name == 'save_extraction' for name, _ in gateway.calls)
+            log = next(json.loads(r.getMessage()) for r in caplog.records if r.name == 'agent.app.runner')
+            assert log['severity'] == 'ERROR'
+            assert log['task_id'] == key
+            assert log['code'] == 'INSUFFICIENT_DATA'
+            assert log['node'] == 'extract'
+            assert log['error'] == 'ValueError'
+            assert log['location']['function'] == 'extract'
 
 
 @pytest.mark.asyncio
