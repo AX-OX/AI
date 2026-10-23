@@ -1,6 +1,7 @@
 """LLM 출력은 후보·근거로 제한한다. 비용과 절감률은 도구 결과로만 사용한다."""
 import asyncio
 import json
+import logging
 from pathlib import Path
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
@@ -8,6 +9,7 @@ from langchain_openai import ChatOpenAI
 from .clients import READS, mask
 from .concurrency import ordered_map
 from .schemas import Narrative
+from .narrative_refs import reference_catalog, draft_schema as narrative_schema, resolve_narrative, NarrativeReferenceError
 from .contexts import assessment_context, discovery_context, response_context, context_json
 from .assessment import evidence_catalog, draft_schema, resolve_draft, AssessmentReferenceError
 from .candidate_refs import candidate_catalog, discovery_schema, resolve_candidates
@@ -15,6 +17,8 @@ from .extraction import chunk_catalog, draft_schema as extraction_schema, resolv
 from .harness.limits import LoopGuard, LimitExceeded
 from .harness.tool_output import prepare_tool_output
 from .harness.recovery import is_retryable
+
+logger = logging.getLogger(__name__)
 
 PROMPTS = Path(__file__).resolve().parents[1] / 'prompts'
 
@@ -216,12 +220,46 @@ class Reasoner:
                     stage='discover_repair',limit=10000)))
 
     async def respond(self, state):
-        context = {**response_context(state), 'mode':self.settings.mode}
+        from pydantic import ValidationError
+        catalog = reference_catalog(state)
+        schema = narrative_schema(catalog)
+        context = {**response_context(state), 'recommendation_catalog':catalog, 'mode':self.settings.mode}
         content = context_json(context, stage='respond', limit=24000)
-        async def generate(model):
-            return await model.with_structured_output(Narrative, method='function_calling', strict=True).ainvoke([
-                SystemMessage(content=prompt('respond')), HumanMessage(content=content)])
-        return (await self.invoke(generate, task_id=state['task_id'], stage='respond')).model_dump()
+        messages = [SystemMessage(content=prompt('respond')), HumanMessage(content=content)]
+        for attempt in range(2):
+            try:
+                async def generate(model):
+                    return await model.with_structured_output(schema, method='function_calling', strict=True).ainvoke(messages)
+                draft = await self.invoke(generate, task_id=state['task_id'], stage='respond')
+                result = resolve_narrative(draft, catalog)
+                self.observe(state['task_id'],'roadmap','NARRATIVE_VALIDATED',
+                             {'recommendationCount':len(result['recommendations']),'repairAttempts':attempt})
+                return result
+            except (NarrativeReferenceError, ValidationError) as exc:
+                failure = exc
+            except RuntimeError as exc:
+                # invoke wraps provider schema validation errors. Repair these,
+                # but do not treat authentication/network errors as a bad narrative.
+                if not isinstance(exc.__cause__,ValidationError): raise
+                failure = exc.__cause__
+            if isinstance(failure,NarrativeReferenceError):
+                code, details = failure.code, failure.details
+            else:
+                code = 'NARRATIVE_SCHEMA_INVALID'
+                details = {'expectedReferences':list(catalog),
+                           'validationErrors':[{'field':list(e['loc']),'type':e['type']}
+                               for e in failure.errors(include_input=False,include_url=False)][:10]}
+            diagnostic = {'code':code,**details,'attempt':attempt+1}
+            self.observe(state['task_id'],'roadmap','NARRATIVE_REFERENCE_ERROR',diagnostic)
+            logger.warning(json.dumps({'severity':'WARNING' if attempt==0 else 'ERROR',
+                'message':'Final narrative validation failed','task_id':state['task_id'],
+                'node':'roadmap',**diagnostic},ensure_ascii=False))
+            if attempt:
+                raise NarrativeReferenceError(code,**details) from None
+            messages.append(HumanMessage(content=context_json({
+                'validation_error':{'code':code,**details},'allowed_recommendations':catalog,
+                'instruction':'선정 결과는 변경하지 마세요. 허용된 R 참조키를 각각 한 번씩 설명하고 해당 항목의 document_ids만 사용하세요. 업무·솔루션 ID를 만들지 마세요.'},
+                stage='respond_repair',limit=6000)))
 
 class MockReasoner:
     def __init__(self, settings=None):

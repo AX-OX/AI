@@ -10,6 +10,7 @@ from agent.app.main import create_app
 from agent.app.reasoning import Reasoner
 from agent.app.schemas import Assessment, AssessmentDraft, Discovery, DiscoveryDraft, Narrative
 from agent.app.trace import PublicTrace
+from agent.app.narrative_refs import NarrativeDraft
 
 
 @pytest.mark.asyncio
@@ -51,8 +52,11 @@ async def test_real_reasoner_two_turn_tool_loop_and_answer_without_external_serv
                 context=json.loads(messages[1].content)
                 return self.schema(candidates=[{'candidate_id':key,'reason':'문서 기반 테스트 후보',
                     'evidence_ids':entry['evidence_ids']} for key,entry in context['candidate_catalog'].items()])
-            assert self.schema is Narrative
-            return Narrative(summary='선정 결과와 선행 과제를 문서 기준으로 설명합니다.',recommendations=[{'process_id':sid-300,'solution_id':sid,'reason':'반복 업무와 사람 검토 조건을 고려했습니다.','document_ids':[403]} for sid in (507,508,509)])
+            assert issubclass(self.schema, NarrativeDraft)
+            context=json.loads(messages[1].content)
+            return self.schema(summary='선정 결과와 선행 과제를 문서 기준으로 설명합니다.',recommendations=[
+                {'recommendation_id':ref,'reason':'반복 업무와 사람 검토 조건을 고려했습니다.','document_ids':row['document_ids']}
+                for ref,row in context['recommendation_catalog'].items()])
     monkeypatch.setattr('agent.app.reasoning.ChatOpenAI',FakeProvider)
     cfg=Settings(mode='llm-demo',model='test-model',internal_token='test')
     app=create_app(cfg);key=str(uuid4())

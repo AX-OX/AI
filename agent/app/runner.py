@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from langgraph.types import Command
 from .graph import task_result, approval_payload
 from .tool_errors import MESSAGES
+from .narrative_refs import NarrativeReferenceError
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,7 @@ class TaskRunner:
             # Cloud Logging은 JSON severity를 인식한다. 원문 예외·프롬프트·자격증명은 남기지 않는다.
             codes = re.findall(r'\b[A-Z][A-Z_]+\b', detail)
             code = next((c for c in codes if c in MESSAGES or c == 'INSUFFICIENT_DATA'), 'TASK_FAILED')
+            if isinstance(exc, NarrativeReferenceError): code = exc.code
             if isinstance(exc, TimeoutError): code = 'TASK_TIMEOUT'
             if isinstance(exc, httpx.HTTPStatusError): code = 'SPRING_HTTP_ERROR'
             record = {'severity': 'ERROR', 'message': 'Agent task failed', 'task_id': task_id,

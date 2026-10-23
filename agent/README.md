@@ -50,6 +50,8 @@ uv run --project agent uvicorn agent.app.main:app --port 8000 --workers 1 --http
 
 ## 테스트
 
+최종 로드맵 설명은 `app/narrative_refs.py`에서 선정된 업무·솔루션 쌍을 `R1` 등의 참조키로 연결한다. 모델은 허용된 참조키·설명·문서 ID만 반환하고, 코드는 실제 ID를 복원해 기존 응답 계약을 유지한다. 참조 누락·중복·문서 불일치 또는 출력 스키마 검증 실패 시 설명 생성만 한 번 보정한다. 계산·저장은 반복하지 않는다. 계속 실패하면 작업을 중단하고 `NARRATIVE_REFERENCE_MISMATCH`, `NARRATIVE_EVIDENCE_MISMATCH`, `NARRATIVE_SCHEMA_INVALID` 등의 코드와 허용·반환 참조를 구조화 로그에 남긴다. 원문 설명이나 자격증명은 로그에 포함하지 않는다.
+
 ```sh
 uv run --project agent python -m pytest agent/tests tests -q
 sh scripts/verify_pgvector.sh
