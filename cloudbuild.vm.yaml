@@ -1,0 +1,58 @@
+# Trigger: AX-OX/AI, push to ^main$, global Cloud Build.
+# Reuses the BE pipeline's build account and VM-scoped IAP SSH permission.
+# Application secrets stay on the VM; no indexing or DB initialization runs.
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --label
+      - org.opencontainers.image.revision=$COMMIT_SHA
+      - --tag
+      - asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ai/axai:$COMMIT_SHA
+      - .
+  - id: check-python
+    name: gcr.io/cloud-builders/docker
+    args:
+      - run
+      - --rm
+      - --network=none
+      - --env
+      - PYTHONPYCACHEPREFIX=/tmp/pycache
+      - --entrypoint
+      - python
+      - asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ai/axai:$COMMIT_SHA
+      - -m
+      - compileall
+      - -q
+      - agent/app
+      - business-mcp
+      - rag-mcp
+      - scripts
+  - id: publish
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ai/axai:$COMMIT_SHA
+  - id: deploy-agent
+    name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        apt-get update -qq
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openssh-client ca-certificates
+        image='asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ai/axai'
+        digest=$$(gcloud artifacts docker images describe "$$image:$COMMIT_SHA" \
+          --project='$PROJECT_ID' --format='value(image_summary.digest)')
+        [[ "$$digest" =~ ^sha256:[a-f0-9]{64}$$ ]]
+        # Shared short-lived CI SSH login; only the agent service is replaced.
+        gcloud compute ssh be-cicd@axox-vm-20261024 \
+          --project='$PROJECT_ID' --zone=asia-northeast1-b \
+          --tunnel-through-iap --ssh-key-expire-after=30m --quiet \
+          --command="sudo /opt/axox-vm/update-service.sh agent '$$image@$$digest' && sudo python3 /opt/axox-vm/verify-runtime.py"
+images:
+  - asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ai/axai:$COMMIT_SHA
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1200s
