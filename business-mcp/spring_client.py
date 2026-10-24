@@ -15,6 +15,9 @@ async def call(method: str, path: str, *, params: dict | None = None, body: Any 
     # Agent가 부여한 키를 Spring에 전달. Spring의 키별 원자적 중복 방지가 필요하다.
     from fastmcp.server.dependencies import get_http_headers
     request_headers = get_http_headers()
+    for name in ('x-command-id', 'x-command-lease'):
+        if request_headers.get(name):
+            headers[name] = request_headers[name]
     if request_headers.get('x-idempotency-key'):
         headers['X-Idempotency-Key'] = request_headers['x-idempotency-key']
     try:
