@@ -60,3 +60,14 @@ sh scripts/verify_pgvector.sh
 첫 명령은 독립 Agent·계약·팀원 그래프/Harness 검사다. 실제 DB 설정이 없는 검사는 skip된다. 두 번째는 `.env`의 OpenAI API 키로 실제 문서 임베딩을 호출해 pgvector·MCP·체크포인터를 검증한다. 이 통합 검사의 Spring·LLM은 fixture이며, 최신 실제 Spring 전체 흐름 검증과 구분한다. 로컬 임베딩 라이브러리는 필요 없으며 RAG 서버는 OpenAI SDK를 사용한다.
 
 실제 최신 BE와 승인·거절·DB 저장까지 확인한 결과는 `../.local/reports/team_aligned_e2e.json`, FE 채팅 상태·SSE 모듈 검사는 `../.local/reports/team_aligned_fe_store.json`에 로컬 생성되며 Git에서 제외한다. 검증에서 LLM은 MockReasoner를 사용했고, 실제 OpenAI 응답 품질이나 브라우저 클릭까지 검증한 것은 아니다.
+# 질문 답변과 분석 실행 라우팅
+
+`POST /chat/messages`는 Spring만 내부 토큰으로 호출하는 읽기 전용 대화 API다. 인사·AX 질문·기존 결과 설명·확인 질문·범위 안내와 새 분석 요청을 분류한다. 이 엔드포인트 자체는 그래프, 업무 도구, 작업 큐를 실행하지 않는다. ANALYZE 결정의 `analysisRequest`를 받은 Spring이 권한·자료를 검사하고 기존 분석 접수 로직을 호출한다.
+
+요청: `{message, history:[{role:"user"|"assistant", content}], task?:{taskId,status,result,requestText}}`. task는 Spring이 권한 확인 후 조회한 값만 전달한다. 제한은 메시지 4000자, 대화 12개·16000자, 작업 컨텍스트 80000자다. 일반 대화 이력은 새 DB에 저장하지 않으며 FE가 현재 대화의 제한된 이력을 전달한다.
+
+응답: `{intent, message, analysisRequest}`. intent는 GREETING/SERVICE_QA/RESULT_QA/ANALYZE/CLARIFY/OUT_OF_SCOPE이며 ANALYZE에만 analysisRequest가 있다. 명확한 인사만 규칙으로 처리하고 live/llm-demo의 나머지 의도는 구조화된 LLM 출력으로 판단한다. mock은 로컬 UI 검증용 규칙이므로 실제 의미 분류 정확도를 대표하지 않는다. 결과가 없으면 확인 질문을 하고, 회사별 수치는 제공된 기존 결과에만 근거한다.
+
+동시 대화 4개, 전체 대기·모델 호출 제한 24초이며 실패 시 503으로 종료한다. 분류 실패를 분석 실행으로 바꾸지 않는다. 프롬프트는 `prompts/chat_route.md`, `prompts/chat_answer.md`다. 입력 원문/회사 결과 없이 intent와 starts_analysis만 라우팅 로그로 남긴다.
+
+`pytest agent/tests/test_conversation.py -q`로 모델 호출 없는 API·분기·실패 검증을 한다. 실제 모델 평가에는 비용이 발생하며 `AX_CHAT_LIVE_EVAL=true LLM_MODEL=... OPENAI_API_KEY=... pytest agent/tests/test_chat_live_eval.py -q`로 합성 질문 22개를 검증한다. 운영 배포는 AI → BE → FE 순서다.
