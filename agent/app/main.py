@@ -16,6 +16,7 @@ from .graph import build_graph, task_result
 from .runner import TaskRunner, pending_kind
 from .ingest import Ingestor, MAX_BYTES
 from .worker import DurableWorker
+from .conversation import Conversation, ChatRequest, ChatReply
 
 
 
@@ -30,6 +31,7 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
             raise RuntimeError('live/llm-demo 모드는 LLM_MODEL과 OPENAI_API_KEY가 필요합니다.')
         app.state.gateway = gateway or (MockGateway(settings) if settings.mode in {'mock','llm-demo'} else Gateway(settings))
         app.state.reasoner = reasoner or (MockReasoner(settings) if settings.mode == 'mock' else Reasoner(settings, observer=app.state.gateway.observe))
+        app.state.conversation = Conversation(app.state.reasoner, mock=settings.mode == 'mock')
         async with _checkpoint(settings, checkpointer) as saver:
             app.state.graph = build_graph(app.state.gateway, app.state.reasoner, saver, settings)
             app.state.runner = TaskRunner(app.state.graph, app.state.gateway, settings)
@@ -63,6 +65,14 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
         if settings.mode != 'live':
             return {'status': 'not_checked', 'mode': settings.mode}
         return await app.state.gateway.check_rag()
+
+    @app.post('/chat/messages', response_model=ChatReply, dependencies=[Depends(auth)])
+    async def chat(request: ChatRequest):
+        try:
+            return await app.state.conversation.reply(request)
+        except (TimeoutError, RuntimeError, ValueError):
+            # Fail closed: a classification/model failure cannot create a task.
+            raise HTTPException(503, '답변을 준비하지 못했어요. 잠시 후 다시 시도해 주세요. 새 분석은 시작하지 않았어요.') from None
 
     def legacy_only():
         if settings.worker_enabled:
