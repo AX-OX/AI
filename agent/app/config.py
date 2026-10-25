@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 
 @dataclass
 class Settings:
+    worker_enabled: bool = False
+    worker_concurrency: int = 1
+    worker_poll_seconds: float = 2
+    worker_drain_seconds: float = 30
     mode: str = 'live'
     internal_token: str = ''
     checkpoint_url: str = ''
@@ -31,6 +35,10 @@ class Settings:
     def __post_init__(self):
         if not 0 < self.tavily_timeout_seconds <= 60:
             raise ValueError('TAVILY_TIMEOUT_SECONDS must be > 0 and <= 60')
+        if self.worker_enabled and (self.mode != 'live' or not self.checkpoint_url):
+            raise ValueError('Durable worker requires live mode and AGENT_DATABASE_URL')
+        if not 1 <= self.worker_concurrency <= 8 or self.worker_poll_seconds <= 0 or self.worker_drain_seconds < 0:
+            raise ValueError('Invalid durable worker limits')
         if not 1 <= self.read_concurrency <= 8:
             raise ValueError('AGENT_READ_CONCURRENCY must be between 1 and 8')
 
@@ -62,7 +70,11 @@ class Settings:
             port = int(os.getenv('POSTGRES_PORT', '5432'))
             database = quote(os.getenv('POSTGRES_AGENT_DB', 'agent'), safe='')
             checkpoint_url = f'postgresql://{user}:{password}@{host}:{port}/{database}'
-        return cls(mode=os.getenv('AGENT_MODE', 'live'), internal_token=os.getenv('INTERNAL_TOKEN', ''),
+        return cls(worker_enabled=os.getenv('AGENT_WORKER_ENABLED', 'false').lower() == 'true',
+                   worker_concurrency=int(os.getenv('AGENT_WORKER_CONCURRENCY', '1')),
+                   worker_poll_seconds=float(os.getenv('AGENT_WORKER_POLL_SECONDS', '2')),
+                   worker_drain_seconds=float(os.getenv('AGENT_WORKER_DRAIN_SECONDS', '30')),
+                   mode=os.getenv('AGENT_MODE', 'live'), internal_token=os.getenv('INTERNAL_TOKEN', ''),
                    checkpoint_url=checkpoint_url, business_url=os.getenv('BUSINESS_MCP_URL', cls.business_url),
                    rag_url=os.getenv('RAG_MCP_URL', cls.rag_url), spring_url=os.getenv('SPRING_INTERNAL_URL', cls.spring_url),
                    tavily_api_key=os.getenv('TAVILY_API_KEY', ''),
