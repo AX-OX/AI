@@ -40,7 +40,7 @@ class TaskRunner:
         return {'configurable': {'thread_id': str(task_id)}, 'recursion_limit': 40,
                 'run_name': 'ax-navigator', 'metadata': {'task_id': str(task_id)}}
 
-    async def execute(self, task_id, payload):
+    async def execute(self, task_id, payload, *, durable=False, publish_only=None):
         graph, client = self.graph, self.gateway
         cfg = self._cfg(task_id)
         cfg['run_id'] = uuid4()
@@ -54,10 +54,14 @@ class TaskRunner:
                 logger.warning('LangSmith URL unavailable task_id=%s', task_id)
         try:
             rejecting = isinstance(payload, Command) and isinstance(payload.resume, dict) and payload.resume.get('decision') == 'REJECT'
-            if not rejecting:
+            if not rejecting and publish_only is None:
                 await client.status(task_id, 'RUNNING', trace_url=trace_url)
-            async with asyncio.timeout(self.settings.task_timeout_seconds or self.settings.timeout):
-                result = await graph.ainvoke(payload, config=cfg)
+            if publish_only is not None:
+                result = publish_only
+            else:
+                async with asyncio.timeout(self.settings.task_timeout_seconds or self.settings.timeout):
+                    kwargs = {'durability': 'sync'} if durable else {}
+                    result = await graph.ainvoke(payload, config=cfg, **kwargs)
             if result.get('errors'):
                 raise ValueError('; '.join(result['errors']))
             if result.get('__interrupt__') and interrupt_kind(result) == 'CONFIRMATION':
@@ -80,6 +84,8 @@ class TaskRunner:
             # 프로세스 종료 시 마지막 완료 노드 체크포인트는 보존한다.
             raise
         except Exception as exc:
+            if durable:
+                raise
             failures=[e for e in client.public_trace.get(task_id) if e['type']=='NODE_ERROR']
             detail=failures[-1]['data'].get('message','') if failures else ''
             # Cloud Logging은 JSON severity를 인식한다. 원문 예외·프롬프트·자격증명은 남기지 않는다.

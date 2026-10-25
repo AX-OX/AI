@@ -1,0 +1,33 @@
+name: AI recovery tests
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: recovery
+          POSTGRES_PASSWORD: recovery-test
+          POSTGRES_DB: agent_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U recovery -d agent_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.19'
+      - name: Install locked dependencies
+        run: uv sync --project agent --locked
+      - name: Unit tests and real process-crash recovery
+        env:
+          AGENT_TEST_PG_DSN: postgresql://recovery:recovery-test@localhost:5432/agent_test
+        run: uv run --project agent python -m pytest agent/tests tests -q

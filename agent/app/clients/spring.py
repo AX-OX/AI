@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 import httpx
 from ..models.events import EventType, TaskEvent
+from ..recovery_context import command_headers
 
 
 class SpringClient:
@@ -13,7 +14,7 @@ class SpringClient:
 
     async def request(self, method, path, body):
         response = await self._client.request(method, path.lstrip('/'), json=body,
-                                             headers={'X-Internal-Token': self.settings.internal_token})
+                                             headers={'X-Internal-Token': self.settings.internal_token, **command_headers()})
         response.raise_for_status()
         return response
 

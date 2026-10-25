@@ -10,6 +10,7 @@ from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 from .spring import SpringClient
 from ..tool_errors import safe_tool_failure
+from ..recovery_context import command_headers, tool_failure
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class Gateway:
         except Exception as exc:
             code, message = safe_tool_failure(exc)
             logger.error('MCP_CALL_FAILED tool=index_document document_id=%s code=%s error=%s', document_id, code, type(exc).__name__)
-            raise ValueError(message) from None
+            raise tool_failure(exc, code, message) from None
 
     async def document_result(self, document_id, body):
         await self._spring('PATCH', f'/documents/{document_id}', body)
@@ -102,7 +103,7 @@ class Gateway:
         try:
             url = self.settings.rag_url if name in RAG_TOOLS else self.settings.business_url
             # 같은 쓰기 재실행은 같은 키를 사용한다. Spring이 키별 중복 저장을 차단해야 한다.
-            headers = {'X-Internal-Token': self.settings.internal_token}
+            headers = {'X-Internal-Token': self.settings.internal_token, **command_headers()}
             if name in WRITES:
                 import hashlib
                 digest = hashlib.sha256(json.dumps(args, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
@@ -130,7 +131,7 @@ class Gateway:
             logger.error('MCP_CALL_FAILED task_id=%s node=%s tool=%s code=%s error=%s',
                          task_id, node, name, code, type(exc).__name__)
             await self.event(task_id, 'TOOL_END', node, {'tool': name, 'label': name, 'ok': False, 'durationMs': round((perf_counter()-started)*1000,2)})
-            raise ValueError(message) from None
+            raise tool_failure(exc, code, message) from None
 
 
 def decode_tool_result(result):

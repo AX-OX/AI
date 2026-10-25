@@ -99,3 +99,8 @@ sh scripts/verify_pgvector.sh
 ### 선택 기능: Tavily 외부 참고 자료
 
 `TAVILY_API_KEY`를 설정하면 live 모드에서 선정 과제의 외부 참고 자료를 Tavily MCP로 검색해 기존 답변 끝에 표시합니다. 키가 없거나 검색이 실패해도 기본 분석을 유지하며 AX점수·ROI에는 반영하지 않습니다. [설정·제약·검증](docs/TAVILY_MCP.md)을 참고하세요.
+# 배포·장애 후 작업 복구
+
+선택적 영속 Worker의 동작·환경변수·실제 프로세스 종료 검증은
+[Durable Recovery](docs/DURABLE_RECOVERY.md)에 정리했다.
+기본 비활성화이며 대응 BE 릴리스와 DB 마이그레이션을 함께 적용해야 한다.

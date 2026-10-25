@@ -1,4 +1,4 @@
-"""단일 worker MVP 실행기. 외부 공개하지 않고 Spring이 내부 토큰으로 호출한다."""
+"""Spring 내부 API와 선택적 영속 pull Worker를 제공한다."""
 from contextlib import asynccontextmanager
 import hmac
 import os
@@ -15,6 +15,7 @@ from .reasoning import Reasoner, MockReasoner
 from .graph import build_graph, task_result
 from .runner import TaskRunner, pending_kind
 from .ingest import Ingestor, MAX_BYTES
+from .worker import DurableWorker
 
 
 
@@ -35,9 +36,16 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
             app.state.jobs = app.state.runner.jobs
             app.state.guard = app.state.runner.guard
             app.state.ingestor = Ingestor(app.state.gateway)
-            yield
-            await app.state.ingestor.close()
-            await app.state.runner.close()
+            worker = DurableWorker(settings, app.state.runner, app.state.gateway) if settings.worker_enabled else None
+            if worker:
+                await worker.start()
+            try:
+                yield
+            finally:
+                if worker:
+                    await worker.close()
+                await app.state.ingestor.close()
+                await app.state.runner.close()
 
     app = FastAPI(title='AX Navigator Agent', lifespan=lifespan)
 
@@ -56,21 +64,29 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
             return {'status': 'not_checked', 'mode': settings.mode}
         return await app.state.gateway.check_rag()
 
+    def legacy_only():
+        if settings.worker_enabled:
+            raise HTTPException(409, '작업 복구 모드에서는 Spring의 영속 실행 명령을 사용하세요.')
+
     @app.post('/tasks/{task_id}/run', status_code=202, dependencies=[Depends(auth)])
     async def run(task_id: UUID, request: RunRequest):
+        legacy_only()
         return await app.state.runner.start(task_id, request)
 
     @app.post('/tasks/{task_id}/resume', status_code=202, dependencies=[Depends(auth)])
     async def resume(task_id: UUID, request: ResumeRequest):
+        legacy_only()
         return await app.state.runner.resume(task_id, request)
 
     @app.post('/tasks/{task_id}/confirm', status_code=202, dependencies=[Depends(auth)])
     async def confirm(task_id: UUID, request: ConfirmRequest):
+        legacy_only()
         return await app.state.runner.confirm(task_id, request)
 
     @app.post('/documents/{document_id}/ingest', status_code=202, dependencies=[Depends(auth)])
     async def ingest(document_id: int, companyId: int = Form(gt=0), fileName: str = Form(min_length=1, max_length=200),
                      contentType: str = Form(), file: UploadFile = File()):
+        legacy_only()
         # Spring이 형식·크기를 먼저 검사한다. 여기서는 경계만 다시 확인하고 결과는 콜백으로 돌려준다.
         if contentType != 'application/pdf': raise HTTPException(400, 'PDF만 색인합니다.')
         data = await file.read(MAX_BYTES + 1)
