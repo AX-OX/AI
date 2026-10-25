@@ -104,3 +104,13 @@ sh scripts/verify_pgvector.sh
 선택적 영속 Worker의 동작·환경변수·실제 프로세스 종료 검증은
 [Durable Recovery](docs/DURABLE_RECOVERY.md)에 정리했다.
 기본 비활성화이며 대응 BE 릴리스와 DB 마이그레이션을 함께 적용해야 한다.
+
+## 가장 간단한 모델 서빙 + Grafana
+
+GPU·API 키 없이 Iris 분류 모델을 FastAPI로 서빙하고 Prometheus/Grafana로 상태·요청·오류·지연을 확인하는 독립 예제입니다. [실행 안내](model-serving/README.md)를 참고하세요.
+
+```sh
+docker compose -f model-serving/compose.yaml up --build -d
+```
+
+Grafana: http://localhost:3001/d/iris-model-serving · API: http://localhost:8001/docs

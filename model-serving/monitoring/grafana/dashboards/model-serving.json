@@ -1,0 +1,385 @@
+{
+  "uid": "iris-model-serving",
+  "title": "Iris Model Serving",
+  "schemaVersion": 41,
+  "version": 1,
+  "timezone": "browser",
+  "editable": false,
+  "refresh": "5s",
+  "tags": [
+    "model-serving",
+    "iris"
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Serving ready",
+      "type": "stat",
+      "description": "Scrape success \u00d7 model loaded. DOWN when the model server is stopped.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "model-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "min(up{job=\"iris-model\"}) * (min(model_ready{job=\"iris-model\"}) or vector(0))",
+          "legendFormat": "",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "READY",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Prediction requests",
+      "type": "stat",
+      "description": "All prediction HTTP requests since model process startup.",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "model-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(model_prediction_requests_total{job=\"iris-model\"})",
+          "legendFormat": "",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Error ratio (2m)",
+      "type": "stat",
+      "description": "Includes invalid input (HTTP 422) and server errors.",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "model-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(model_prediction_requests_total{job=\"iris-model\",status=~\"4..|5..\"}[2m])) / clamp_min(sum(rate(model_prediction_requests_total{job=\"iris-model\"}[2m])), 1e-9)",
+          "legendFormat": "",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Build holdout accuracy",
+      "type": "stat",
+      "description": "Static build-time accuracy on 30 held-out Iris samples. Not live model quality.",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "model-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "model_test_accuracy{job=\"iris-model\"}",
+          "legendFormat": "",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Requests / second by HTTP status",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "model-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(model_prediction_requests_total{job=\"iris-model\"}[2m])",
+          "legendFormat": "HTTP {{status}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Request latency p95 (2m)",
+      "type": "timeseries",
+      "description": "Histogram estimate of prediction HTTP latency, including input validation. No traffic produces no p95.",
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "model-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(model_prediction_duration_seconds_bucket{job=\"iris-model\"}[2m])))",
+          "legendFormat": "",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Prediction requests by HTTP status",
+      "type": "timeseries",
+      "description": "",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "model-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "model_prediction_requests_total{job=\"iris-model\"}",
+          "legendFormat": "HTTP {{status}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ],
+  "annotations": {
+    "list": []
+  }
+}
