@@ -4,7 +4,8 @@ import hmac
 import os
 from uuid import UUID
 
-from fastapi import FastAPI, Depends, Header, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, Depends, Header, HTTPException, UploadFile, File, Form, Response
+from prometheus_client import CONTENT_TYPE_LATEST
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from .config import Settings
@@ -17,11 +18,13 @@ from .runner import TaskRunner, pending_kind
 from .ingest import Ingestor, MAX_BYTES
 from .worker import DurableWorker
 from .conversation import Conversation, ChatRequest, ChatReply
+from .telemetry import AgentMetrics, MetricsMiddleware
 
 
 
 def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None):
     settings = settings or Settings.from_env()
+    metrics = AgentMetrics(settings)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -30,7 +33,9 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
         if settings.mode != 'mock' and (not settings.model or not os.getenv('OPENAI_API_KEY')):
             raise RuntimeError('live/llm-demo 모드는 LLM_MODEL과 OPENAI_API_KEY가 필요합니다.')
         app.state.gateway = gateway or (MockGateway(settings) if settings.mode in {'mock','llm-demo'} else Gateway(settings))
+        app.state.gateway.metrics = metrics
         app.state.reasoner = reasoner or (MockReasoner(settings) if settings.mode == 'mock' else Reasoner(settings, observer=app.state.gateway.observe))
+        app.state.reasoner.metrics = metrics
         app.state.conversation = Conversation(app.state.reasoner, mock=settings.mode == 'mock')
         async with _checkpoint(settings, checkpointer) as saver:
             app.state.graph = build_graph(app.state.gateway, app.state.reasoner, saver, settings)
@@ -42,14 +47,25 @@ def create_app(settings=None, *, gateway=None, reasoner=None, checkpointer=None)
             if worker:
                 await worker.start()
             try:
+                metrics.ready.set(1)
                 yield
             finally:
+                metrics.ready.set(0)
                 if worker:
                     await worker.close()
                 await app.state.ingestor.close()
                 await app.state.runner.close()
 
     app = FastAPI(title='AX Navigator Agent', lifespan=lifespan)
+    app.state.metrics = metrics
+    app.add_middleware(MetricsMiddleware, metrics=metrics)
+
+    @app.get('/metrics', include_in_schema=False)
+    async def prometheus_metrics(authorization: str | None = Header(default=None)):
+        token = os.getenv('METRICS_TOKEN') or settings.internal_token
+        if not token or not authorization or not hmac.compare_digest(authorization, f'Bearer {token}'):
+            raise HTTPException(403, 'Metrics authentication required')
+        return Response(metrics.render(), media_type=CONTENT_TYPE_LATEST)
 
     async def auth(x_internal_token: str | None = Header(default=None)):
         if not x_internal_token or not hmac.compare_digest(x_internal_token, settings.internal_token):

@@ -6,6 +6,7 @@ import os
 import re
 import traceback
 from uuid import uuid4
+from time import perf_counter
 import httpx
 from fastapi import HTTPException
 from langgraph.types import Command
@@ -42,6 +43,10 @@ class TaskRunner:
 
     async def execute(self, task_id, payload, *, durable=False, publish_only=None):
         graph, client = self.graph, self.gateway
+        metrics = getattr(client, 'metrics', None)
+        started, outcome = perf_counter(), 'FAILED'
+        if metrics:
+            metrics.active.inc()
         cfg = self._cfg(task_id)
         cfg['run_id'] = uuid4()
         cfg['metadata']['mode'] = self.settings.mode
@@ -65,9 +70,11 @@ class TaskRunner:
             if result.get('errors'):
                 raise ValueError('; '.join(result['errors']))
             if result.get('__interrupt__') and interrupt_kind(result) == 'CONFIRMATION':
+                outcome = 'WAITING_CONFIRMATION'
                 # Spring은 draft가 저장된 작업만 WAITING_CONFIRMATION으로 바꾼다. 상태 전환은 이벤트로 한다.
                 await client.event(task_id, 'CONFIRMATION_REQUIRED', 'confirmation', {'draftId': result['extraction']['draft_id']})
             elif result.get('__interrupt__'):
+                outcome = 'WAITING_APPROVAL'
                 await client.status(task_id, 'WAITING_APPROVAL', result=task_result(result, self.settings.mode))
                 # Existing FE renders natural language only from TOKEN events.
                 # Send the verified complete answer once; do not expose raw LLM output.
@@ -75,15 +82,19 @@ class TaskRunner:
                     await client.event(task_id, 'TOKEN', 'roadmap', {'text': task_result(result, self.settings.mode)['answer']})
                 await client.event(task_id, 'APPROVAL_REQUIRED', 'approval', approval_payload(result))
             elif result['status'] == 'REJECTED':
+                outcome = 'REJECTED'
                 await client.status(task_id, 'REJECTED')
             else:
                 body = task_result(result, self.settings.mode)
                 await client.status(task_id, 'DONE', result=body)
                 await client.event(task_id, 'DONE', 'register', {'result': body})
+                outcome = 'DONE'
         except asyncio.CancelledError:
+            outcome = 'CANCELLED'
             # 프로세스 종료 시 마지막 완료 노드 체크포인트는 보존한다.
             raise
         except Exception as exc:
+            outcome = 'FAILED'
             if durable:
                 raise
             failures=[e for e in client.public_trace.get(task_id) if e['type']=='NODE_ERROR']
@@ -113,6 +124,10 @@ class TaskRunner:
             except Exception:
                 logger.exception('Failure callback failed task_id=%s', task_id)
         finally:
+            if metrics:
+                metrics.active.dec()
+                metrics.executions.labels(outcome).inc()
+                metrics.execution_time.observe(perf_counter() - started)
             self.jobs.pop(task_id, None)
 
     async def start(self, task_id, request):

@@ -1,0 +1,13 @@
+# Optional local real-LLM observation. Supply secrets with --env-file; never commit them.
+services:
+  agent:
+    environment:
+      AGENT_MODE: ${AGENT_MODE:-llm-demo}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?Set the Agent internal token}
+      LLM_MODEL: ${LLM_MODEL:?Set the actual provider model}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set the provider API key}
+      AGENT_DATABASE_URL: ${AGENT_DATABASE_URL:-}
+      SPRING_INTERNAL_URL: ${SPRING_INTERNAL_URL:-http://host.docker.internal:8080/internal}
+      BUSINESS_MCP_URL: ${BUSINESS_MCP_URL:-http://host.docker.internal:9101/mcp}
+      RAG_MCP_URL: ${RAG_MCP_URL:-http://host.docker.internal:9102/mcp}

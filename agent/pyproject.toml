@@ -20,6 +20,7 @@ dependencies = [
     "langsmith",
     "pypdf>=5",
     "python-multipart>=0.0.32",
+    "prometheus-client>=0.22,<1",
 ]
 
 [dependency-groups]
