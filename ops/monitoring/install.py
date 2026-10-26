@@ -180,7 +180,15 @@ def install():
     for name in ('compose.yaml', 'prometheus.yml', 'alerts.yml', 'alertmanager.yml'):
         shutil.copy2(SOURCE / name, ROOT / name)
         (ROOT / name).chmod(0o644)
-    shutil.copytree(SOURCE / 'grafana', ROOT / 'grafana', dirs_exist_ok=True)
+    shutil.copytree(SOURCE / 'grafana', ROOT / 'grafana', dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('._*', '.DS_Store', '__pycache__'))
+    # macOS tar can carry AppleDouble files; Grafana parses every *.yml file.
+    # Preserve any prior packaging metadata outside the provisioned directory.
+    for metadata in (ROOT / 'grafana').rglob('._*'):
+        if metadata.is_file():
+            saved = backup / 'packaging-metadata' / metadata.relative_to(ROOT / 'grafana')
+            saved.parent.mkdir(parents=True, exist_ok=True)
+            metadata.rename(saved)
     dashboard = SOURCE / 'ax-agent.json'
     inbox = SOURCE / 'alert_inbox.py'
     if not dashboard.exists():

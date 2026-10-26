@@ -2,7 +2,6 @@
 import importlib.util
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -85,3 +84,15 @@ def test_active_execution_prevents_first_token_restart(vm, monkeypatch):
     assert (app / 'Caddyfile').read_text() == CADDY
     assert (app / 'runtime/agent.env').read_text() == 'INTERNAL_TOKEN=existing-application-secret\n'
     assert not commands
+
+
+def test_reinstall_removes_appledouble_from_provisioning_without_losing_it(vm):
+    app, root, commands = vm
+    installer.install()
+    metadata = root / 'grafana/provisioning/dashboards/._production.yml'
+    metadata.write_bytes(b'\x00AppleDouble metadata')
+    installer.install()
+    assert not metadata.exists()
+    saved = list((root / 'backups').glob('*/packaging-metadata/provisioning/dashboards/._production.yml'))
+    assert len(saved) == 1
+    assert saved[0].read_bytes() == b'\x00AppleDouble metadata'
