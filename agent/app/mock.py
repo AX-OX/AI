@@ -6,6 +6,7 @@ import csv
 import json
 import sqlite3
 from .clients import Gateway, mask
+from .telemetry import instrument_tool
 
 
 class MockGateway(Gateway):
@@ -30,6 +31,7 @@ class MockGateway(Gateway):
     async def _spring(self, method, path, body):
         self.events.append({'method':method,'path':path,'body':copy.deepcopy(body)})
 
+    @instrument_tool
     async def index_document(self, company_id, document_id, title, pages):
         args = {'company_id': company_id, 'document_id': document_id, 'title': title, 'pages': pages}
         self.calls.append(('index_document', copy.deepcopy(args)))
@@ -37,6 +39,7 @@ class MockGateway(Gateway):
         if not result['chunks']: raise ValueError('RAG_UPLOAD_EMPTY: PDF에서 텍스트를 추출하지 못했습니다.')
         return result
 
+    @instrument_tool
     async def tool(self, task_id, node, name, args):
         self.calls.append((name,copy.deepcopy(args)))
         await self.event(task_id,'TOOL_START',node,{'tool':name,'label':name})

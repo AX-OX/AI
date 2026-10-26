@@ -1,0 +1,46 @@
+groups:
+  - name: model-and-agent
+    interval: 5s
+    rules:
+      - alert: ServingTargetDown
+        expr: up{job=~"iris-model|ax-agent"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} server is unreachable"
+      - alert: ModelNotReady
+        expr: model_ready{job="iris-model"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Iris model is not loaded"
+      - alert: ModelHighErrorRatio
+        expr: sum(rate(model_prediction_requests_total{job="iris-model",status=~"5.."}[1m])) / clamp_min(sum(rate(model_prediction_requests_total{job="iris-model"}[1m])), 1e-9) > 0.1 and sum(increase(model_prediction_requests_total{job="iris-model"}[1m])) >= 10
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Iris server errors exceed 10% (at least 10 requests/min)"
+      - alert: ModelSlowRequests
+        expr: histogram_quantile(0.95, sum by (le) (rate(model_prediction_duration_seconds_bucket{job="iris-model"}[1m]))) > 0.3 and sum(increase(model_prediction_requests_total{job="iris-model"}[1m])) >= 10
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Iris prediction p95 exceeds 300ms"
+      - alert: AgentLLMErrors
+        expr: sum(increase(ax_agent_llm_requests_total{job="ax-agent",outcome="error"}[2m])) >= 3
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "AX Agent has at least 3 failed LLM attempts in 2 minutes"
+      - alert: AgentToolErrors
+        expr: sum(increase(ax_agent_tool_calls_total{job="ax-agent",outcome="error"}[2m])) >= 3
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: "AX Agent has at least 3 failed tool calls in 2 minutes"
