@@ -1,0 +1,45 @@
+groups:
+  - name: axox-production-agent
+    rules:
+      - alert: AgentTargetDown
+        expr: up{job="ax-agent"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: AX Agent metrics cannot be collected
+      - alert: AgentNotReady
+        expr: ax_agent_ready{job="ax-agent"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: AX Agent is not ready
+      - alert: AgentHighHTTPErrorRatio
+        expr: sum(rate(ax_agent_http_requests_total{job="ax-agent",status=~"5.."}[5m])) / clamp_min(sum(rate(ax_agent_http_requests_total{job="ax-agent"}[5m])), 1e-9) > 0.1 and sum(increase(ax_agent_http_requests_total{job="ax-agent"}[5m])) >= 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: AX Agent HTTP server errors exceed 10% with at least 10 requests in 5 minutes
+      - alert: AgentLLMErrors
+        expr: sum(increase(ax_agent_llm_requests_total{job="ax-agent",outcome="error"}[5m])) >= 3
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: AX Agent has at least 3 failed LLM attempts in 5 minutes
+      - alert: AgentToolErrors
+        expr: sum(increase(ax_agent_tool_calls_total{job="ax-agent",outcome="error"}[5m])) >= 3
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: AX Agent has at least 3 failed tool calls in 5 minutes
+      - alert: AgentProcessMemoryHigh
+        expr: process_resident_memory_bytes{job="ax-agent"} > 1536 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: AX Agent process RSS exceeds 1.5 GiB (container limit is 2 GiB)
