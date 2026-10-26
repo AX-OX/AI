@@ -49,6 +49,10 @@ def test_reinstall_preserves_credentials_and_does_not_restart_agent(vm):
     assert 'respond @internal 404' in (app / 'Caddyfile').read_text()
     assert not any('agent' == arg for command in commands for arg in command)
     assert (root / 'grafana-access.txt').stat().st_mode & 0o777 == 0o600
+    dashboard = json.loads((root / 'grafana/dashboards/ax-agent.json').read_text())
+    assert dashboard['links'] == []
+    assert len([p for p in dashboard['panels'] if p['title'] == 'Active alerts']) == 1
+    assert 'mode=mock' not in next(p['options']['content'] for p in dashboard['panels'] if p['type'] == 'text')
 
 
 def test_first_install_failure_restores_routing_and_stops_only_monitoring(vm, monkeypatch):

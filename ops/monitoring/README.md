@@ -65,3 +65,13 @@ sudo docker stats --no-stream
 운영 모니터링만 중지하려면 모니터링 Compose에 `stop`을 사용한다. Agent·백엔드에는
 영향을 주지 않는다. `/grafana/` 경로 제거는 백업 Caddyfile을 검토한 뒤 복구하고
 `caddy validate` 및 `caddy reload`를 실행한다.
+
+## 최초 운영 검증 (2026-10-26)
+
+기존 GCP VM에 적용 후 Agent `mode=live`, PostgreSQL 체크포인트, Prometheus의
+Agent/self 대상 `UP`, 준비 상태 1, HTTPS Grafana 로그인 및 인증된 대시보드 조회를 확인했다.
+합성 알림의 발생·해제 모두 독립 수신함에 저장됐으며, 기존 백엔드·Agent·RAG reader/indexer의
+PostgreSQL 연결 검사와 인증된 RAG MCP 검사도 통과했다. 테스트용 장애나 LLM 호출은 만들지 않았다.
+
+운영 주소: `https://axox.34.104.191.144.sslip.io/grafana/d/ax-agent-monitoring`.
+VM의 임시 외부 IP가 바뀌면 기존 애플리케이션과 함께 `SITE_ADDRESS`를 갱신해야 한다.

@@ -200,6 +200,25 @@ def install():
     document['title'] = 'AX Agent · GCP Production'
     document['tags'] = ['axox', 'production', 'gcp']
     document['refresh'] = '15s'
+    document['links'] = []
+    for panel in document['panels']:
+        if panel['type'] == 'text':
+            panel['gridPos'].update(x=6, w=18)
+            panel['options']['content'] = (
+                '**GCP production / mode=live**: 실제 운영 LLM·MCP/pgvector 경로를 사용하는 Agent의 지표입니다. '
+                '문서 내용·질문·사용자 식별자는 수집하지 않습니다. 토큰은 제공자가 보고한 값이며, '
+                '호출이 없으면 관련 패널은 No data로 표시될 수 있습니다. CPU/RSS는 Agent 프로세스 기준입니다. '
+                'Active alerts는 현재 발생 중인 운영 경보 수입니다. 알림 발생·해제 이력은 내부 수신함에 저장됩니다.')
+    document['panels'].append({
+        'id': 16, 'type': 'stat', 'title': 'Active alerts',
+        'gridPos': {'x': 0, 'y': 38, 'w': 6, 'h': 5},
+        'datasource': {'type': 'prometheus', 'uid': 'model-prometheus'},
+        'targets': [{'refId': 'A', 'expr': 'sum(ALERTS{alertstate="firing"}) or vector(0)', 'instant': True}],
+        'fieldConfig': {'defaults': {'unit': 'short', 'thresholds': {'mode': 'absolute', 'steps': [
+            {'color': 'green', 'value': None}, {'color': 'red', 'value': 1}]}}, 'overrides': []},
+        'options': {'reduceOptions': {'calcs': ['lastNotNull'], 'fields': '', 'values': False},
+                    'colorMode': 'value', 'graphMode': 'none'},
+    })
     (target / 'ax-agent.json').write_text(json.dumps(document, ensure_ascii=False, indent=2) + '\n')
     shutil.copy2(inbox, ROOT / 'alert_inbox.py')
     alerts = ROOT / 'state/alerts'
