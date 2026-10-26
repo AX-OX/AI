@@ -199,8 +199,8 @@ def install():
     document = json.loads(dashboard.read_text())
     document['title'] = 'AX Agent · GCP Production'
     document['tags'] = ['axox', 'production', 'gcp']
-    document['refresh'] = '15s'
-    document['timepicker'] = {'refresh_intervals': ['15s', '30s', '1m', '5m', '15m', '1h']}
+    document['refresh'] = '2m'
+    document['timepicker'] = {'refresh_intervals': ['30s', '1m', '2m', '5m', '15m', '1h']}
     document['links'] = []
     for panel in document['panels']:
         if panel['type'] == 'text':

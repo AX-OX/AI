@@ -31,6 +31,8 @@ Agent 프로세스 CPU 및 RSS를 표시한다. 토큰은 제공자가 보고한
 Prometheus는 15초마다 수집하고 시계열을 최대 7일/1GB 보관한다. 컨테이너 메모리
 상한은 Prometheus 256MiB, Grafana 256MiB, Alertmanager 64MiB, 수신함 96MiB다.
 운영 환경이 4GiB 단일 VM이므로 실제 사용량을 확인하며 조정한다.
+Grafana 대시보드의 기본 자동 새로고침은 2분이며, Prometheus의 15초 수집 주기와는
+별개다.
 
 ## 인증과 알림
 
