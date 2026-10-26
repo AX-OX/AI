@@ -50,7 +50,7 @@ steps:
         gcloud compute ssh be-cicd@axox-vm-20261024 \
           --project='$PROJECT_ID' --zone=asia-northeast1-b \
           --tunnel-through-iap --ssh-key-expire-after=30m --quiet \
-          --command="sudo /opt/axox-vm/update-service.sh agent '$$image@$$digest' && sudo python3 /opt/axox-vm/verify-runtime.py"
+          --command="sudo /opt/axox-vm/update-service.sh agent '$$image@$$digest' && sudo python3 /opt/axox-vm/verify-runtime.py && sudo mkdir -p /opt/axox-monitoring-package-next && sudo docker cp axox-vm-agent-1:/opt/axox-monitoring-package/. /opt/axox-monitoring-package-next/ && sudo python3 /opt/axox-monitoring-package-next/install.py"
 images:
   - asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ai/axai:$COMMIT_SHA
 options:
