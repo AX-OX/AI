@@ -109,6 +109,8 @@ sh scripts/verify_pgvector.sh
 
 GPU·API 키 없이 Iris 분류 모델을 FastAPI로 서빙하고 Prometheus/Grafana로 상태·요청·오류·지연을 확인하는 독립 예제입니다. [실행 안내](model-serving/README.md)를 참고하세요.
 
+테스트 요청·모의 장애, 프로세스 CPU/RSS, Alertmanager 로컬 수신함, 모델 정보와 별도 AX Agent 계측 대시보드도 포함합니다. 기본 Agent는 mock이며, 실제 LLM/pgvector 연결은 실행 모드에 따라 구분합니다.
+
 ```sh
 docker compose -f model-serving/compose.yaml up --build -d
 ```

@@ -3,6 +3,8 @@ name: ax-model-serving
 services:
   model:
     build: .
+    environment:
+      ENABLE_DEMO_CONTROLS: "true"
     ports:
       - "127.0.0.1:8001:8000"
     healthcheck:
@@ -17,6 +19,7 @@ services:
       - "127.0.0.1:9091:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
     depends_on:
       model:
@@ -35,7 +38,39 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+  agent:
+    build:
+      context: ..
+      dockerfile: agent/Dockerfile
+    environment:
+      AGENT_MODE: mock
+      INTERNAL_TOKEN: local-agent-demo-only
+      METRICS_TOKEN: local-metrics-demo-only
+    ports:
+      - "127.0.0.1:8002:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  alertmanager:
+    image: prom/alertmanager:v0.34.1
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--cluster.listen-address="]
+    ports:
+      - "127.0.0.1:9094:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+  alert-inbox:
+    build: .
+    command: ["uvicorn", "app.ops:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "127.0.0.1:8003:8000"
+    volumes:
+      - alert_inbox_data:/data
 
 volumes:
   prometheus_data:
   grafana_data:
+  alertmanager_data:
+  alert_inbox_data:

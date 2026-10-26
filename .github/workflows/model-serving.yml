@@ -5,11 +5,13 @@ on:
     branches: [develop]
     paths:
       - model-serving/**
+      - agent/**
       - .github/workflows/model-serving.yml
   push:
     branches: [develop]
     paths:
       - model-serving/**
+      - agent/**
       - .github/workflows/model-serving.yml
 
 permissions:
@@ -31,3 +33,12 @@ jobs:
           pip install -r requirements.txt pytest httpx
           python -m pytest tests -q
           docker compose config --quiet
+      - name: Validate alert rules
+        run: |
+          docker run --rm --entrypoint promtool \
+            -v "$PWD/model-serving/monitoring:/rules:ro" \
+            -w /rules prom/prometheus:v3.15.1 test rules alerts.test.yml
+      - name: Install and test Agent instrumentation
+        run: |
+          pip install -r agent/requirements.lock.txt pytest pytest-asyncio
+          python -m pytest agent/tests/test_telemetry.py agent/tests/test_api.py agent/tests/test_conversation.py agent/tests/test_llm_demo.py agent/tests/test_external_research.py -q

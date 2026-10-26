@@ -87,3 +87,20 @@ def test_unready_model_returns_503(artifact):
         assert client.get("/health").status_code == 503
         assert client.post("/predict", json={"features": [5.1, 3.5, 1.4, 0.2]}).status_code == 503
         assert metric(client, "model_prediction_requests_total", {"status": "503"}) == 1
+
+
+def test_model_identity_and_demo_controls(artifact, monkeypatch):
+    with TestClient(create_app(artifact)) as client:
+        info = client.get('/model').json()
+        assert info['dataset'] == 'sklearn_builtin_iris'
+        assert info['training_samples'] == 120 and info['test_samples'] == 30
+        assert info['trained_at'] and info['loaded_at_unix'] > 0
+        assert client.post('/demo/control', json={'error_every': 2}).status_code == 404
+        monkeypatch.setenv('ENABLE_DEMO_CONTROLS', 'true')
+        assert client.post('/demo/control', json={'error_every': 2}).status_code == 200
+        body = {'features': [5.1, 3.5, 1.4, .2]}
+        assert client.post('/predict', json=body).status_code == 200
+        assert client.post('/predict', json=body).status_code == 503
+        assert client.post('/demo/control', json={'delay_ms': 2001}).status_code == 422
+        assert client.post('/demo/control', json={}).status_code == 200
+        assert client.post('/predict', json=body).status_code == 200

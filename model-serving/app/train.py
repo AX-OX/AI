@@ -1,6 +1,7 @@
 """Build the trusted local model artifact; never download or load user pickles."""
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
@@ -23,6 +24,9 @@ def train(output: Path) -> dict:
         "version": MODEL_VERSION,
         "classes": iris.target_names.tolist(),
         "test_accuracy": float(model.score(x_test, y_test)),
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "training_samples": len(x_train),
+        "test_samples": len(x_test),
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(artifact, output)

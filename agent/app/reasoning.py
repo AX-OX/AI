@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+from time import perf_counter
 from pathlib import Path
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
@@ -17,6 +18,7 @@ from .extraction import chunk_catalog, draft_schema as extraction_schema, resolv
 from .harness.limits import LoopGuard, LimitExceeded
 from .harness.tool_output import prepare_tool_output
 from .harness.recovery import is_retryable
+from .telemetry import TokenUsageCallback
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +41,11 @@ class Reasoner:
         models = list(dict.fromkeys(filter(None, [self.settings.model, self.settings.fallback_model])))
         last = None
         for name in models:
-            model = ChatOpenAI(model=name, temperature=None, use_responses_api=True, timeout=45, max_retries=0)
+            metrics = getattr(self, 'metrics', None)
+            callbacks = [TokenUsageCallback(metrics, name)] if metrics else []
+            model = ChatOpenAI(model=name, temperature=None, use_responses_api=True, timeout=45, max_retries=0, callbacks=callbacks)
             for attempt in range(3):
+                started, outcome = perf_counter(), 'error'
                 self.observe(task_id, stage, 'LLM_REQUEST', {'model':name, 'attempt':attempt+1})
                 try:
                     result = await method(model, *args)
@@ -50,7 +55,11 @@ class Reasoner:
                     calls = getattr(result, 'tool_calls', None)
                     if calls: info['toolCalls'] = [c['name'] for c in calls]
                     self.observe(task_id, stage, 'LLM_RESPONSE', info)
+                    outcome = 'success'
                     return result
+                except asyncio.CancelledError:
+                    outcome = 'cancelled'
+                    raise
                 except Exception as exc:
                     last = exc
                     info={'model':name,'errorType':type(exc).__name__,'httpStatus':getattr(exc,'status_code',None)}
@@ -60,7 +69,10 @@ class Reasoner:
                     self.observe(task_id, stage, 'LLM_ERROR', info)
                     if not is_retryable(exc):
                         raise RuntimeError('LLM 호출 실패') from exc
-                    await asyncio.sleep(0.5 * 2**attempt)
+                finally:
+                    if metrics:
+                        metrics.record_llm(name, stage, outcome, perf_counter() - started)
+                await asyncio.sleep(0.5 * 2**attempt)
         raise RuntimeError('LLM 호출 실패') from last
 
     async def collect(self, state, gateway):

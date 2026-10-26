@@ -11,6 +11,7 @@ from fastmcp.client.transports import StreamableHttpTransport
 from .spring import SpringClient
 from ..tool_errors import safe_tool_failure
 from ..recovery_context import command_headers, tool_failure
+from ..telemetry import instrument_tool
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ class Gateway:
         fields = {aliases.get(k, k): v for k, v in values.items()}
         await self._spring('PATCH', f'/tasks/{task_id}', {'status': status, **mask(fields)})
 
+    @instrument_tool
     async def index_document(self, company_id, document_id, title, pages):
         """업로드 문서를 회사 RAG 색인에 저장한다. 작업(task)이 없으므로 진행 이벤트를 보내지 않는다."""
         args = {'company_id': company_id, 'document_id': document_id, 'title': title, 'pages': pages}
@@ -96,6 +98,7 @@ class Gateway:
             logger.error('RAG_PROBE_FAILED code=%s error=%s', code, type(exc).__name__)
             return {'status': 'error', 'code': code, 'message': message}
 
+    @instrument_tool
     async def tool(self, task_id, node, name, args):
         started = perf_counter()
         await self.event(task_id, 'TOOL_START', node, {'tool': name, 'label': name})
