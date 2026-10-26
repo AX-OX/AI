@@ -6,12 +6,18 @@ on:
     paths:
       - model-serving/**
       - agent/**
+      - ops/monitoring/**
+      - Dockerfile
+      - cloudbuild.vm.yaml
       - .github/workflows/model-serving.yml
   push:
     branches: [develop]
     paths:
       - model-serving/**
       - agent/**
+      - ops/monitoring/**
+      - Dockerfile
+      - cloudbuild.vm.yaml
       - .github/workflows/model-serving.yml
 
 permissions:
@@ -38,6 +44,13 @@ jobs:
           docker run --rm --entrypoint promtool \
             -v "$PWD/model-serving/monitoring:/rules:ro" \
             -w /rules prom/prometheus:v3.15.1 test rules alerts.test.yml
+      - name: Validate production monitoring and recovery
+        run: |
+          SITE_ADDRESS=axox.example.test AI_IMAGE=validation-only docker compose -f ops/monitoring/compose.yaml config --quiet
+          python -m pytest ops/monitoring/test_install.py -q
+          docker run --rm --entrypoint promtool \
+            -v "$PWD/ops/monitoring/alerts.yml:/rules.yml:ro" \
+            prom/prometheus:v3.15.1 check rules /rules.yml
       - name: Install and test Agent instrumentation
         run: |
           pip install -r agent/requirements.lock.txt pytest pytest-asyncio

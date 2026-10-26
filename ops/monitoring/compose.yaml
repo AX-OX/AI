@@ -1,0 +1,92 @@
+name: axox-monitoring
+
+x-service: &service
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: 5m
+      max-file: '2'
+
+services:
+  prometheus:
+    <<: *service
+    image: prom/prometheus:v3.15.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=1GB
+      - --query.max-concurrency=4
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./secrets/metrics-token:/run/secrets/metrics-token:ro
+      - prometheus_data:/prometheus
+    networks: [default, application]
+    mem_limit: 256m
+    cpus: 0.3
+
+  grafana:
+    <<: *service
+    image: grafana/grafana:13.2.4
+    environment:
+      GF_SERVER_ROOT_URL: https://${SITE_ADDRESS:?HTTPS hostname required}/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: 'true'
+      GF_SECURITY_ADMIN_USER: axox-admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana-password
+      GF_SECURITY_COOKIE_SECURE: 'true'
+      GF_SECURITY_COOKIE_SAMESITE: strict
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_USERS_ALLOW_ORG_CREATE: 'false'
+      GF_AUTH_DISABLE_LOGIN_FORM: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: 'false'
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/ax-agent.json
+      GF_UNIFIED_ALERTING_ENABLED: 'false'
+    volumes:
+      - ./secrets/grafana-password:/run/secrets/grafana-password:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    networks:
+      default:
+      application:
+        aliases: [axox-grafana]
+    mem_limit: 256m
+    cpus: 0.3
+
+  alertmanager:
+    <<: *service
+    image: prom/alertmanager:v0.34.1
+    command: [--config.file=/etc/alertmanager/alertmanager.yml, --cluster.listen-address=]
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    mem_limit: 64m
+    cpus: 0.1
+
+  alert-inbox:
+    <<: *service
+    image: ${AI_IMAGE:?Use the deployed Agent image}
+    entrypoint: [python, -m, uvicorn]
+    command: [alert_inbox:app, --host, 0.0.0.0, --port, '8000', --no-access-log]
+    working_dir: /monitoring
+    environment:
+      ALERT_DATABASE: /data/alerts.sqlite
+    volumes:
+      - ./alert_inbox.py:/monitoring/alert_inbox.py:ro
+      - ./state/alerts:/data
+    mem_limit: 96m
+    cpus: 0.1
+
+networks:
+  application:
+    external: true
+    name: axox-vm_default
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:

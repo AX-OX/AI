@@ -35,6 +35,9 @@ COPY business-mcp/*.py business-mcp/
 COPY rag-mcp/*.py rag-mcp/
 COPY AX_Navigator_AI_MVP_v3 AX_Navigator_AI_MVP_v3
 COPY scripts/run_cloudrun.py scripts/run_cloudrun.py
+COPY ops/monitoring /opt/axox-monitoring-package
+COPY model-serving/monitoring/grafana/dashboards/ax-agent.json /opt/axox-monitoring-package/ax-agent.json
+COPY model-serving/app/ops.py /opt/axox-monitoring-package/alert_inbox.py
 RUN useradd --create-home --uid 10001 axagent
 USER axagent
 
