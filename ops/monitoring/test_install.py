@@ -51,6 +51,7 @@ def test_reinstall_preserves_credentials_and_does_not_restart_agent(vm):
     assert (root / 'grafana-access.txt').stat().st_mode & 0o777 == 0o600
     dashboard = json.loads((root / 'grafana/dashboards/ax-agent.json').read_text())
     assert dashboard['links'] == []
+    assert dashboard['refresh'] == '2m'
     assert dashboard['refresh'] in dashboard['timepicker']['refresh_intervals']
     assert len([p for p in dashboard['panels'] if p['title'] == 'Active alerts']) == 1
     assert 'mode=mock' not in next(p['options']['content'] for p in dashboard['panels'] if p['type'] == 'text')
